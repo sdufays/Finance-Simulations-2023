@@ -2,7 +2,9 @@ from tranche_class import Tranche
 
 class CLO(Tranche):
     def __init__(self, ramp_up):
+        # tranche objects stored here
         self.__tranches = []
+        # boolean, default no
         self.__ramp_up = ramp_up
     
     def get_ramp_up(self):
@@ -15,9 +17,9 @@ class CLO(Tranche):
     def get_tranches(self):
         return self.__tranches
 
-    # need cascade function
+    # need cascade function to update tranches
 
-    # get total deal amount
+    # get current total deal amount
     def get_tda(self):
         total_deal_amount = 0 
         for tranche in self.get_tranches():
@@ -25,6 +27,7 @@ class CLO(Tranche):
         return total_deal_amount
 
     # get total amount of offered bonds (IG bonds balance)
+    # starts changing once loans get paid off
     def get_tob(self):
       total_offered_bonds = 0
       for tranche in self.get_tranches():
@@ -56,18 +59,15 @@ class CLO(Tranche):
       
       return(percent_fee * self.get_tob())
 
-    def get_upfront_costs(self):
+    def get_upfront_costs(self, legal, accounting, trustee, printing, RA_site, modeling, misc):
       RA = self.get_RA_fees(self.get_tda())
       placement = self.get_placement_fee()
-      legal = int(input("Input legal fee: ")) or 1200000
-      accounting = int(input("Input accounting fee: ")) or 155000
-      trustee = int(input("Input trustee fee: ")) or 54000
-      printing = int(input("Input printing fee: ")) or 27500
-      RA_site = int(input("Input RA 17g-5 site fee: ")) or 32000
-      modeling = int(input("Input 3rd party modeling fee: ")) or 40000
-      misc = int(input("Input miscellaneous fee: ")) or 70000
-
       return(sum(RA, placement, legal, accounting, trustee, printing, RA_site, modeling, misc))
 
     def get_upfront_percent(self):
       return((self.get_upfront_costs() / self.get_tob()) * 100)
+
+    def get_clo_threshold(self):
+      threshhold = self.get_tranches()[0].get_size() * 0.2
+      return threshold
+      
