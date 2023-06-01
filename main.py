@@ -1,4 +1,3 @@
-import random
 from collateral_class import CollateralPortfolio
 from clo_class import CLO
 
@@ -8,12 +7,23 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    # import the data into these from excel
-    clo = CLO()
+    # ------------------------ IMPORTING DATA FROM EXCEL ------------------------ #
+    clo = CLO(False) # need rampup here
+    # add tranches
+    clo.add_tranche("various parameters")
+  
     loan_portfolio = CollateralPortfolio()
-
-
-
+    # add loans
+    loan_portfolio.add_loan("various parameters")
+  
+    # OTHER SPECIFICATIONS NEEDED:
+    """
+    reinvestment_period = 
+    deal_start_month = 
+    deal_end_threshold = 
+    """
+    
+    # ------------------------ RAMP UP CALCULATIONS ------------------------ #
     if clo.get_ramp_up():
         # after one month
         liability_balance = clo.get_tob()
@@ -27,10 +37,7 @@ if __name__ == "__main__":
     # AFTER A MONTH:
     # add new loan with collateral balance liability - collateral
 
-
-    # remember here loan index starts at 0
-    # but if we use the loan_id attribute then it would start at 1
-    # not sure where this code should go (in the loan class? or outside while iterating through collateral_portfolio)
+    # ------------------------ VARIOUS FUNCTIONS ------------------------ #
     def get_beginning_balance(loan_index):
         if loan_index == 1:
             beginning_balance = 0
@@ -57,4 +64,4 @@ if __name__ == "__main__":
         d=''
         # iterate through loans in portfolio and store the four above calculations somewhere (where??)
 
-    # ------------------------ REINVESTMENT COLLATERAL ------------------------ #
+    # ------------------------ REINVESTMENT FUNCTIONS ------------------------ #
