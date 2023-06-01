@@ -10,12 +10,11 @@ if __name__ == "__main__":
     # leap year?
     days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-
-    # ------------------------ IMPORTING DATA FROM EXCEL ------------------------ #
     clo = CLO(False) # need rampup here
     threshold = clo.get_clo_threshold()
     # add tranches
     clo.add_tranche("various parameters")
+
   
     loan_portfolio = CollateralPortfolio()
     # add loans
@@ -43,24 +42,25 @@ if __name__ == "__main__":
     # AFTER A MONTH:
     # add new loan with collateral balance liability - collateral
 
-    # ------------------------ VARIOUS FUNCTIONS ------------------------ #
-    def get_beginning_balance(loan_index):
-        if loan_index == 1:
-            beginning_balance = 0
+    # ------------------------ VARIOUS FUNCTIONS (A BIG MESS RN) ------------------------ #
+    # I just realized i = month... so these are WRONG IGNORE
+    # this has reinvestment
+    def get_beginning_balance(reinvestment, month, loan:
+        if (reinvestment and month <= loan.get_term_length()) or (month == 1)
+            return 0
         else:
-            beginning_balance = get_ending_balance(loan_index-1)
-        return beginning_balance
+            return get_ending_balance(month - 1)
 
-    def get_principal_paydown(loan_index):
-        if loan_index == collateral_portfolio[loan_index].get_term_length():
-            return get_beginning_balance(loan_index)
+    def get_principal_paydown(reinvestment, month, loan):
+        if month == loan.get_term_length():
+            return get_beginning_balance(reinvestment, month, loan)
         else:
             return 0
 
-    def get_ending_balance(loan_index):
+    def get_ending_balance(reinvestment, month, loan):
         # NEED TO FIND FUNDING AMOUNT
         funding_amount = 0
-        return get_beginning_balance(loan_index) + funding_amount - get_principal_paydown(loan_index)
+        return get_beginning_balance(reinvestment, month, loan) + funding_amount - get_principal_paydown(loan_index)
 
     def get_interest_income(loan_index, days_in_month):
         return get_beginning_balance(loan_index) * (collateral_portfolio[loan_index].get_spread() + max(collateral_portfolio[loan_index].get_index_floor(), loan_index) * days_in_month / 360)
@@ -69,5 +69,3 @@ if __name__ == "__main__":
     while loan_index in range(len(collateral_portfolio)):
         d=''
         # iterate through loans in portfolio and store the four above calculations somewhere (where??)
-
-    # ------------------------ REINVESTMENT FUNCTIONS ------------------------ #
