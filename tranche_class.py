@@ -29,24 +29,3 @@ class Tranche:
     def update_size(self, value):
         d=""
       # formulas
-
-row_index = 1
-tranche_instances = []
-
-while True:
-    tranche_data = df.loc[row_index, ['Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-
-    if tranche_data.empty:
-        break
-
-tranche_instance = Tranche(
-    tranche_data['Rating'],
-    tranche_data['Size'],
-    tranche_data['Spread (bps)'],
-    tranche_data['Offered'],
-    tranche_data['Price']
-)
-
-tranche_instances.append(tranche_instance)
-
-row_index =+ 1
