@@ -8,7 +8,8 @@ class CLO(Tranche):
     def get_ramp_up(self):
         return self.__ramp_up
 
-    def add_tranche(self, tranche):
+    def add_tranche(self, rating, size, spread, offered, price):
+        tranche = Tranche(rating, size, spread, offered, price)
         self.__tranches.append(tranche)
 
     def get_tranches(self):
