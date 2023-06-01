@@ -1,3 +1,5 @@
+import random
+
 # ------------------------ LOAN CLASS SETUP ------------------------ #
 class Loan:
     def __init__(self, loan_id, collateral_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period):
