@@ -4,6 +4,11 @@ import random
 # get reinvestment period length from user
 # default is 24
 
+# ------------------------ SCENARIOS ------------------------ #
+base = [.33, .33, .34]
+downside = [.30, .25, .45]
+upside = [.40, .35, .25]
+
 # ------------------------ VARIOUS TRANCHE OPERATIONS ------------------------ #
 class Tranche:
     def __init__(self, rating, size, spread, offered, price):
@@ -27,8 +32,6 @@ class Tranche:
 
     def get_price(self):
         return self.__price
-
-
 
 class CLO(Tranche):
     def __init__(self, ramp_up):
@@ -100,15 +103,24 @@ class CLO(Tranche):
       return((self.get_upfront_costs() / self.get_tob()) * 100)
 
 
+
 clo = CLO()
+loan_portfolio = CollateralPortfolio()
 if clo.get_ramp_up():
+  # after one month
   liability_balance = clo.get_tob()
   # total amount getting in loans
-  collateral_balance = get_collateral_sum(collateral_portfolio)
+  collateral_balance = loan_portfolio.get_collateral_sum()
   
+  if liability_balance > collateral_balance:
+      # make new loan of size liability - collateral
+      newloan = Loan(...)
+  
+def get_collateral_sum(collateral_portfolio):
+    d="get sum of collateral portfolio"
+
 # AFTER A MONTH:
 # add new loan with collateral balance liability - collateral
-
 
 # ------------------------ LOAN CLASS SETUP ------------------------ #
 class Loan:
@@ -159,13 +171,15 @@ class Loan:
 
 # create collateral portfolio class
 
-collateral_portfolio = ["""list of Loan objects"""]
+def CollateralPortfolio(Loans):
 
-def get_collateral_sum(collateral_portfolio):
-  sum = 0
-  for loan in collateral_portfolio:
-    sum+=loan.get_collateral_balance()
-  return sum
+    collateral_portfolio = ["""list of Loan objects"""]
+
+    def get_collateral_sum(collateral_portfolio):
+        sum = 0
+        for loan in collateral_portfolio:
+            sum+=loan.get_collateral_balance()
+        return sum
 
 # NEED TO KNOW MONTH FOR THIS
 
