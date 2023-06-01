@@ -8,12 +8,14 @@ class CLO(Tranche):
     def get_ramp_up(self):
         return self.__ramp_up
 
-    def add_tranche(self, rating, size, spread, offered, price):
-        tranche = Tranche(rating, size, spread, offered, price)
+    def add_tranche(self, name, rating, size, spread, offered, price):
+        tranche = Tranche(name, rating, size, spread, offered, price)
         self.__tranches.append(tranche)
 
     def get_tranches(self):
         return self.__tranches
+
+    # need cascade function
 
     # get total deal amount
     def get_tda(self):
