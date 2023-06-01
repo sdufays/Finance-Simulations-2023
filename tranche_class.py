@@ -25,3 +25,7 @@ class Tranche:
 
     def get_price(self):
         return self.__price
+
+    def update_size(self, value):
+        d=""
+      # formulas
