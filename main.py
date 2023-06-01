@@ -7,14 +7,20 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
+    # leap year?
+    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+
     # ------------------------ IMPORTING DATA FROM EXCEL ------------------------ #
     clo = CLO(False) # need rampup here
+    threshold = clo.get_clo_threshold()
     # add tranches
     clo.add_tranche("various parameters")
   
     loan_portfolio = CollateralPortfolio()
     # add loans
     loan_portfolio.add_loan("various parameters")
+    loan_portfolio.generate_loan_terms(base)
   
     # OTHER SPECIFICATIONS NEEDED:
     """
@@ -22,7 +28,7 @@ if __name__ == "__main__":
     deal_start_month = 
     deal_end_threshold = 
     """
-    
+
     # ------------------------ RAMP UP CALCULATIONS ------------------------ #
     if clo.get_ramp_up():
         # after one month
@@ -46,7 +52,7 @@ if __name__ == "__main__":
         return beginning_balance
 
     def get_principal_paydown(loan_index):
-        if loan_index == collateral_portfolio[loan_index].get_loan_term():
+        if loan_index == collateral_portfolio[loan_index].get_term_length():
             return get_beginning_balance(loan_index)
         else:
             return 0
