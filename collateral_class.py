@@ -26,24 +26,24 @@ class CollateralPortfolio(Loan):
     upside = [.40, .35, .25]
 """
   #run this at the beginning of main
-  def generate_loan_terms(self, case):
-      # Calculate the number of loans to assign to each term
-      num_loans = len(self.__portfolio)
-      prepay_amt = round(num_loans * case[0])
-      intial_amt = round(num_loans * case[1])
-      extended_amt = num_loans - prepay_amt - intial_amt
-  
-      # Create a list with the loan terms according to the scenario
-      loan_terms = ['prepaid'] * prepay_amt + ['initial'] * intial_amt + ['extended'] * extended_amt
-  
-      # Shuffle the list to randomize the terms
-      np.random.shuffle(loan_terms)
-  
-      # Assign each loan a term from the list
-      for loan, term_type in zip(self.__portfolio, loan_terms):
-          if term_type == "initial":
-              loan.set_term_length(loan.get_remaining_loan_term())
-          elif term_type == "extended":
-              loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
-          else:
-              loan.set_term_length(loan.get_open_prepayment_period())
+    def generate_loan_terms(self, case):
+        # Calculate the number of loans to assign to each term
+        num_loans = len(self.__portfolio)
+        prepay_amt = round(num_loans * case[0])
+        intial_amt = round(num_loans * case[1])
+        extended_amt = num_loans - prepay_amt - intial_amt
+    
+        # Create a list with the loan terms according to the scenario
+        loan_terms = ['prepaid'] * prepay_amt + ['initial'] * intial_amt + ['extended'] * extended_amt
+    
+        # Shuffle the list to randomize the terms
+        np.random.shuffle(loan_terms)
+    
+        # Assign each loan a term from the list
+        for loan, term_type in zip(self.__portfolio, loan_terms):
+            if term_type == "initial":
+                loan.set_term_length(loan.get_remaining_loan_term())
+            elif term_type == "extended":
+                loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
+            else:
+                loan.set_term_length(loan.get_open_prepayment_period())
