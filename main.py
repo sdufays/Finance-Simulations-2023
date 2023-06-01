@@ -1,16 +1,8 @@
 import random
 
-RAMP_UP = bool(input("Enable ramp up? Type True or False: ")) or True
-
-if RAMP_UP:
-  s = """ 
-  clo = CLO()
-  
-  liability_balance = clo.get_tob()
-  collateral_balance = clo.get_tda()
-  
-  
-  """
+# REINVESTMENT
+# get reinvestment period length from user
+# default is 24
 
 # ------------------------ VARIOUS TRANCHE OPERATIONS ------------------------ #
 class Tranche:
@@ -39,8 +31,12 @@ class Tranche:
 
 
 class CLO(Tranche):
-    def __init__(self):
+    def __init__(self, ramp_up):
         self.__tranches = []
+        self.__ramp_up = ramp_up
+    
+    def get_ramp_up(self):
+        return self.__ramp_up
 
     def add_tranche(self, tranche):
         self.__tranches.append(tranche)
@@ -103,9 +99,16 @@ class CLO(Tranche):
     def get_upfront_percent(self):
       return((self.get_upfront_costs() / self.get_tob()) * 100)
 
-# ------------------------ RAMP UP/REINVESTMENT PERIOD ------------------------ #
-# are there two cases for ramp up/no ramp up? ie since the funds need to be distributed in sequential order vs non sequential order, would the whole process be different?
-# how do we distribute in sequential order?
+
+clo = CLO()
+if clo.get_ramp_up():
+  liability_balance = clo.get_tob()
+  # total amount getting in loans
+  collateral_balance = get_collateral_sum(collateral_portfolio)
+  
+# AFTER A MONTH:
+# add new loan with collateral balance liability - collateral
+
 
 # ------------------------ LOAN CLASS SETUP ------------------------ #
 class Loan:
@@ -143,24 +146,34 @@ class Loan:
         return self.__open_prepayment_period
 
     def get_term(self):
+        # make this align with ratios
         term_type = random.choice(['initial', 'extended', 'prepaid'])
         if term_type == "initial":
-            return(self.get_remaining_loan_term)
+            return(self.get_remaining_loan_term())
         elif term_type == "extended":
-            return(self.get_remaining_loan_term + self.get_extension_period)
+            return(self.get_remaining_loan_term() + self.get_extension_period())
         else:
-            return(self.get_open_prepayment_period)
+            return(self.get_open_prepayment_period())
         
 # ------------------------ COLLATERAL PORTFOLIO ------------------------ #
+
+# create collateral portfolio class
+
 collateral_portfolio = ["""list of Loan objects"""]
 
-# IF NO REINVESTMENT
+def get_collateral_sum(collateral_portfolio):
+  sum = 0
+  for loan in collateral_portfolio:
+    sum+=loan.get_collateral_balance()
+  return sum
+
+# NEED TO KNOW MONTH FOR THIS
 
 # remember here loan index starts at 0
 # but if we use the loan_id attribute then it would start at 1
 # not sure where this code should go (in the loan class? or outside while iterating through collateral_portfolio)
 def get_beginning_balance(loan_index):
-    if loan_index == 0:
+    if loan_index == 1:
         beginning_balance = 0
     else:
         beginning_balance = get_ending_balance(loan_index-1)
@@ -180,7 +193,8 @@ def get_ending_balance(loan_index):
 def get_interest_income(loan_index, days_in_month):
     return get_beginning_balance(loan_index) * (collateral_portfolio[loan_index].get_spread() + max(collateral_portfolio[loan_index].get_index_floor(), loan_index) * days_in_month / 360)
 
-for lo in range(len(collateral_portfolio)):
+loan_index = 1
+while loan_index in range(len(collateral_portfolio)):
     d=''
     # iterate through loans in portfolio and store the four above calculations somewhere (where??)
 
