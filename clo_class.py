@@ -53,7 +53,16 @@ class CLO(Tranche):
       KRBA_fee = max(0.0006 * total_deal_amount + 25000, 175000)
       return (moody_fee + KRBA_fee)
 
-    def get_upfront_costs(self, placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc):
+    def get_upfront_costs(self, placement_percent):
+      df = pd.read_excel("CLO_Input.xlsm", sheet_name="Upfront Costs")
+      row = df.iloc[0]
+      legal = row['Legal']
+      accounting = row['Accounting']
+      trustee = row['Trustee']
+      printing = row['Printing']
+      RA_site = row['RA 17g-5 site']
+      modeling = row['3rd Part Modeling']
+      misc = row['Misc']
       RA = self.get_RA_fees(self.get_tda())
       placement = placement_percent * self.get_tob()
       return(sum(RA, placement, legal, accounting, trustee, printing, RA_site, modeling, misc))
