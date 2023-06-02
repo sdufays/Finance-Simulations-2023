@@ -159,3 +159,13 @@ for loan in loans:
         break
 
 #---------------------------------------------------UPFRONT COSTS---------------------------------------------------#
+
+#in clo class under def get_upfront_cost()
+
+#---------------------------------------------------OTHER SPECIFICATIONS---------------------------------------------------#
+
+#in clo class under their own functions:
+            #get_revest_period()
+            #get_deal_start_date()
+
+#I feel like if the two functions dont make sense or don't work then it might be better to switch the values to be in main.py
