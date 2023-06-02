@@ -41,6 +41,8 @@ class Loan:
         return self.__term_length
 
     # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
+    # MONTH - 1 DOESN'T WORK
+  
     # for reinvestment, calculate beginning balance of NEW loan using original loan
     # month here is the months passed
     def beginning_balance(self, month, funding_amount):

@@ -1,5 +1,6 @@
 from collateral_class import CollateralPortfolio
 from clo_class import CLO
+import pandas as pd
 
 # assume starting date is in format MM/DD/YYYY
 def get_date_array(date):
@@ -48,17 +49,15 @@ if __name__ == "__main__":
     # goes for the longest possible month duration
     months_passed = 0
     while months_passed in range(loan_portfolio.get_longest_term()): # what if reinvestment makes it longer
-        # one more bc if starting date is 1/31/2023, current month is february
-        current_month = (starting_month + months_passed + 1) % 12
-        for loan in loan_portfolio.get_portfolio():
-            funding_storeholder = 0  
-            beginning_bal = loan.beginning_balance(months_passed, funding_storeholder)
-            principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
-            ending_bal = loan.ending_balance(month, funding_storeholder, beginning_bal)
-            days = days_in_month[current_month]
-            interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)
-        # store in df
-        # do calculations
+      # one more bc if starting date is 1/31/2023, current month is february
+      current_month = (starting_month + months_passed + 1) % 12
+      for loan in loan_portfolio.get_portfolio():
+        funding_storeholder = 0  
+        beginning_bal = loan.beginning_balance(months_passed, funding_storeholder)
+        principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
+        ending_bal = loan.ending_balance(month, funding_storeholder, beginning_bal)
+        days = days_in_month[current_month]
+        interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)
 
         
 

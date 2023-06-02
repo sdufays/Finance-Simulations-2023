@@ -1,4 +1,4 @@
-#---------------------------------------------------TRANCHES/CAPITAL STACK SHEET---------------------------------------------------#
+#-----------------------------------------TRANCHES/CAPITAL STACK SHEET-----------------------------------------#
 import pandas as pd
 
 class Tranche:
@@ -73,7 +73,7 @@ for tranche in tranches:
         #print(tranche.get_offered())
         #print(tranche.get_price())
 
-#---------------------------------------------------LOANS/COLLATERAL PORTFOLIO SHEET---------------------------------------------------#
+#---------------------------------------LOANS/COLLATERAL PORTFOLIO SHEET----------------------------------------#
 class Loan:
     def __init__(self, loan_id, collateral_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period):
         self.__loan_id = loan_id
@@ -158,14 +158,14 @@ for loan in loans:
         print(loan_data)
         break
 
-#---------------------------------------------------UPFRONT COSTS---------------------------------------------------#
+#-------------------------------------------------UPFRONT COSTS-------------------------------------------------#
 
 #in clo class under def get_upfront_cost()
 
-#---------------------------------------------------OTHER SPECIFICATIONS---------------------------------------------------#
+#---------------------------------------------OTHER SPECIFICATIONS----------------------------------------------#
 
 #in clo class under their own functions:
             #get_revest_period()
             #get_deal_start_date()
+    
 
-#I feel like if the two functions dont make sense or don't work then it might be better to switch the values to be in main.py
