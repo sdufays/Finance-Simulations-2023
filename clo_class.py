@@ -31,7 +31,7 @@ class CLO(Tranche):
     def get_tob(self):
       total_offered_bonds = 0
       for tranche in self.get_tranches():
-          total_offered_bonds += (tranche.get_size() * tranche.get_offered)
+          total_offered_bonds += (tranche.get_size() * tranche.get_offered())
       return total_offered_bonds
 
     # get deal discount amount
@@ -53,21 +53,14 @@ class CLO(Tranche):
       KRBA_fee = max(0.0006 * total_deal_amount + 25000, 175000)
       return (moody_fee + KRBA_fee)
 
-    # calculate placement fee
-    def get_placement_fee(self):
-      percent_fee = float(input("Input percent fee: ")) or 0.0006
-      
-      return(percent_fee * self.get_tob())
-
-    def get_upfront_costs(self, legal, accounting, trustee, printing, RA_site, modeling, misc):
+    def get_upfront_costs(self, placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc):
       RA = self.get_RA_fees(self.get_tda())
-      placement = self.get_placement_fee()
+      placement = placement_percent * self.get_tob()
       return(sum(RA, placement, legal, accounting, trustee, printing, RA_site, modeling, misc))
 
     def get_upfront_percent(self):
       return((self.get_upfront_costs() / self.get_tob()) * 100)
 
-    def get_clo_threshold(self):
-      threshhold = self.get_tranches()[0].get_size() * 0.2
-      return threshold
+    def get_threshold(self):
+      return self.get_tranches()[0].get_size() * 0.2
       
