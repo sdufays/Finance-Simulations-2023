@@ -13,7 +13,7 @@ class Tranche:
     
     def get_rating(self):
         return self.__rating
-
+      
     def get_size(self):
         return self.__size
 
@@ -29,3 +29,4 @@ class Tranche:
     def update_size(self, value):
         d=""
       # formulas
+

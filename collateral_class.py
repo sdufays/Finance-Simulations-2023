@@ -20,25 +20,22 @@ class CollateralPortfolio(Loan):
         sum = 0
         for loan in self.__portfolio:
             sum+=loan.get_collateral_balance()
+        return sum
 
-"""base = [.33, .33, .34]
-    downside = [.30, .25, .45]
-    upside = [.40, .35, .25]
-"""
-  #run this at the beginning of main
+    #run this at the beginning of main
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
         num_loans = len(self.__portfolio)
         prepay_amt = round(num_loans * case[0])
         intial_amt = round(num_loans * case[1])
         extended_amt = num_loans - prepay_amt - intial_amt
-    
+
         # Create a list with the loan terms according to the scenario
         loan_terms = ['prepaid'] * prepay_amt + ['initial'] * intial_amt + ['extended'] * extended_amt
-    
+
         # Shuffle the list to randomize the terms
         np.random.shuffle(loan_terms)
-    
+
         # Assign each loan a term from the list
         for loan, term_type in zip(self.__portfolio, loan_terms):
             if term_type == "initial":

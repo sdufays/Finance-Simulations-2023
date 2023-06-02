@@ -14,9 +14,6 @@ class Loan:
   
     def get_loan_id(self):
         return self.__loan_id
-    
-    def get_prev_id(self):
-        return self.__prev_id
 
     def get_loan_balance(self):
         return self.__loan_balance
@@ -24,7 +21,8 @@ class Loan:
     # need all the equations for investors to pay off their loans each month 
     def update_loan_balance(self, month, etc):
         # add equation for loan getting smaller and smaller each month
-  
+        d=""
+
     def get_margin(self):
         return self.__margin
 
@@ -40,8 +38,8 @@ class Loan:
     def get_open_prepayment_period(self):
         return self.__open_prepayment_period
 
-    def set_term_length(self, term):
-        self.__term_length = term
+    def set_term_length(self, term_length):
+        self.__term_length = term_length
 
     def get_term_length(self):
         return self.__term_length
