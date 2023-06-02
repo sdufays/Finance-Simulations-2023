@@ -1,14 +1,22 @@
 from tranche_class import Tranche
 
 class CLO(Tranche):
-    def __init__(self, ramp_up):
+    def __init__(self, ramp_up, reinvestment_period, starting_date):
         # tranche objects stored here
         self.__tranches = []
         # boolean, default no
         self.__ramp_up = ramp_up
+        self.__reinvestment_period = reinvestment_period
+        self.__starting_date = starting_date
     
     def get_ramp_up(self):
         return self.__ramp_up
+
+    def get_reinvestment_period(self):
+        return self.__reinvestment_period
+
+    def get_starting_date(self):
+        return self.__starting_date
 
     def add_tranche(self, name, rating, size, spread, offered, price):
         tranche = Tranche(name, rating, size, spread, offered, price)
