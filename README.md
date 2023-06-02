@@ -1,5 +1,5 @@
 # CLO Simulator Documentation
-
+---
 ## THE CAPITAL STACK
 
 ### 01. *Tranche Class*
@@ -28,7 +28,7 @@
 * `clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)` calculates and returns sum of all upfront costs
 * `clo.get_upfront_percent()` calculates and returns the upfront costs as a percentage of the total offered bonds
 * `clo.get_threshold()` calculates and returns 0.2 * the size of the AAA tranche
-
+---
 ## THE COLLATERAL PORTFOLIO
 
 ### 01. *Loan Class*
