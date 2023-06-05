@@ -6,6 +6,8 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
+    SOFR = 0.0408
+
     po = CollateralPortfolio()
     
     # read excel file for loans
@@ -47,3 +49,10 @@ if __name__ == "__main__":
     print("TESTING ADD NEW LOAN")
     po.add_new_loan(90000)
     print(po.get_portfolio()[-1].get_loan_balance())
+
+    print("TESTING BEGINNING BALANCE")
+    loan = po.get_portfolio()[0]
+    begin = loan.beginning_balance(0, [1,2,3])
+    print("beginning balance " + str(begin))
+    print(SOFR)
+    print("interest income " + str(loan.interest_income(begin, SOFR, 30)))
