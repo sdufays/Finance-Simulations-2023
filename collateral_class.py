@@ -47,13 +47,13 @@ class CollateralPortfolio(Loan):
         # Assign each loan a term from the list
         for loan, term_type in zip(self.__portfolio, loan_terms):
             if term_type == "initial":
-                print("initial" + loan.get_loan_id())
+                print("initial" + str(loan.get_loan_id()))
                 loan.set_term_length(loan.get_remaining_loan_term())
             elif term_type == "extended":
-                print("extend" + loan.get_loan_id())
+                print("extend" + str(loan.get_loan_id()))
                 loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
             else:
-                print("prepay"+ loan.get_loan_id())
+                print("prepay"+ str(loan.get_loan_id()))
                 loan.set_term_length(loan.get_open_prepayment_period())
 
     def get_longest_term(self):
