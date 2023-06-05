@@ -69,6 +69,7 @@ if __name__ == "__main__":
         days = days_in_month[current_month - 1]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
         if principal_pay != 0: 
+           loan.remove_loan
            
 
         
