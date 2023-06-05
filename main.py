@@ -69,8 +69,6 @@ if __name__ == "__main__":
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
     loan_portfolio.generate_loan_terms(base)
-
-    # will need loop that makes sim happen 100 or 1000x 
     longest_duration = loan_portfolio.get_longest_term()
     # CREATE DATAFRAME
     loan_ids = list(range(1, 22))  # 21 loan IDs
@@ -81,7 +79,10 @@ if __name__ == "__main__":
     loan_data = pd.DataFrame(index=index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
     # START LOOP: goes for the longest possible month duration
+    # will need loop that makes sim happen 100 or 1000x 
     months_passed = 0
+    final_countdown = None
+ # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     while months_passed in range(longest_duration): # what if reinvestment makes it longer
       current_month = (starting_month + months_passed) % 12
       # ramp-up calculations 
@@ -111,7 +112,15 @@ if __name__ == "__main__":
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal)
 
+        # terminate 
         if clo.get_tranches()[0].get_size() <= threshold:
+           if final_countdown is None:
+              final_countdown = 2 * loan_portfolio.get_portfolio_count()
+           else:
+              final_countdown -= 1
+              if final_countdown <= 0:
+                 break
+              
+      months_passed += 1
+              
            
-        
-      print(loan_data)
