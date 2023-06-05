@@ -103,7 +103,8 @@ if __name__ == "__main__":
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
-        
+        loan_data.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
+
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
@@ -125,5 +126,5 @@ if __name__ == "__main__":
               break
               
       months_passed += 1
-              
+    print(loan_data.head(longest_duration))
            
