@@ -9,7 +9,7 @@ index = pd.MultiIndex.from_product([loan_ids, months_passed],
                                    names=['Loan ID', 'Months Passed'])
 
 # Create an empty DataFrame with the multi-index
-loan_data = pd.DataFrame(index=index, columns=['Current Month', 'Beginning Balance', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
+loan_data = pd.DataFrame(index=index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
 # Display the DataFrame
 print(loan_data)
@@ -17,6 +17,6 @@ print(loan_data)
 loan_id = 1
 month = 3
 
-loan_data.loc[(loan_id, month), 'Beginning Balance'] = 90000
+loan_data.loc[(loan_id, month), 'Ending Balance'] = 90000
 
-print(loan_data.loc[(loan_id, month), 'Beginning Balance']) # gets beginning balance at month 6 of loan 1
+print(loan_data.loc[(loan_id, month), 'Ending Balance']) # gets beginning balance at month 6 of loan 1
