@@ -32,8 +32,14 @@ if __name__ == "__main__":
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     clo = CLO("are we in rampup?")
+
+    # read excel file for capital stack
+    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
+
     # add tranches in  a loop
-    clo.add_tranche("various parameters")
+    for index_t, row_t in df_cs.iterrows():
+      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
     threshold = clo.get_clo_threshold()
     SOFR = 0.0408
   
