@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     # assume they're giving us a date at the end of the month
     # they don't start at the start, they start when the first payment is made
-    first_payment_date = df_os.iloc[0, 1]
+    first_payment_date = df_os.iloc[2, 1]
     date_str = first_payment_date.strftime("%m-%d-%Y")
     date = date_str.split("-") # ["MM", "DD", "YYYY"]
     date = list(map(int, date)) # [MM, DD, YYYY]
