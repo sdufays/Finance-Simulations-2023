@@ -67,6 +67,4 @@ class Loan:
     # changes due to # days in month
     # index value is SOFR
     def interest_income(self, beginning_balance, INDEX_VALUE, num_days):
-        print("index floor" + str(self.get_index_floor()))
-        print("margin" + str(self.get_margin()))
         return beginning_balance * (self.get_margin() + max(self.get_index_floor(), INDEX_VALUE)) * num_days / 360
