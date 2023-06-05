@@ -92,8 +92,10 @@ if __name__ == "__main__":
     longest_duration = loan_portfolio.get_longest_term()
     loan_ids = list(range(1, 22))  # 21 loan IDs
     months = list(range(1, longest_duration))
-    collateral_cf = pd.
-
+    index = pd.MultiIndex.from_product([loan_ids, months],
+                                   names=['Loan ID', 'Months Passed'])
+    # Create an empty DataFrame with the multi-index
+    loan_data = pd.DataFrame(index=index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
     # goes for the longest possible month duration
     months_passed = 0
