@@ -53,7 +53,7 @@ if __name__ == "__main__":
     for index_t, row_t in df_cs.iterrows():
       tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
       clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
-    threshold = clo.get_clo_threshold()
+    threshold = clo.get_threshold()
     SOFR = 0.0408
   
     loan_portfolio = CollateralPortfolio()
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
     loan_portfolio.generate_loan_terms(base)
-    longest_duration = loan_portfolio.get_longest_term()
+    longest_duration = int(loan_portfolio.get_longest_term())
     # CREATE DATAFRAME
     loan_ids = list(range(1, 22))  # 21 loan IDs
     months = list(range(1, longest_duration))
@@ -93,8 +93,8 @@ if __name__ == "__main__":
       
       # monthly calculations 
       for loan in loan_portfolio.get_portfolio():
-        beginning_bal = loan.beginning_balance(months_passed)
-        principal_pay = loan.principal_paydown(months_passed)
+        beginning_bal = loan.beginning_balance(months_passed, loan_data)
+        principal_pay = loan.principal_paydown(months_passed, loan_data)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 1]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
