@@ -94,6 +94,8 @@ if __name__ == "__main__":
     while months_passed in range(loan_portfolio.get_longest_term()): # what if reinvestment makes it longer
       # one more bc if starting date is 1/31/2023, current month is february
       current_month = (starting_month + months_passed + 1) % 12
+      if months_passed == 1:
+         extra = 
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed)
         principal_pay = loan.principal_paydown(months_passed)
@@ -106,12 +108,6 @@ if __name__ == "__main__":
               loan_portfolio.add_new_loan(ending_bal)
               
            
-
-        
-
-        
-        
-        
 
 # ------------------------ RAMP UP CALCULATIONS ------------------------ #
 if clo.get_ramp_up():
