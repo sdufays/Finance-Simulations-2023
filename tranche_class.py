@@ -29,5 +29,5 @@ class Tranche:
     def subtract_size(self, value):
         self.__size -= value
     
-    def interest_trench(self, beginning_balance, INDEX_VALUE, num_days):
+    def interest_tranche(self, beginning_balance, INDEX_VALUE, num_days):
         return beginning_balance * (self.get_margin() + max(self.get_index_floor(), INDEX_VALUE)) * num_days / 360

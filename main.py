@@ -108,8 +108,6 @@ if __name__ == "__main__":
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           clo.get_tranches()[0].subtract_size(beginning_bal)
-           # calculate interest paid based on tranche's spread + sofr and the balance of the tranche at that time
            # principal payment = after the reinvestment period, the balance of whatever was paid off (goes back to the bondholders)
            #  clo cash flows total = total discount amount (0.75% x balance of each tranch) + total upfront costs - sum of all original balances of tranches that was solod (period 1 )
            # interest payment + principal payment for each trNCHD 
@@ -117,6 +115,9 @@ if __name__ == "__main__":
            # reinvestment calculations 
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal)
+           else:
+               clo.get_tranches()[0].subtract_size(beginning_bal)
+               prin
 
         # terminate 
         if clo.get_tranches()[0].get_size() <= threshold:
