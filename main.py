@@ -18,7 +18,6 @@ if __name__ == "__main__":
 
     # read excel file for Other Specifications
     df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications", header=None)
-    print(df_os)
     row_3 = df_os.iloc[2]
 
     # assume they're giving us a date at the end of the month
@@ -33,6 +32,7 @@ if __name__ == "__main__":
     reinvestment_period = df_os.iloc[1,1]
 
     # --------------------------- UPFRONT COSTS --------------------------- #
+<<<<<<< Updated upstream
 
     df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
     legal = df_uc.iloc[0, 1]
@@ -42,6 +42,32 @@ if __name__ == "__main__":
     RA_site = df_uc.iloc[4, 1]
     modeling = df_uc.iloc[5, 1]
     misc = df_uc.iloc[6, 1]
+=======
+    #legal, accounting, trustee, printing, RA_site, modeling, misc
+    # read excel file for upfront costs
+    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
+
+    row_legal = df_uc.iloc[0]
+    legal = row_legal['Legal']
+
+    row_accounting = df_uc.iloc[1]
+    accounting = row_accounting['Accounting']
+
+    row_trustee = df_uc.iloc[2]
+    trustee = row_trustee['Trustee']
+
+    row_printing = df_uc.iloc[3]
+    printing = row_printing['Printing']
+
+    row_RA = df_uc.iloc[4]
+    RA_site = row_RA['RA 17g-5 site']
+
+    row_modeling = df_uc.iloc[5]
+    modeling = row_modeling['3rd Part Modeling']
+
+    row_misc = df_uc.iloc[6]
+    misc = row_misc['Misc']
+>>>>>>> Stashed changes
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
@@ -114,6 +140,5 @@ if __name__ == "__main__":
 
         if clo.get_tranches()[0].get_size() <= threshold:
            
-              
-           
-    print(loan_data)
+        
+      print(loan_data)
