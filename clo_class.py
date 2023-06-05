@@ -46,8 +46,12 @@ class CLO(Tranche):
     def get_dda(self):
         deal_discount_amount = 0
         for tranche in self.get_tranches():
-            deal_discount_amount += (tranche.get_size() + tranche.get_offered() * (1-tranche.get_price()/100))
+            price = tranche.get_price()
+            if price < 100:
+                deal_discount_amount += tranche.get_size() + tranche.get_offered() * (1 - price / 100)
         return deal_discount_amount
+
+
   
     # c/e is the tranche cost / total cost
     # tranch percentage of total 
@@ -62,9 +66,11 @@ class CLO(Tranche):
         return (moody_fee + KRBA_fee)
 
     def get_upfront_costs(self, placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc):
-        RA = self.get_RA_fees(self.get_tda())
+        RA = self.get_RA_fees()
         placement = placement_percent * self.get_tob()
-        return(sum(RA, placement, legal, accounting, trustee, printing, RA_site, modeling, misc))
+        return sum(RA, placement, legal, accounting, trustee, printing, RA_site, modeling, misc)
+
+
 
     def get_upfront_percent(self):
         return((self.get_upfront_costs() / self.get_tob()) * 100)

@@ -61,11 +61,14 @@ if __name__ == "__main__":
     print("\nTOTAL DEAL AMOUNT")
     print(clo.get_tda())
 
-    #print("\nTOTAL OFFERED BONDS")
-    #print(clo.get_tob())
+    print("\nTOTAL OFFERED BONDS")
+    print(clo.get_tob())
 
-    #print("\nDEAL DISCOUNT AMOUNT")
-    #print(clo.get_dda())
+    print("\nDEAL DISCOUNT AMOUNT")
+    print(clo.get_dda())
 
-    #print("\nTRANCHE PERCENT OF TOTAL")
-    #print(clo.get_CE)
+    print("\nTRANCHE PERCENT OF TOTAL")
+    tranche_to_test = clo.get_tranches()[0]
+    print(clo.get_CE(tranche_to_test))
+
+    
