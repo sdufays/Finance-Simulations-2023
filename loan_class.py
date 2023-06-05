@@ -42,7 +42,7 @@ class Loan:
     # MONTH - 1 DOESN'T WORK, global variables
     # for reinvestment, calculate beginning balance of NEW loan using original loan
     # month here is the months passed
-    def beginning_balance(self, month, funding_amount):
+    def beginning_balance(self, month):
         if month == 0:
             return self.get_loan_balance()
         else:
@@ -50,7 +50,7 @@ class Loan:
 
     # not doing partial paydown, only full
     # month is months passed
-    def principal_paydown(self, month, funding_amount):
+    def principal_paydown(self, month):
         if month == self.get_term_length():
             # ending/beginning balance is basically same]
             return loan_data.loc[(loan_id, month-1), 'Ending Balance']

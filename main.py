@@ -53,8 +53,8 @@ if __name__ == "__main__":
       current_month = (starting_month + months_passed + 1) % 12
       for loan in loan_portfolio.get_portfolio():
         funding_storeholder = loan.funding_amount_rein(months_passed, reinvestment_period)
-        beginning_bal = loan.beginning_balance(months_passed, funding_storeholder)
-        principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
+        beginning_bal = loan.beginning_balance(months_passed)
+        principal_pay = loan.principal_paydown(months_passed)
         ending_bal = loan.ending_balance(funding_storeholder, beginning_bal, principal_pay)
         days = days_in_month[current_month - 1]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
