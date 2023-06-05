@@ -31,7 +31,6 @@ if __name__ == "__main__":
     days_in_month = get_date_array(date)
 
     reinvestment_period = df_os.iloc[1,1]
-    reinvestment_period = row_2['Reinvestment period']
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
