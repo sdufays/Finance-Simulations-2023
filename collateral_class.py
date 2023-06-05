@@ -21,7 +21,7 @@ class CollateralPortfolio(Loan):
       self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
       self.__portfolio[loan_id-1].set_term_length(30)
       
-    def remove_loan(self):
+    def remove_loans(self):
         for loan in self.__portfolio:
           if loan.get_loan_balance() <= 0:
             self.__portfolio.remove(loan)
