@@ -32,6 +32,33 @@ if __name__ == "__main__":
     row_2 = df_os.iloc[1]
     reinvestment_period = row_2['Reinvestment period']
 
+    # --------------------------- UPFRONT COSTS --------------------------- #
+
+    #legal, accounting, trustee, printing, RA_site, modeling, misc
+    # read excel file for upfront costs
+    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs")
+
+    row_legal = df_uc.iloc[0]
+    legal = row_legal['Legal']
+
+    row_accounting = df_uc.iloc[1]
+    accounting = row_accounting['Accounting']
+
+    row_trustee = df_uc.iloc[2]
+    trustee = row_trustee['Trustee']
+
+    row_printing = df_uc.iloc[3]
+    printing = row_printing['Printing']
+
+    row_RA = df_uc.iloc[4]
+    RA_site = row_RA['RA 17g-5 site']
+
+    row_modeling = df_uc.iloc[5]
+    modeling = row_modeling['3rd Part Modeling']
+
+    row_misc = df_uc.iloc[6]
+    misc = row_misc['Misc']    
+
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     clo = CLO("are we in rampup?")
 
