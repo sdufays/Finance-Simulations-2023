@@ -66,14 +66,16 @@ if __name__ == "__main__":
       # one more bc if starting date is 1/31/2023, current month is february
       current_month = (starting_month + months_passed + 1) % 12
       for loan in loan_portfolio.get_portfolio():
-        funding_storeholder = loan.funding_amount_rein(months_passed, reinvestment_period)
         beginning_bal = loan.beginning_balance(months_passed)
         principal_pay = loan.principal_paydown(months_passed)
-        ending_bal = loan.ending_balance(funding_storeholder, beginning_bal, principal_pay)
+        ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 1]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
         if principal_pay != 0: 
-           loan.remove_loan
+           loan_portfolio.remove_loan(loan)
+           if months_passed < reinvestment_period and months_passed == loan.get_term_length():
+              loan_portfolio.add_new_loan(ending_bal)
+              
            
 
         

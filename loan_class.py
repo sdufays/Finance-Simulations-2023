@@ -59,9 +59,9 @@ class Loan:
 
     # no funding amount if no reinvestment (funding_amt = 0)
     # at the end, beginning - paydown = 0 cuz no partial paydown
-    def ending_balance(self, funding_amount, beginning_balance, principal_paydown):
+    def ending_balance(self, beginning_balance, principal_paydown):
         # funding amount - if you sell loan in reinvestment period, that money is the funding amount
-        self.__loan_balance = beginning_balance + funding_amount -  principal_paydown
+        self.__loan_balance = beginning_balance -  principal_paydown
         self.__remaining_loan_term = self.__remaining_loan_term - 1
         return  self.__loan_balance
     # gets interest income as fraction over the total year
@@ -69,12 +69,3 @@ class Loan:
     # index value is SOFR
     def interest_income(self, beginning_balance, INDEX_VALUE, num_days):
         return beginning_balance * (self.get_spread() + max(self.get_index_floor(), INDEX_VALUE) * num_days / 360)
-
-    # -------------------------- WITH REINVESTMENT -------------------------
-    # this is the loan balance of the new loan we create using .add_new_loan(loan_balance)
-    # make sure to tell it to recalculate the stuff
-    def funding_amount_rein(self, month, rein_period):
-        if month == self.get_term_length() and month < rein_period:
-            return self.ending_balance(month - 1, loan)
-        else:
-            return 0
