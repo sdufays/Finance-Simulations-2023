@@ -29,7 +29,7 @@ class CollateralPortfolio(Loan):
     def get_collateral_sum(self):
         sum = 0
         for loan in self.__portfolio:
-            sum+=loan.get_collateral_balance()
+            sum+=loan.get_loan_balance()
         return sum
 
     #run this at the beginning of main
