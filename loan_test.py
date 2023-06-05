@@ -54,5 +54,6 @@ if __name__ == "__main__":
     loan = po.get_portfolio()[0]
     begin = loan.beginning_balance(0, [1,2,3])
     print("beginning balance " + str(begin))
-    print(SOFR)
+
+    print("TESTING INTEREST INCOME")
     print("interest income " + str(loan.interest_income(begin, SOFR, 30)))
