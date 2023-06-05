@@ -97,24 +97,18 @@ if __name__ == "__main__":
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
+
       for loan in loan_portfolio.get_portfolio():
-        funding_storeholder = loan.funding_amount_rein(months_passed, reinvestment_period)
-        beginning_bal = loan.beginning_balance(months_passed, funding_storeholder)
-        principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
-        ending_bal = loan.ending_balance(month, funding_storeholder, beginning_bal)
-        days = days_in_month[current_month]
-        interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)  
-
-    # ------------------------ RAMP UP CALCULATIONS ------------------------ #
-    if clo.get_ramp_up():
-        # after one month
-        liability_balance = clo.get_tob()
-        # total amount getting in loans
-        collateral_balance = loan_portfolio.get_collateral_sum()
-    
-    if liability_balance > collateral_balance:
-        # make new loan of size liability - collateral
-        newloan = Loan(...)
-
-    # AFTER A MONTH:
-    # add new loan with collateral balance liability - collateral
+        beginning_bal = loan.beginning_balance(months_passed)
+        principal_pay = loan.principal_paydown(months_passed)
+        ending_bal = loan.ending_balance(beginning_bal, principal_pay)
+        loan_data.loc[(loan_id, month), 'Ending Balance'] = 90000
+        
+        days = days_in_month[current_month - 1]
+        interest_inc = loan.interest_income(beginning_bal, SOFR, days)
+        if principal_pay != 0: 
+           loan_portfolio.remove_loan(loan)
+           if months_passed < reinvestment_period and months_passed == loan.get_term_length():
+              loan_portfolio.add_new_loan(ending_bal)
+              
+           
