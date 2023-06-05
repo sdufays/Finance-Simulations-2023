@@ -71,16 +71,3 @@ class CLO(Tranche):
 
     def get_threshold(self):
         return self.get_tranches()[0].get_size() * 0.2
-
-    def get_revest_period(self):
-        df = pd.read_excel("CLO_Input.xlsm", sheet_name="Other Specifications")
-        row = df.iloc[1]
-        revest_period = row['Reivestement period']
-        return revest_period
-  
-    def get_deal_start_date(self):
-        df = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications")
-        row = df.iloc[2]
-        deal_start = row["Deal Starting Date"]
-        return deal_start
-        
