@@ -18,17 +18,15 @@ if __name__ == "__main__":
 
     # assume they're giving us a date at the end of the month
     # they don't start at the start, they start when the first payment is made
-    first_payment_date = "get from excel"
+    first_payment_date = row_3['Deal Starting Date']
     date = first_payment_date.split("/") # ["MM", "DD", "YYYY"]
     date = list(map(int, date)) # [MM, DD, YYYY]
     # starting payment month
     starting_month = date[0]
     days_in_month = get_date_array(date)
 
-    # OTHER SPECIFICATIONS NEEDED:
-    """
-    reinvestment_period = 
-    """
+    row_2 = df_os.iloc[1]
+    reinvestment_period = row_2['Reinvestment period']
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     clo = CLO("are we in rampup?")
