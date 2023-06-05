@@ -32,6 +32,7 @@ if __name__ == "__main__":
     # --------------------------- UPFRONT COSTS --------------------------- #
 
     df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
+    placement_percent = 0.05 #<---<---<--- need a row for this in excel spreadsheet
     legal = df_uc.iloc[0, 1]
     accounting = df_uc.iloc[1, 1]
     trustee = df_uc.iloc[2, 1]
@@ -71,4 +72,17 @@ if __name__ == "__main__":
     tranche_to_test = clo.get_tranches()[0]
     print(clo.get_CE(tranche_to_test))
 
-    
+    print("\n*************************")
+
+    print("\nGETTING RA FEES")
+    print(clo.get_RA_fees())
+
+    print("\nGETTING UPFRONT COSTS")
+    print(clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc))
+
+    print("\nGETTING UPFRONT PERCENT")
+    print(clo.get_upfront_percent(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc))
+
+    print("\nGETTING THRESHOLD")
+    print(clo.get_threshold())
+
