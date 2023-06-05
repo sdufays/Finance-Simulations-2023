@@ -18,8 +18,8 @@ class CLO(Tranche):
     def get_starting_date(self):
         return self.__starting_date
 
-    def add_tranche(self, name, rating, size, spread, offered, price):
-        tranche = Tranche(name, rating, size, spread, offered, price)
+    def add_tranche(self, name, rating, offered, size, spread, price):
+        tranche = Tranche(name, rating, offered, size, spread, price)
         self.__tranches.append(tranche)
 
     def get_tranches(self):

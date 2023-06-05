@@ -1,6 +1,6 @@
 # ------------------------ VARIOUS TRANCHE OPERATIONS ------------------------ #
 class Tranche:
-    def __init__(self, name, rating, size, spread, offered, price):
+    def __init__(self, name, rating, offered, size, spread, price):
         self.__name = name
         self.__rating = rating
         self.__size = size
