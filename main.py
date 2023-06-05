@@ -90,6 +90,7 @@ if __name__ == "__main__":
 
     # will need loop that makes sim happen 100 or 1000x 
     longest_duration = loan_portfolio.get_longest_term()
+    # CREATE DATAFRAME
     loan_ids = list(range(1, 22))  # 21 loan IDs
     months = list(range(1, longest_duration))
     index = pd.MultiIndex.from_product([loan_ids, months],
@@ -97,7 +98,7 @@ if __name__ == "__main__":
     # Create an empty DataFrame with the multi-index
     loan_data = pd.DataFrame(index=index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
-    # goes for the longest possible month duration
+    # START LOOP: goes for the longest possible month duration
     months_passed = 0
     while months_passed in range(longest_duration): # what if reinvestment makes it longer
       current_month = (starting_month + months_passed) % 12
@@ -110,10 +111,14 @@ if __name__ == "__main__":
         beginning_bal = loan.beginning_balance(months_passed)
         principal_pay = loan.principal_paydown(months_passed)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
-        loan_data.loc[(loan_id, month), 'Ending Balance'] = 90000
-        
         days = days_in_month[current_month - 1]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
+
+        # save to dataframe
+        loan_data.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
+        loan_data.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
+        loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
+        
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
