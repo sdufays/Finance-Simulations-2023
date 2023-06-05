@@ -16,6 +16,10 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
+    # read excel file for Other Specifications
+    df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications")
+    row_3 = df_os.iloc[2]
+
     # assume they're giving us a date at the end of the month
     # they don't start at the start, they start when the first payment is made
     first_payment_date = row_3['Deal Starting Date']
