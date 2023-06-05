@@ -61,7 +61,7 @@ class CLO(Tranche):
         KRBA_fee = max(0.0006 * total_deal_amount + 25000, 175000)
         return (moody_fee + KRBA_fee)
 
-    def get_upfront_costs(self, placement_percent):
+    def get_upfront_costs(self, placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc):
         RA = self.get_RA_fees(self.get_tda())
         placement = placement_percent * self.get_tob()
         return(sum(RA, placement, legal, accounting, trustee, printing, RA_site, modeling, misc))
