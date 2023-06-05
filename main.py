@@ -18,32 +18,51 @@ if __name__ == "__main__":
 
     # read excel file for Other Specifications
     df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications")
+    row_3 = df_os.iloc[2]
 
     # assume they're giving us a date at the end of the month
     # they don't start at the start, they start when the first payment is made
-    first_payment_date = df_os.loc[2, 1]
+    first_payment_date = row_3['Deal Starting Date']
     date = first_payment_date.split("/") # ["MM", "DD", "YYYY"]
     date = list(map(int, date)) # [MM, DD, YYYY]
     # starting payment month
     starting_month = date[0]
     days_in_month = get_date_array(date)
 
-    reinvestment_period = df_os.iloc[1, 1]
+    row_2 = df_os.iloc[1]
+    reinvestment_period = row_2['Reinvestment period']
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
+    #legal, accounting, trustee, printing, RA_site, modeling, misc
+    # read excel file for upfront costs
     df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs")
-    legal = df_uc.iloc[0, 1]
-    accounting = df_uc.iloc[1, 1]
-    trustee = df_uc.iloc[2, 1]
-    printing = df_uc.iloc[3, 1]
-    RA_site = df_uc.iloc[4, 1]
-    modeling = df_uc.iloc[5, 1]
-    misc = df_uc.iloc[6, 1]
+
+    row_legal = df_uc.iloc[0]
+    legal = row_legal['Legal']
+
+    row_accounting = df_uc.iloc[1]
+    accounting = row_accounting['Accounting']
+
+    row_trustee = df_uc.iloc[2]
+    trustee = row_trustee['Trustee']
+
+    row_printing = df_uc.iloc[3]
+    printing = row_printing['Printing']
+
+    row_RA = df_uc.iloc[4]
+    RA_site = row_RA['RA 17g-5 site']
+
+    row_modeling = df_uc.iloc[5]
+    modeling = row_modeling['3rd Part Modeling']
+
+    row_misc = df_uc.iloc[6]
+    misc = row_misc['Misc']
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
-    ramp_up = df_os.iloc[0, 1]
-    clo = CLO("are we in rampup?")
+    row_1 = df_os.iloc[0]
+    ramp_up = row_1['Ramp up']
+    clo = CLO(ramp_up)
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
@@ -56,7 +75,7 @@ if __name__ == "__main__":
     SOFR = 0.0408
   
     loan_portfolio = CollateralPortfolio()
-    
+
     # read excel file for loans
     df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
 
@@ -73,32 +92,32 @@ if __name__ == "__main__":
     # goes for the longest possible month duration
     months_passed = 0
     while months_passed in range(loan_portfolio.get_longest_term()): # what if reinvestment makes it longer
-      current_month = (starting_month + months_passed) % 12
-      if months_passed == 1:
-         extra = 'ramp up'
+      # one more bc if starting date is 1/31/2023, current month is february
+      current_month = (starting_month + months_passed + 1) % 12
       for loan in loan_portfolio.get_portfolio():
-        beginning_bal = loan.beginning_balance(months_passed)
-        principal_pay = loan.principal_paydown(months_passed)
-        ending_bal = loan.ending_balance(beginning_bal, principal_pay)
-        days = days_in_month[current_month - 1]
-        interest_inc = loan.interest_income(beginning_bal, SOFR, days)
-        if principal_pay != 0: 
-           loan_portfolio.remove_loan(loan)
-           if months_passed < reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(ending_bal)
-              
-           
+        funding_storeholder = loan.funding_amount_rein(months_passed, reinvestment_period)
+        beginning_bal = loan.beginning_balance(months_passed, funding_storeholder)
+        principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
+        ending_bal = loan.ending_balance(month, funding_storeholder, beginning_bal)
+        days = days_in_month[current_month]
+        interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)
 
-# ------------------------ RAMP UP CALCULATIONS ------------------------ #
-if clo.get_ramp_up():
-  # after one month
-  liability_balance = clo.get_tob()
-  # total amount getting in loans
-  collateral_balance = loan_portfolio.get_collateral_sum()
+        
 
-if liability_balance > collateral_balance:
-    # make new loan of size liability - collateral
-    newloan = Loan(...)
+        
+        
+        
 
-# AFTER A MONTH:
-# add new loan with collateral balance liability - collateral
+    # ------------------------ RAMP UP CALCULATIONS ------------------------ #
+    if clo.get_ramp_up():
+        # after one month
+        liability_balance = clo.get_tob()
+        # total amount getting in loans
+        collateral_balance = loan_portfolio.get_collateral_sum()
+    
+    if liability_balance > collateral_balance:
+        # make new loan of size liability - collateral
+        newloan = Loan(...)
+
+    # AFTER A MONTH:
+    # add new loan with collateral balance liability - collateral

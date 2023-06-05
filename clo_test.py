@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
     # assume they're giving us a date at the end of the month
     # they don't start at the start, they start when the first payment is made
-    first_payment_date = df_os.iloc[2, 1]
+    first_payment_date = df_os.iloc[1, 2]
     date = first_payment_date.split("/") # ["MM", "DD", "YYYY"]
     date = list(map(int, date)) # [MM, DD, YYYY]
     # starting payment month
@@ -24,16 +24,16 @@ if __name__ == "__main__":
     # --------------------------- UPFRONT COSTS --------------------------- #
 
     df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs")
-    legal = df_uc.iloc[0, 1]
+    legal = df_uc.iloc[1, 0]
     accounting = df_uc.iloc[1, 1]
-    trustee = df_uc.iloc[2, 1]
-    printing = df_uc.iloc[3, 1]
-    RA_site = df_uc.iloc[4, 1]
-    modeling = df_uc.iloc[5, 1]
-    misc = df_uc.iloc[6, 1]
+    trustee = df_uc.iloc[1, 2]
+    printing = df_uc.iloc[1, 3]
+    RA_site = df_uc.iloc[1, 4]
+    modeling = df_uc.iloc[1, 5]
+    misc = df_uc.iloc[1, 6]
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
-    ramp_up = df_os.iloc[0, 1]
+    ramp_up = df_os.iloc[1, 0]
     clo = CLO(ramp_up)
 
     # read excel file for capital stack
