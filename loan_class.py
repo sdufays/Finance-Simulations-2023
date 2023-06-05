@@ -59,7 +59,7 @@ class Loan:
 
     # no funding amount if no reinvestment (funding_amt = 0)
     # at the end, beginning - paydown = 0 cuz no partial paydown
-    def ending_balance(self, months, funding_amount, beginning_balance, principal_paydown):
+    def ending_balance(self, funding_amount, beginning_balance, principal_paydown):
         # funding amount - if you sell loan in reinvestment period, that money is the funding amount
         self.__loan_balance = beginning_balance + funding_amount -  principal_paydown
         self.__remaining_loan_term = self.__remaining_loan_term - 1
