@@ -28,5 +28,5 @@ class Tranche:
 
     def update_size(self, value):
         d=""
-      # formulas
+        # formulas
 

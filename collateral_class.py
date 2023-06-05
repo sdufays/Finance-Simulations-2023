@@ -13,13 +13,13 @@ class CollateralPortfolio(Loan):
 
     # only during reinvestment period
     def add_new_loan(self, loan_balance):
-      loan_id = len(self.__portfolio) + 1
-      sum = 0
-      for loan in self.__portfolio:
-        sum += (loan.get_loan_balance() * loan.get_margin())
-      margin = sum / self._get_collateral_sum()
-      self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
-      self.__portfolio[loan_id-1].set_term_length(30)
+        loan_id = len(self.__portfolio) + 1
+        sum = 0
+        for loan in self.__portfolio:
+            sum += (loan.get_loan_balance() * loan.get_margin())
+        margin = sum / self._get_collateral_sum()
+        self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
+        self.__portfolio[loan_id-1].set_term_length(30)
       
     def remove_loans(self):
         for loan in self.__portfolio:
@@ -53,8 +53,8 @@ class CollateralPortfolio(Loan):
                 loan.set_term_length(loan.get_open_prepayment_period())
 
     def get_longest_term(self):
-      max = 0
-      for loan in self.__portfolio:
-        if loan.get_term_length() > max:
-          max = loan.get_term_length()
-      return max
+        max = 0
+        for loan in self.__portfolio:
+            if loan.get_term_length() > max:
+                max = loan.get_term_length()
+        return max

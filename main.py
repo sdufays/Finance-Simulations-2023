@@ -65,17 +65,16 @@ if __name__ == "__main__":
         
         
 
-    # ------------------------ RAMP UP CALCULATIONS ------------------------ #
-    if clo.get_ramp_up():
-        # after one month
-        liability_balance = clo.get_tob()
-        # total amount getting in loans
-        collateral_balance = loan_portfolio.get_collateral_sum()
-    
-    if liability_balance > collateral_balance:
-        # make new loan of size liability - collateral
-        newloan = Loan(...)
+# ------------------------ RAMP UP CALCULATIONS ------------------------ #
+if clo.get_ramp_up():
+  # after one month
+  liability_balance = clo.get_tob()
+  # total amount getting in loans
+  collateral_balance = loan_portfolio.get_collateral_sum()
 
-    # AFTER A MONTH:
-    # add new loan with collateral balance liability - collateral
-    
+if liability_balance > collateral_balance:
+    # make new loan of size liability - collateral
+    newloan = Loan(...)
+
+# AFTER A MONTH:
+# add new loan with collateral balance liability - collateral

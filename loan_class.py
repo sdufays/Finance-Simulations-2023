@@ -73,7 +73,7 @@ class Loan:
     # this is the loan balance of the new loan we create using .add_new_loan(loan_balance)
     # make sure to tell it to recalculate the stuff
     def funding_amount_rein(self, month, rein_period):
-      if month == self.get_term_length() and month < rein_period:
-        return self.ending_balance(month - 1, loan)
-      else:
-        return 0
+        if month == self.get_term_length() and month < rein_period:
+            return self.ending_balance(month - 1, loan)
+        else:
+            return 0
