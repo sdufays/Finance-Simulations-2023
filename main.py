@@ -38,8 +38,14 @@ if __name__ == "__main__":
     SOFR = 0.0408
   
     loan_portfolio = CollateralPortfolio()
+    
+    # read excel file for loans
+    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
+
     # add loans in a loop
-    loan_portfolio.add_initial_loan("various parameters")
+    for index, row in df_cp.iterrows():
+      loan_data = row[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+      loan_portfolio.add_initial_loan(loan_data)
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
