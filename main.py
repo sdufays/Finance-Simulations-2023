@@ -18,22 +18,26 @@ if __name__ == "__main__":
 
     # assume they're giving us a date at the end of the month
     # they don't start at the start, they start when the first payment is made
-    first_payment_date = "get from excel"
+    first_payment_date = row_3['Deal Starting Date']
     date = first_payment_date.split("/") # ["MM", "DD", "YYYY"]
     date = list(map(int, date)) # [MM, DD, YYYY]
     # starting payment month
     starting_month = date[0]
     days_in_month = get_date_array(date)
 
-    # OTHER SPECIFICATIONS NEEDED:
-    """
-    reinvestment_period = 
-    """
+    row_2 = df_os.iloc[1]
+    reinvestment_period = row_2['Reinvestment period']
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     clo = CLO("are we in rampup?")
+
+    # read excel file for capital stack
+    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
+
     # add tranches in  a loop
-    clo.add_tranche("various parameters")
+    for index_t, row_t in df_cs.iterrows():
+      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
     threshold = clo.get_clo_threshold()
     SOFR = 0.0408
   
@@ -43,10 +47,9 @@ if __name__ == "__main__":
     df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
 
     # add loans in a loop
-    for index, row in df_cp.iterrows():
-      loan_data = row[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      # need to separate items in the list otherwise it won't take it
-      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3],loan_data[4],loan_data[5],loan_data[6])
+    for index_l, row_l in df_cp.iterrows():
+      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
