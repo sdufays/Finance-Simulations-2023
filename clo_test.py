@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
-    clo = CLO(ramp_up)
+    clo = CLO(ramp_up, reinvestment_period, first_payment_date)
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
@@ -51,16 +51,5 @@ if __name__ == "__main__":
     for index_t, row_t in df_cs.iterrows():
       tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
       clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
-    threshold = clo.get_clo_threshold()
+    threshold = clo.get_threshold()
     SOFR = 0.0408
-
-    print("\nRAMP UP")
-    clo.get_ramp_up()
-    print("\nREINVESTMENT PERIOD")
-    clo.get_reinvestment_period()
-    print("STARTING DATE")
-    clo.get_starting_date
-
-    clo.add_tranche('I', 'AA', 1, 327, 99.25)
-    print("\n")
-    clo.get_tranches()

@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[2, 1]
-    clo = CLO(ramp_up)
+    clo = CLO(ramp_up, reinvestment_period, first_payment_date)
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
