@@ -97,17 +97,15 @@ if __name__ == "__main__":
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
-
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed)
         principal_pay = loan.principal_paydown(months_passed)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
-        loan_data.loc[(loan_id, month), 'Ending Balance'] = 90000
-        
         days = days_in_month[current_month - 1]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
+           clo.
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(ending_bal)
               
