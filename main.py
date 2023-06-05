@@ -75,7 +75,9 @@ if __name__ == "__main__":
     while months_passed in range(loan_portfolio.get_longest_term()): # what if reinvestment makes it longer
       current_month = (starting_month + months_passed) % 12
       if months_passed == 1:
-         extra = 'ramp up'
+         extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
+         if extra_balance > 0:
+            loan_portfolio.add_new_loan(extra_balance)
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed)
         principal_pay = loan.principal_paydown(months_passed)
