@@ -53,3 +53,9 @@ if __name__ == "__main__":
       clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
     threshold = clo.get_threshold()
     SOFR = 0.0408
+
+    print("\nTOTAL DEAL AMOUNT")
+    print(clo.get_tda())
+
+    print("")
+    print("\nTOTAL OFFERED BONDS")
