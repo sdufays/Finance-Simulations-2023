@@ -120,8 +120,8 @@ if __name__ == "__main__":
         
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           clo.
+           clo.get_tranches()[0].subtract_size(beginning_bal)
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(ending_bal)
+              loan_portfolio.add_new_loan(beginning_bal)
               
            
