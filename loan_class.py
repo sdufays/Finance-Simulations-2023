@@ -48,24 +48,22 @@ class Loan:
         if month == 0:
             return self.get_loan_balance()
         else:
-            return loan_data.loc[(loan_id, month), 'Ending Balance']
-            return self.ending_balance(month-1, funding_amount)
+            return loan_data.loc[(loan_id, month-1), 'Ending Balance']
 
     # not doing partial paydown, only full
     # month is months passed
     def principal_paydown(self, month, funding_amount):
         if month == self.get_term_length():
             # ending/beginning balance is basically same]
-            return self.ending_balance(month-1, funding_amount)
-        # 
+            return loan_data.loc[(loan_id, month-1), 'Ending Balance']
         else:
             return 0
 
     # no funding amount if no reinvestment (funding_amt = 0)
     # at the end, beginning - paydown = 0 cuz no partial paydown
-    def ending_balance(self, month, funding_amount, beginning_balance):
+    def ending_balance(self, funding_amount, beginning_balance, principal_paydown):
         # funding amount - if you sell loan in reinvestment period, that money is the funding amount
-        return beginning_balance + funding_amount - self.principal_paydown(month, funding_amount)
+        return beginning_balance + funding_amount -  principal_paydown
 
     # gets interest income as fraction over the total year
     # changes due to # days in month
