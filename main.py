@@ -21,7 +21,6 @@ if __name__ == "__main__":
     row_3 = df_os.iloc[2]
 
     # assume they're giving us a date at the end of the month
-    # they don't start at the start, they start when the first payment is made
     first_payment_date = df_os.iloc[2, 1]
     date_str = first_payment_date.strftime("%m-%d-%Y")
     date = date_str.split("-") # ["MM", "DD", "YYYY"]
@@ -51,7 +50,7 @@ if __name__ == "__main__":
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
 
-    # add tranches in  a loop
+    # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
       tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
       clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
@@ -86,10 +85,13 @@ if __name__ == "__main__":
     months_passed = 0
     while months_passed in range(longest_duration): # what if reinvestment makes it longer
       current_month = (starting_month + months_passed) % 12
+      # ramp-up calculations 
       if months_passed == 1:
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
+      
+      # monthly calculations 
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed)
         principal_pay = loan.principal_paydown(months_passed)
@@ -102,10 +104,14 @@ if __name__ == "__main__":
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         
+        # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
            clo.get_tranches()[0].subtract_size(beginning_bal)
+           # reinvestment calculations 
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal)
+
+        if clo.get_tranches()[0].get_size() ==
               
            
