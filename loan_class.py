@@ -67,19 +67,19 @@ class Loan:
     # changes due to # days in month
     # index value is SOFR
     def interest_income(self, month, funding_amount, INDEX_VALUE, num_days):
-        return beginning_balance(month, funding_amount) * (self.get_spread() + max(self.get_index_floor(), INDEX_VALUE) * num_days / 360)
+        return self.beginning_balance(month, funding_amount) * (self.get_spread() + max(self.get_index_floor(), INDEX_VALUE) * num_days / 360)
 
     # -------------------------- WITH REINVESTMENT -------------------------
     # this is the loan balance of the new loan we create using .add_new_loan(loan_balance)
     # make sure to tell it to recalculate the stuff
     def funding_amount_rein(self, month, rein_period):
-      if month == loan.get_term_length() and month < rein_period:
-        return ending_balance(month - 1, loan)
+      if month == self.get_term_length() and month < rein_period:
+        return self.ending_balance(month - 1, loan)
       else:
         return 0
 
     def principal_paydown_rein(month, loan):
       if month == loan.get_term_length():
-        return(beginning_balance_rein(month - 1, loan))
+        return(self.beginning_balance_rein(month - 1, loan))
       else:
         return 0

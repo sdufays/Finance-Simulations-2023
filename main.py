@@ -56,8 +56,8 @@ if __name__ == "__main__":
         beginning_bal = loan.beginning_balance(months_passed, funding_storeholder)
         principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
         ending_bal = loan.ending_balance(funding_storeholder, beginning_bal, principal_pay)
-        days = days_in_month[current_month]
-        interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)
+        days = days_in_month[current_month - 1]
+        interest_inc = loan.interest_income(months_passed, funding_storeholder, SOFR, days)
 
         
 
