@@ -38,22 +38,22 @@ class CollateralPortfolio(Loan):
         # Calculate the number of loans to assign to each term
         num_loans = len(self.__portfolio)
         prepay_amt = round(num_loans * case[0])
-        intial_amt = round(num_loans * case[1])
-        extended_amt = num_loans - prepay_amt - intial_amt
+        print("prepay: " + str(prepay_amt/num_loans))
+        initial_amt = round(num_loans * case[1])
+        print("initial: " + str(initial_amt/num_loans))
+        extended_amt = num_loans - prepay_amt - initial_amt
+        print("extended: " + str(extended_amt/num_loans))
         # Create a list with the loan terms according to the scenario
-        loan_terms = ['prepaid'] * prepay_amt + ['initial'] * intial_amt + ['extended'] * extended_amt
+        loan_terms = ['prepaid'] * prepay_amt + ['initial'] * initial_amt + ['extended'] * extended_amt
         # Shuffle the list to randomize the terms
         np.random.shuffle(loan_terms)
         # Assign each loan a term from the list
         for loan, term_type in zip(self.__portfolio, loan_terms):
             if term_type == "initial":
-                print("initial" + str(loan.get_loan_id()))
                 loan.set_term_length(loan.get_remaining_loan_term())
             elif term_type == "extended":
-                print("extend" + str(loan.get_loan_id()))
                 loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
             else:
-                print("prepay"+ str(loan.get_loan_id()))
                 loan.set_term_length(loan.get_open_prepayment_period())
 
     def get_longest_term(self):
