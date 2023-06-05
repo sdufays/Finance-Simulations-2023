@@ -60,6 +60,8 @@ if __name__ == "__main__":
     misc = row_misc['Misc']    
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
+    row_1 = df_os.iloc[0]
+    ramp_up = row_1['Ramp up']
     clo = CLO("are we in rampup?")
 
     # read excel file for capital stack
