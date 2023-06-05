@@ -103,13 +103,7 @@ if __name__ == "__main__":
         principal_pay = loan.principal_paydown(months_passed, funding_storeholder)
         ending_bal = loan.ending_balance(month, funding_storeholder, beginning_bal)
         days = days_in_month[current_month]
-        interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)
-
-        
-
-        
-        
-        
+        interest_inc = loan.interest_income(month, funding_storeholder, SOFR, days)  
 
     # ------------------------ RAMP UP CALCULATIONS ------------------------ #
     if clo.get_ramp_up():
