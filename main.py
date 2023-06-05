@@ -115,11 +115,9 @@ if __name__ == "__main__":
         # terminate 
         if clo.get_tranches()[0].get_size() <= threshold:
            if final_countdown is None:
-              final_countdown = 2 * loan_portfolio.get_portfolio_count()
+              final_countdown = 1
            else:
-              final_countdown -= 1
-              if final_countdown <= 0:
-                 break
+              break
               
       months_passed += 1
               
