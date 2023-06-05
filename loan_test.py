@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # add loans in a loop
     for index, row in df_cp.iterrows():
       loan_data = row[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      po.add_initial_loan(loan_data)
+      po.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3],loan_data[4],loan_data[5],loan_data[6])
 
     # print(po.get_portfolio())
 
@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
     # print(po.get_collateral_sum())
 
+    # GENERATE LOAN TERMS WORKS!
     #po.generate_loan_terms(base)
     #for loan in po.get_portfolio():
         #print(loan.get_term_length())
