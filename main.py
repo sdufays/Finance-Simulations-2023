@@ -49,10 +49,9 @@ if __name__ == "__main__":
     df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
 
     # add loans in a loop
-    for index, row in df_cp.iterrows():
-      loan_data = row[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      # need to separate items in the list otherwise it won't take it
-      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3],loan_data[4],loan_data[5],loan_data[6])
+    for index_l, row_l in df_cp.iterrows():
+      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
