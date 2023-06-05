@@ -54,8 +54,14 @@ if __name__ == "__main__":
     threshold = clo.get_threshold()
     SOFR = 0.0408
 
-    print("\nTOTAL DEAL AMOUNT")
+    print("TOTAL DEAL AMOUNT")
     print(clo.get_tda())
 
-    print("")
     print("\nTOTAL OFFERED BONDS")
+    print(clo.get_tob())
+
+    print("\nDEAL DISCOUNT AMOUNT")
+    print(clo.get_dda())
+
+    print("\nTRANCHE PERCENT OF TOTAL")
+    print(clo.get_CE)
