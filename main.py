@@ -44,7 +44,7 @@ if __name__ == "__main__":
     misc = df_uc.iloc[6, 1]
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
-    ramp_up = df_os.iloc[0, 1]
+    ramp_up = df_os.iloc[2, 1]
     clo = CLO(ramp_up)
 
     # read excel file for capital stack
