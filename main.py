@@ -89,9 +89,15 @@ if __name__ == "__main__":
     loan_portfolio.generate_loan_terms(base)
 
     # will need loop that makes sim happen 100 or 1000x 
+    longest_duration = loan_portfolio.get_longest_term()
+    loan_ids = list(range(1, 22))  # 21 loan IDs
+    months = list(range(1, longest_duration))
+    collateral_cf = pd.
+
+
     # goes for the longest possible month duration
     months_passed = 0
-    while months_passed in range(loan_portfolio.get_longest_term()): # what if reinvestment makes it longer
+    while months_passed in range(longest_duration): # what if reinvestment makes it longer
       current_month = (starting_month + months_passed) % 12
       if months_passed == 1:
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
