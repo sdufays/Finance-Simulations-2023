@@ -19,7 +19,6 @@ if __name__ == "__main__":
 
     # read excel file for Other Specifications
     df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications", header=None)
-    row_3 = df_os.iloc[2]
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -47,7 +46,6 @@ if __name__ == "__main__":
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     SOFR = 0.0408
     ramp_up = df_os.iloc[0, 1]
-    print(ramp_up)
     clo = CLO(ramp_up, reinvestment_period, first_payment_date)
     upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
@@ -83,11 +81,11 @@ if __name__ == "__main__":
     # Create an empty DataFrame with the multi-index
     loan_data = pd.DataFrame(index=loan_index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
+ # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
     # will need loop that makes sim happen 100 or 1000x 
     months_passed = 0
     terminate_next = False
- # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     total_tranche_cfs = []
     deal_call_mos = []
     initial_AAA_bal = clo.get_tranches()[0].get_size()
@@ -128,7 +126,7 @@ if __name__ == "__main__":
            loan_portfolio.remove_loan(loan)
            
            # reinvestment calculations 
-           if months_passed < reinvestment_period and months_passed == loan.get_term_length():
+           if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               print('new loan added')
               loan_portfolio.add_new_loan(beginning_bal)
            else:

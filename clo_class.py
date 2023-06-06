@@ -54,7 +54,8 @@ class CLO(Tranche):
     # c/e is the tranche cost / total cost
     # tranch percentage of total 
     def get_CE(self, tranche):
-        return (tranche.get_size() / self.get_tob())
+        return (1 - (tranche.get_size() / self.get_tob()))
+    # rewrite it later (only right for aaa)
 
     # calculate rating agency fees (moody's + KRBA)
     def get_RA_fees(self):

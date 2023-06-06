@@ -45,7 +45,6 @@ class Loan:
         else:
             return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
 
-    # not doing partial paydown, only full
     # month = months passed
     def principal_paydown(self, month, loan_data):
         if month == self.get_term_length():
