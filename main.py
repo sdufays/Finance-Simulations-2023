@@ -87,7 +87,6 @@ if __name__ == "__main__":
     # will need loop that makes sim happen 100 or 1000x 
     months_passed = 0
     terminate_next = False
-    portfolio_index = 0
     total_tranche_cfs = []
     deal_call_mos = []
     initial_AAA_bal = clo.get_tranches()[0].get_size()
@@ -97,6 +96,7 @@ if __name__ == "__main__":
     margin = loan_portfolio.generate_initial_margin()
 
     while months_passed in range(longest_duration): # longest duration 
+      portfolio_index = 0 
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
@@ -109,7 +109,7 @@ if __name__ == "__main__":
       while portfolio_index < len(loan_portfolio.get_portfolio()):
         loan = loan_portfolio.get_portfolio()[portfolio_index]
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
-        print(months_passed)
+        #print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
         print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
@@ -126,7 +126,6 @@ if __name__ == "__main__":
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           portfolio_index -= 1
            
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
@@ -137,8 +136,9 @@ if __name__ == "__main__":
               # switched from beginning balance 
               print("AAA SIZE " +str(clo.get_tranches()[0].get_size()))
               print("THRESHOLD " + str(threshold))
+              portfolio_index -= 1
             
-           portfolio_index += 1
+        portfolio_index += 1
 
         clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
         clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
@@ -159,7 +159,7 @@ if __name__ == "__main__":
       #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
       #print("Thre " + str(threshold))
 
-      portfolio_index = 0        
+       
       months_passed += 1
 
     # for the tranches, put 0 as all the values
