@@ -136,7 +136,8 @@ if __name__ == "__main__":
               print(loan.get_loan_id())
               print("principay month " + str(months_passed))
               print('subtracting by ' + str(beginning_bal))
-              clo.get_tranches()[0].subtract_size(beginning_bal)
+              clo.get_tranches()[0].subtract_size(principal_pay)
+              # switched from beginning balance 
               print("AAA SIZE " +str(clo.get_tranches()[0].get_size()))
               print("THRESHOLD " + str(threshold))
 
@@ -153,6 +154,9 @@ if __name__ == "__main__":
       #print("Thre " + str(threshold))
               
       months_passed += 1
+
+    # for the tranches, put 0 as all the values
+    # for the loans, leave as if (still outstanding)
       
     # test to make sure loan data is right
     print(loan_data.head(longest_duration))
