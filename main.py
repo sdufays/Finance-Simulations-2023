@@ -156,7 +156,7 @@ if __name__ == "__main__":
       
     # test to make sure loan data is right
     print(loan_data.head(longest_duration))
-    loan_data.to_excel('output.xlsx', index=True)
+    # loan_data.to_excel('output.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
@@ -168,20 +168,21 @@ if __name__ == "__main__":
     """
     # WEIGHTED AVG ADVANCE RATE
     # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
-    avg_clo_bal = initial_clo_tob - initial_AAA_bal
+    avg_AAA_bal = # sum of all AAA bals over time / deal_call_mos[0]
+    avg_clo_bal = (initial_clo_tob - initial_AAA_bal) / deal_call_mos[0] + avg_AAA_bal
     avg_collateral_bal = loan_data['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_portfolio.get_collateral_income(loan_data) # income we get from loans
-    clo_interest_cost = initial_clo_tob * wa_cof # interest we pay to tranches
+    collateral_income = loan_portfolio.get_collateral_income(loan_data, deal_call_mos[0]) # income we get from loans
+    clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
     # origination fee add on (fee for creating the clo)
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
-    projected_equity_yield = (equity_net_spread + origination_fee + SOFR) * 100
+    projected_equity_yield = (equity_net_spread + origination_fee) * 100
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    print(calculations_for_one_trial)"""
+    print(calculations_for_one_trial) """
