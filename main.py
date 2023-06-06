@@ -94,7 +94,7 @@ if __name__ == "__main__":
     initial_clo_tob = clo.get_tob()
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     loan_data = loan_data.fillna(0)
-    margin = clo.generate_initial_margin()
+    margin = loan_portfolio.generate_initial_margin()
 
     while months_passed in range(longest_duration): # longest duration 
       current_month = (starting_month + months_passed) % 12 or 12
