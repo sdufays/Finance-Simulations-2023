@@ -9,7 +9,7 @@ class Tranche:
         self.__price = price
 
     def get_name(self):
-        return self.__get_name
+        return self.__name
     
     def get_rating(self):
         return self.__rating
@@ -28,6 +28,6 @@ class Tranche:
 
     def subtract_size(self, value):
         self.__size -= value
-    
-    def interest_tranche(self, beginning_balance, INDEX_VALUE, num_days):
-        return beginning_balance * (self.get_margin() + max(self.get_index_floor(), INDEX_VALUE)) * num_days / 360
+
+    def tranche_interest(self, num_days):
+        return self.get_size() * (self.get_spread() + 0.0408) * num_days / 360

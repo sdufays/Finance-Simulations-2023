@@ -1,6 +1,8 @@
 from collateral_class import CollateralPortfolio
 from clo_class import CLO
 import pandas as pd
+import numpy_financial as npf
+import math
 
 # assume starting date is in format MM/DD/YYYY
 def get_date_array(date):
@@ -41,10 +43,12 @@ if __name__ == "__main__":
     RA_site = df_uc.iloc[4, 1]
     modeling = df_uc.iloc[5, 1]
     misc = df_uc.iloc[6, 1]
+    placement_percent = 0.02 # PLACEHOLDER CUZ WE NEED TO ADD THIS TO THE SPREADSHEET
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, reinvestment_period, first_payment_date)
+    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
@@ -52,7 +56,7 @@ if __name__ == "__main__":
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
       tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4], tranche_data[5])
+      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
     threshold = clo.get_threshold()
     SOFR = 0.0408
   
@@ -70,21 +74,36 @@ if __name__ == "__main__":
     # sets term lengths
     loan_portfolio.generate_loan_terms(base)
     longest_duration = int(loan_portfolio.get_longest_term())
-    # CREATE DATAFRAME
-    loan_ids = list(range(1, 22))  # 21 loan IDs
-    months = list(range(1, longest_duration))
-    index = pd.MultiIndex.from_product([loan_ids, months],
+    
+    # CREATE LOAN DATAFRAME
+    loan_ids = list(range(1, 1 + len(loan_portfolio.get_portfolio())))  # 21 loan IDs
+    months = list(range(0, longest_duration))
+    loan_index = pd.MultiIndex.from_product([loan_ids, months],
                                    names=['Loan ID', 'Months Passed'])
     # Create an empty DataFrame with the multi-index
-    loan_data = pd.DataFrame(index=index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
+    loan_data = pd.DataFrame(index=loan_index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
+    # CREATE TRANCHE DATAFRAME ?
+    tranche_ids = []
+    for t in clo.get_tranches():
+      tranche_ids.append(t.get_name())
+    tranche_index = pd.MultiIndex.from_product([tranche_ids, months],
+                                   names=['Tranche Name', 'Months Passed'])
+    tranche_data = pd.DataFrame(index=tranche_index, columns=['Ending Balance'])
 
     # START LOOP: goes for the longest possible month duration
     # will need loop that makes sim happen 100 or 1000x 
     months_passed = 0
     final_countdown = None
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
-    while months_passed in range(longest_duration): 
-      current_month = (starting_month + months_passed) % 12
+    total_tranche_cfs = []
+    deal_call_mos = []
+    initial_AAA_bal = clo.get_tranches()[0].get_size()
+    initial_clo_tob = clo.get_tob()
+    loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
+    loan_data = loan_data.fillna(0)
+
+    while months_passed in range(longest_duration): # longest duration 
+      current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
@@ -94,6 +113,7 @@ if __name__ == "__main__":
       # monthly calculations 
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
+        #print("Begin bal " + str(beginning_bal))
         principal_pay = loan.principal_paydown(months_passed, loan_data)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 1]
@@ -105,27 +125,62 @@ if __name__ == "__main__":
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
+        clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
+        clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal) 
+        # appends to list of cashflows
+        total_tranche_cfs.append(clo_cashflow)
+
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           # principal payment = after the reinvestment period, the balance of whatever was paid off (goes back to the bondholders)
-           #  clo cash flows total = total discount amount (0.75% x balance of each tranch) + total upfront costs - sum of all original balances of tranches that was solod (period 1 )
-           # interest payment + principal payment for each trNCHD 
-
+           
            # reinvestment calculations 
            if months_passed < reinvestment_period and months_passed == loan.get_term_length():
+              print('new loan added')
               loan_portfolio.add_new_loan(beginning_bal)
            else:
-               clo.get_tranches()[0].subtract_size(beginning_bal)
-               principal_tranche = beginning_bal
+              print('subtracting')
+              clo.get_tranches()[0].subtract_size(beginning_bal)
 
         # terminate 
+        #print("\nmonth " + str(months_passed))
+        #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
+        #print("Thre " + str(threshold))
         if clo.get_tranches()[0].get_size() <= threshold:
            if final_countdown is None:
               final_countdown = 1
            else:
+              deal_call_mos.append(months_passed)
               break
               
       months_passed += 1
+    # test to make sure loan data is right
     print(loan_data.head(longest_duration))
-           
+
+    # ------------------ CALCULATING OUTPUTS ------------------ #
+    # DEAL CALL MONTH
+    print(deal_call_mos) # only one so far
+    # WEIGHTED AVG COST OF FUNDS
+    # multiplied by 100 cuz percent
+    total_tranche_cfs = [x for x in total_tranche_cfs if not math.isnan(x)] # takes out NaN values from list
+    wa_cof = (npf.irr(total_tranche_cfs)*360/365 - SOFR) * 100
+    """
+    # WEIGHTED AVG ADVANCE RATE
+    # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
+    avg_clo_bal = initial_clo_tob - initial_AAA_bal
+    avg_collateral_bal = loan_data['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
+    wa_adv_rate = avg_clo_bal/avg_collateral_bal
+
+    # PROJECTED EQUITY YIELD
+    # equity net spread
+    collateral_income = loan_portfolio.get_collateral_income(loan_data) # income we get from loans
+    clo_interest_cost = initial_clo_tob * wa_cof # interest we pay to tranches
+    net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
+    equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
+    # origination fee add on (fee for creating the clo)
+    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
+    # projected equity yield (times 100 cuz percent), represents expected return on the clo
+    projected_equity_yield = (equity_net_spread + origination_fee + SOFR) * 100
+
+    calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
+    print(calculations_for_one_trial)"""

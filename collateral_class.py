@@ -4,6 +4,13 @@ import numpy as np
 class CollateralPortfolio(Loan):
     def __init__(self):
         self.__portfolio = []
+        self.__initial_deal_size = 0
+
+    def set_initial_deal_size(self, deal_size):
+        self.__initial_deal_size = deal_size
+
+    def get_initial_deal_size(self):
+        return self.__initial_deal_size
 
     def get_portfolio(self):
         return self.__portfolio
@@ -36,11 +43,11 @@ class CollateralPortfolio(Loan):
         # Calculate the number of loans to assign to each term
         num_loans = len(self.__portfolio)
         prepay_amt = round(num_loans * case[0])
-        print("prepay: " + str(prepay_amt/num_loans))
+        # print("prepay: " + str(prepay_amt/num_loans))
         initial_amt = round(num_loans * case[1])
-        print("initial: " + str(initial_amt/num_loans))
+        # print("initial: " + str(initial_amt/num_loans))
         extended_amt = num_loans - prepay_amt - initial_amt
-        print("extended: " + str(extended_amt/num_loans))
+        # print("extended: " + str(extended_amt/num_loans))
         # Create a list with the loan terms according to the scenario
         loan_terms = ['prepaid'] * prepay_amt + ['initial'] * initial_amt + ['extended'] * extended_amt
         # Shuffle the list to randomize the terms
@@ -60,3 +67,9 @@ class CollateralPortfolio(Loan):
             if loan.get_term_length() > max:
                 max = loan.get_term_length()
         return max
+
+    def get_collateral_income(self, dataframe):
+        margin_balance_sum = 0
+        for loan in self.get_portfolio():
+          margin_balance_sum += loan.get_margin() * dataframe.loc[(loan.get_loan_id(), 0), 'Ending Balance']
+        return margin_balance_sum
