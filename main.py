@@ -103,7 +103,7 @@ if __name__ == "__main__":
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
-      
+      po_indexes = []
       # monthly calculations 
       # NEED TO ADD REINVESTMENT LOANS
       while portfolio_index < len(loan_portfolio.get_portfolio()):
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
         #print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
-        print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
+        #print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
@@ -125,25 +125,30 @@ if __name__ == "__main__":
 
         # paying off loans
         if principal_pay != 0: 
+           print("loan payed off")
            loan_portfolio.remove_loan(loan)
+           
            
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              print('new loan added')
+              print('new loan added, prev loan term length: ' + str(loan.get_term_length()) + ", loan id: " + str(loan.get_loan_id()))
               loan_portfolio.add_new_loan(beginning_bal, margin)
            else:
-              clo.get_tranches()[0].subtract_size(principal_pay)
+              clo.get_tranches()[0].subtract_size(beginning_bal)
               # switched from beginning balance 
-              print("AAA SIZE " +str(clo.get_tranches()[0].get_size()))
+              print("\nLOAN: " + str(loan.get_loan_id()))
+              print("Subtracted beginning balance: " + str(beginning_bal))
+              print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))
               print("THRESHOLD " + str(threshold))
               portfolio_index -= 1
-            
-        portfolio_index += 1
+              
 
         clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
         clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
         # appends to list of cashflows
         total_tranche_cfs.append(clo_cashflow)
+        po_indexes.append(portfolio_index)
+        portfolio_index += 1
 
       # inner loop ends 
 
@@ -155,7 +160,9 @@ if __name__ == "__main__":
       if clo.get_tranches()[0].get_size() <= threshold:
           print("WORK")
           terminate_next = True 
-      #print("\nmonth " + str(months_passed))
+      
+      print("\nmonth " + str(months_passed))
+      print(po_indexes)
       #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
       #print("Thre " + str(threshold))
 
