@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # START LOOP: goes for the longest possible month duration
     # will need loop that makes sim happen 100 or 1000x 
     months_passed = 0
-    final_countdown = None
+    terminate_next = False
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     total_tranche_cfs = []
     deal_call_mos = []
@@ -142,18 +142,19 @@ if __name__ == "__main__":
               print('subtracting')
               clo.get_tranches()[0].subtract_size(beginning_bal)
 
-        # terminate 
-        #print("\nmonth " + str(months_passed))
-        #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
-        #print("Thre " + str(threshold))
-        if clo.get_tranches()[0].get_size() <= threshold:
-           if final_countdown is None:
-              final_countdown = 1
-           else:
-              deal_call_mos.append(months_passed)
-              break
+      # terminate 
+      if terminate_next:
+         deal_call_mos.append(months_passed)
+         break 
+      
+      if clo.get_tranches()[0].get_size() <= threshold:
+          terminate_next = True 
+      #print("\nmonth " + str(months_passed))
+      #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
+      #print("Thre " + str(threshold))
               
       months_passed += 1
+      
     # test to make sure loan data is right
     print(loan_data.head(longest_duration))
 
