@@ -79,7 +79,7 @@ if __name__ == "__main__":
     loan_index = pd.MultiIndex.from_product([loan_ids, months],
                                    names=['Loan ID', 'Months Passed'])
     # Create an empty DataFrame with the multi-index
-    loan_data = pd.DataFrame(index=loan_index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
+    loan_data = pd.DataFrame(index=loan_index, columns=['Current Month', 'Beginning Balance', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
@@ -104,13 +104,15 @@ if __name__ == "__main__":
       # monthly calculations 
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
-        #print("Begin bal " + str(beginning_bal))
+        print("Begin bal " + str(beginning_bal) + " Loan id " + str(loan.get_loan_id()))
+        print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
-        days = days_in_month[current_month - 1]
+        days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
 
         # save to dataframe
+        loan_data.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
@@ -153,6 +155,7 @@ if __name__ == "__main__":
       
     # test to make sure loan data is right
     print(loan_data.head(longest_duration))
+    loan_data.to_excel('output.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
