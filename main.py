@@ -106,6 +106,7 @@ if __name__ == "__main__":
       po_indexes = []
       # monthly calculations 
       # NEED TO ADD REINVESTMENT LOANS
+      print("\nmonth " + str(months_passed))
       while portfolio_index < len(loan_portfolio.get_portfolio()):
         loan = loan_portfolio.get_portfolio()[portfolio_index]
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
@@ -161,7 +162,7 @@ if __name__ == "__main__":
           print("WORK")
           terminate_next = True 
       
-      print("\nmonth " + str(months_passed))
+      
       print(po_indexes)
       #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
       #print("Thre " + str(threshold))
