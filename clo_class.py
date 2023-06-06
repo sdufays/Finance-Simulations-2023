@@ -93,11 +93,11 @@ class CLO(Tranche):
                   princi_sum += tranche.get_size()
         return princi_sum
   
-    def total_tranche_cashflow(self, month, upfront_cost, num_days, principal_sum):
+    def total_tranche_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value):
         if month == 0: # should return a negative number
             return (self.get_dda() + upfront_cost - self.get_tob())
         else:
             interest_sum = 0
             for tranche in self.get_tranches():
-                interest_sum += tranche.tranche_interest(num_days)
+                interest_sum += tranche.tranche_interest(num_days, sofr_value)
             return(interest_sum + principal_sum)

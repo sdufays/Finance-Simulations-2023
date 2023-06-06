@@ -29,5 +29,5 @@ class Tranche:
     def subtract_size(self, value):
         self.__size -= value
 
-    def tranche_interest(self, num_days):
-        return self.get_size() * (self.get_spread() + 0.0408) * num_days / 360
+    def tranche_interest(self, num_days, sofr_value):
+        return self.get_size() * (self.get_spread() + sofr_value) * num_days / 360

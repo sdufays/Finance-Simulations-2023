@@ -78,8 +78,8 @@ class CollateralPortfolio(Loan):
                 max = loan.get_term_length()
         return max
 
-    def get_collateral_income(self, dataframe, months):
+    def get_collateral_income(self, dataframe, months, sofr_value):
         margin_balance_sum = 0
         for loan in self.get_portfolio():
-          margin_balance_sum += (loan.get_margin() + 0.0408) * dataframe.loc[(loan.get_loan_id(), 0), 'Ending Balance']
+          margin_balance_sum += (loan.get_margin() + sofr_value) * dataframe.loc[(loan.get_loan_id(), 0), 'Ending Balance']
         return 12 * margin_balance_sum / months # CLO interest cost is number per year, but all income is over duration of deal -> need to conv to annual num

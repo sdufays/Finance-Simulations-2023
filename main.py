@@ -30,6 +30,8 @@ if __name__ == "__main__":
     days_in_month = get_date_array(date)
 
     reinvestment_period = df_os.iloc[1,1]
+    SOFR = df_os.iloc[3,1]
+
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
@@ -44,7 +46,6 @@ if __name__ == "__main__":
     misc = df_uc.iloc[7, 1]
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
-    SOFR = 0.0408
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, reinvestment_period, first_payment_date)
     upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
@@ -122,7 +123,7 @@ if __name__ == "__main__":
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
         clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
-        clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal) 
+        clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
         # appends to list of cashflows
         total_tranche_cfs.append(clo_cashflow)
 
@@ -182,7 +183,7 @@ if __name__ == "__main__":
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_portfolio.get_collateral_income(loan_data, deal_call_mos[0]) # income we get from loans
+    collateral_income = loan_portfolio.get_collateral_income(loan_data, deal_call_mos[0], SOFR) # income we get from loans
     clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
