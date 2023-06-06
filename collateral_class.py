@@ -28,7 +28,7 @@ class CollateralPortfolio(Loan):
         margin = sum / self.get_collateral_sum()
         # CHANGE THIS loan balance and collateral sum are original numbers
         self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
-        self.__portfolio[loan_id-1].set_term_length(30)
+        self.__portfolio[loan_id-1].set_term_length(20)
       
     def remove_loan(self, loan):
         self.__portfolio.remove(loan)

@@ -102,11 +102,12 @@ if __name__ == "__main__":
             loan_portfolio.add_new_loan(extra_balance)
       
       # monthly calculations 
+      # NEED TO ADD REINVESTMENT LOANS
       for loan in loan_portfolio.get_portfolio():
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
-        print("Begin bal " + str(beginning_bal) + " Loan id " + str(loan.get_loan_id()))
         print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
+        print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
