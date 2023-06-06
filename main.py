@@ -94,6 +94,7 @@ if __name__ == "__main__":
     initial_clo_tob = clo.get_tob()
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     loan_data = loan_data.fillna(0)
+    margin = clo.generate_initial_margin()
 
     while months_passed in range(longest_duration): # longest duration 
       current_month = (starting_month + months_passed) % 12 or 12
@@ -122,11 +123,6 @@ if __name__ == "__main__":
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
-        clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
-        clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
-        # appends to list of cashflows
-        total_tranche_cfs.append(clo_cashflow)
-
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
@@ -135,7 +131,7 @@ if __name__ == "__main__":
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               print('new loan added')
-              loan_portfolio.add_new_loan(beginning_bal)
+              loan_portfolio.add_new_loan(beginning_bal, margin)
            else:
               clo.get_tranches()[0].subtract_size(principal_pay)
               # switched from beginning balance 
@@ -144,7 +140,14 @@ if __name__ == "__main__":
             
            portfolio_index += 1
 
-      # terminate 
+        clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
+        clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
+        # appends to list of cashflows
+        total_tranche_cfs.append(clo_cashflow)
+
+      # inner loop ends 
+
+      # terminate in outer loop
       if terminate_next:
          deal_call_mos.append(months_passed)
          break 
