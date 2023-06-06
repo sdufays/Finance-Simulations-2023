@@ -36,14 +36,14 @@ if __name__ == "__main__":
     # --------------------------- UPFRONT COSTS --------------------------- #
 
     df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
-    legal = df_uc.iloc[0, 1]
-    accounting = df_uc.iloc[1, 1]
-    trustee = df_uc.iloc[2, 1]
-    printing = df_uc.iloc[3, 1]
-    RA_site = df_uc.iloc[4, 1]
-    modeling = df_uc.iloc[5, 1]
-    misc = df_uc.iloc[6, 1]
-    placement_percent = 0.02 # PLACEHOLDER CUZ WE NEED TO ADD THIS TO THE SPREADSHEET
+    placement_percent = df_uc.iloc[0,1]
+    legal = df_uc.iloc[1, 1]
+    accounting = df_uc.iloc[2, 1]
+    trustee = df_uc.iloc[3, 1]
+    printing = df_uc.iloc[4, 1]
+    RA_site = df_uc.iloc[5, 1]
+    modeling = df_uc.iloc[6, 1]
+    misc = df_uc.iloc[7, 1]
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
