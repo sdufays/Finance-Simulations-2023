@@ -86,6 +86,7 @@ if __name__ == "__main__":
     # will need loop that makes sim happen 100 or 1000x 
     months_passed = 0
     terminate_next = False
+    portfolio_index = 0
     total_tranche_cfs = []
     deal_call_mos = []
     initial_AAA_bal = clo.get_tranches()[0].get_size()
@@ -103,7 +104,8 @@ if __name__ == "__main__":
       
       # monthly calculations 
       # NEED TO ADD REINVESTMENT LOANS
-      for loan in loan_portfolio.get_portfolio():
+      while portfolio_index < len(loan_portfolio.get_portfolio()):
+        loan = loan_portfolio.get_portfolio()[portfolio_index]
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
         print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
@@ -127,19 +129,19 @@ if __name__ == "__main__":
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
+           portfolio_index -= 1
            
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               print('new loan added')
               loan_portfolio.add_new_loan(beginning_bal)
            else:
-              print(loan.get_loan_id())
-              print("principay month " + str(months_passed))
-              print('subtracting by ' + str(beginning_bal))
               clo.get_tranches()[0].subtract_size(principal_pay)
               # switched from beginning balance 
               print("AAA SIZE " +str(clo.get_tranches()[0].get_size()))
               print("THRESHOLD " + str(threshold))
+            
+           portfolio_index += 1
 
       # terminate 
       if terminate_next:
@@ -152,7 +154,8 @@ if __name__ == "__main__":
       #print("\nmonth " + str(months_passed))
       #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
       #print("Thre " + str(threshold))
-              
+
+      portfolio_index = 0        
       months_passed += 1
 
     # for the tranches, put 0 as all the values
