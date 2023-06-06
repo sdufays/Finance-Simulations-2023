@@ -4,7 +4,6 @@ import pandas as pd
 import numpy_financial as npf
 import math
 
-# assume starting date is in format MM/DD/YYYY
 def get_date_array(date):
     if date[2] % 4 == 0:
       return [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -48,6 +47,7 @@ if __name__ == "__main__":
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     SOFR = 0.0408
     ramp_up = df_os.iloc[0, 1]
+    print(ramp_up)
     clo = CLO(ramp_up, reinvestment_period, first_payment_date)
     upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
     loan_portfolio.generate_loan_terms(base)
-    longest_duration = int(loan_portfolio.get_longest_term())
+    longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_portfolio())))  # 21 loan IDs
@@ -82,13 +82,6 @@ if __name__ == "__main__":
                                    names=['Loan ID', 'Months Passed'])
     # Create an empty DataFrame with the multi-index
     loan_data = pd.DataFrame(index=loan_index, columns=['Current Month', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
-    # CREATE TRANCHE DATAFRAME ?
-    tranche_ids = []
-    for t in clo.get_tranches():
-      tranche_ids.append(t.get_name())
-    tranche_index = pd.MultiIndex.from_product([tranche_ids, months],
-                                   names=['Tranche Name', 'Months Passed'])
-    tranche_data = pd.DataFrame(index=tranche_index, columns=['Ending Balance'])
 
     # START LOOP: goes for the longest possible month duration
     # will need loop that makes sim happen 100 or 1000x 
@@ -139,8 +132,12 @@ if __name__ == "__main__":
               print('new loan added')
               loan_portfolio.add_new_loan(beginning_bal)
            else:
-              print('subtracting')
+              print(loan.get_loan_id())
+              print("principay month " + str(months_passed))
+              print('subtracting by ' + str(beginning_bal))
               clo.get_tranches()[0].subtract_size(beginning_bal)
+              print("AAA SIZE " +str(clo.get_tranches()[0].get_size()))
+              print("THRESHOLD " + str(threshold))
 
       # terminate 
       if terminate_next:
@@ -148,6 +145,7 @@ if __name__ == "__main__":
          break 
       
       if clo.get_tranches()[0].get_size() <= threshold:
+          print("WORK")
           terminate_next = True 
       #print("\nmonth " + str(months_passed))
       #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
