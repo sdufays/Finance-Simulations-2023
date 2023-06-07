@@ -8,6 +8,10 @@ class CLO(Tranche):
         self.__ramp_up = ramp_up
         self.__reinvestment_period = reinvestment_period
         self.__starting_date = starting_date
+        self.__total_cashflows = []
+    
+    def get_total_cashflows(self):
+        return self.__total_cashflows
     
     def get_ramp_up(self):
         return self.__ramp_up
@@ -96,13 +100,13 @@ class CLO(Tranche):
                   princi_sum += tranche.get_size()
         return princi_sum
   
-    def total_tranche_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value):
+    def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value):
         if month == 0: # should return a negative number
             print("DDA " + str(self.get_dda()))
             print("TOB " + str(self.get_tob()))
-            return (self.get_dda() + upfront_cost - self.get_tob())
+            self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
         else:
             interest_sum = 0
             for tranche in self.get_tranches():
                 interest_sum += tranche.tranche_interest(num_days, sofr_value)
-            return(interest_sum + principal_sum)
+            self.__total_cashflows.append(interest_sum + principal_sum)
