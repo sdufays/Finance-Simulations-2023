@@ -7,14 +7,14 @@ class Tranche:
         self.__spread = spread
         self.__offered = offered
         self.__price = price
-        self.__AAA_bal_list = []
+        self.__bal_list = []
     
-    def save_AAA_balance(self):
-        if self.get_name() == 'A':
-            self.__AAA_bal_list.append(self.get_size())
+    def save_balance(self, dataframe, month):
+        self.__bal_list.append(self.get_size())
+        dataframe.loc[('A', month), 'Tranche Size'] = self.get_size()
     
-    def get_AAA_bal_list(self):
-        return self.__AAA_bal_list
+    def get__bal_list(self):
+        return self.__bal_list
 
     def get_name(self):
         return self.__name
@@ -37,5 +37,24 @@ class Tranche:
     def subtract_size(self, value):
         self.__size -= value
 
-    def tranche_interest(self, num_days, sofr_value):
-        return self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
+    def tranche_interest(self, num_days, sofr_value, dataframe, month):
+        if self.get_offered() == 1:
+            interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
+            dataframe.loc[(self.get_name(), month), 'Interest Payment'] = interest
+            return interest
+        else:
+            return 0
+    
+    def tranche_principal(self, month, reinvest_per, dataframe, loan_paydown, termin_next):
+        if self.get_name() == 'A':
+            if month > reinvest_per:
+                principal = loan_paydown
+            else:
+                principal = self.get_size()
+        else:
+            if termin_next:
+                principal = self.get__bal_list()[month-1]
+            else:
+                principal = 0
+        dataframe.loc[(self.get_name(), month), 'Principal Payment'] = principal
+        return principal

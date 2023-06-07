@@ -80,33 +80,31 @@ class CLO(Tranche):
     def get_threshold(self):
         return self.get_tranches()[0].get_size() * 0.2
     
-    def get_tranche_principal_sum(self, month,  reinvest_per, loan_paydown, A_thres):
+    def get_tranche_principal_sum(self, month,  reinvest_per, loan_paydown, A_thres, dataframe):
         princi_sum = 0
         for tranche in self.get_tranches():
           if tranche.get_name() == "A":
               # after rein, before deal call
               if month > reinvest_per and tranche.get_size() > A_thres:
-                  #print('adding loan paydown')
+                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = loan_paydown
                   princi_sum += loan_paydown
               else:
-                  #print('adding tranche size')
+                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche.get_size()
                   princi_sum += tranche.get_size()
           else:
               if self.get_tranches()[0].get_size() > A_thres:
-                  #print('adding 0')
+                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = 0
                   princi_sum += 0
               else:
-                  #print('adding tranche size 2')
+                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche.get_size()
                   princi_sum += tranche.get_size()
         return princi_sum
   
-    def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value):
+    def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value, dataframe):
         if month == 0: # should return a negative number
-            print("DDA " + str(self.get_dda()))
-            print("TOB " + str(self.get_tob()))
             self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
         else:
             interest_sum = 0
             for tranche in self.get_tranches():
-                interest_sum += tranche.tranche_interest(num_days, sofr_value)
+                interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             self.__total_cashflows.append(interest_sum + principal_sum)
