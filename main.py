@@ -89,7 +89,6 @@ if __name__ == "__main__":
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment'])
 
-
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
     # storage variables
@@ -191,7 +190,7 @@ if __name__ == "__main__":
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
     print(deal_call_mos) # only one so far
-    #"""
+    """
     # WEIGHTED AVG COST OF FUNDS
     # multiplied by 100 cuz percent
     total_tranche_cfs = [x for x in total_tranche_cfs if not math.isnan(x)] # takes out NaN values from list
@@ -219,4 +218,4 @@ if __name__ == "__main__":
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
     print(calculations_for_one_trial)
-  #"""
+  """
