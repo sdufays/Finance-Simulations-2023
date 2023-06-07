@@ -66,6 +66,8 @@ class Loan:
     # month = months passed
     def principal_paydown(self, month, loan_data):
         if month == self.get_term_length() + self.get_starting_month():
+            print("term length " + str(self.get_term_length()))
+            print("startomg " + str(self.get_starting_month()))
             # ending/beginning balance is same
             return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']
         else:

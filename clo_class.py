@@ -102,8 +102,6 @@ class CLO(Tranche):
   
     def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value):
         if month == 0: # should return a negative number
-            print("DDA " + str(self.get_dda()))
-            print("TOB " + str(self.get_tob()))
             self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
         else:
             interest_sum = 0

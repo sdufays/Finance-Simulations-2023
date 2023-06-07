@@ -72,7 +72,7 @@ if __name__ == "__main__":
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengthsi think
-    loan_portfolio.generate_loan_terms(base)
+    loan_portfolio.generate_loan_terms(upside)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -137,6 +137,9 @@ if __name__ == "__main__":
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance(months_passed, loan_df)
         #print(months_passed)
+        if months_passed == 0:
+            print(loan.get_loan_id())
+            print("begin bal isn't the issue")
         principal_pay = loan.principal_paydown(months_passed, loan_df)
         #print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
