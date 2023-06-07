@@ -85,9 +85,10 @@ if __name__ == "__main__":
     # CREATE TRANCHE DATAFRAME
     tranche_names = []
     for tranche in clo.get_tranches():
-       tranche_names.append(tranche.get_name())
+       if tranche.get_offered() == 1:
+        tranche_names.append(tranche.get_name())
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
-    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment'])
+    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
 
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
@@ -119,8 +120,9 @@ if __name__ == "__main__":
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
       
-      # add current AAA balance to list
-      clo.get_tranches()[0].save_AAA_balance()
+      # add current balances to list
+      for tranche in clo.get_tranches():
+        tranche.save__balance(tranche_df, months_passed)
 
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
@@ -136,15 +138,12 @@ if __name__ == "__main__":
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance(months_passed, loan_df)
-        #print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_df)
-        #print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
-        # somehow all these calculations are 0
 
-        # save to dataframe
+        # save to loan dataframe
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
@@ -163,9 +162,13 @@ if __name__ == "__main__":
         else:
            portfolio_index += 1
              
-        clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
-        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
-        #po_indexes.append(portfolio_index)
+        clo_principal = clo.get_tranche_principal(months_passed, reinvestment_period, principal_pay, threshold, tranche_df, terminate_next)
+        if months_passed == 0:
+           print("month: " + str(months_passed))
+           for tranche in clo.get_tranches():
+              print("tranche: " + tranche.get_name())
+              print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
+        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR, tranche_df) 
         
 
       # inner loop ends 
@@ -182,10 +185,13 @@ if __name__ == "__main__":
 
     # for the tranches, put 0 as all the values
     # for the loans, leave as if (still outstanding)
-      
-    # test to make sure loan data is right
-    print(loan_df.tail(longest_duration))
+    
+    # testing loan data
+    #print(loan_df.tail(longest_duration))
     # loan_df.to_excel('output.xlsx', index=True)
+
+    # testing tranche data
+    print(tranche_df.head(longest_duration))
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
