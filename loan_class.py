@@ -9,6 +9,14 @@ class Loan:
         self.__extension_period = extension_period
         self.__open_prepayment_period = open_prepayment_period
         self.__term_length = 0
+        self.__reinvestment = False
+        self.__starting_month = 0
+    
+    def get_reinvestment(self):
+        return self.__reinvestment
+    
+    def set_reinvestment(self, rein):
+        self.__reinvestment = rein
 
     def get_loan_id(self):
         return self.__loan_id
@@ -36,6 +44,12 @@ class Loan:
 
     def get_term_length(self):
         return self.__term_length
+    
+    def set_starting_month(self, month):
+        self.__starting_month = month
+    
+    def get_starting_month(self):
+        return self.__starting_month
 
     def print_loan_info(self):
         print("Loan ID: ", self.get_loan_id())
@@ -51,14 +65,14 @@ class Loan:
     # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
     # month = months passed
     def beginning_balance(self, month, loan_data):
-        if month == 0:
+        if month == self.get_starting_month():
             return self.get_loan_balance()
         else:
             return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
 
     # month = months passed
     def principal_paydown(self, month, loan_data):
-        if month == self.get_term_length():
+        if month == self.get_term_length() + self.get_starting_month():
             # ending/beginning balance is same
             return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']
         else:

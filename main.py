@@ -110,7 +110,7 @@ if __name__ == "__main__":
       if months_passed == 1:
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
-            loan_portfolio.add_new_loan(extra_balance)
+            loan_portfolio.add_new_loan(extra_balance, margin, months_passed)
       
       # po_indexes = [] # just for testing
       # monthly calculations 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               print('new loan added, beginning bal: ' + str(beginning_bal))
-              loan_portfolio.add_new_loan(beginning_bal, margin)
+              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed)
               new_loan = loan_portfolio.get_active_portfolio()[-1]
               # set beginnning balance of newly created loan in spreadsheet
               # it's not 0 but then gets overwritten as 0
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     # for the loans, leave as if (still outstanding)
       
     # test to make sure loan data is right
-    print(loan_data.head(longest_duration))
+    print(loan_data.tail(longest_duration))
     # loan_data.to_excel('output.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
