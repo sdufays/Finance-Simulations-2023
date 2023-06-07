@@ -48,7 +48,7 @@ class CLO(Tranche):
         for tranche in self.get_tranches():
             price = tranche.get_price()
             if price < 100:
-                deal_discount_amount += tranche.get_size() + tranche.get_offered() * (1 - price / 100)
+                deal_discount_amount += tranche.get_size() * tranche.get_offered() * (1 - price / 100)
         return deal_discount_amount
   
     # c/e is the tranche cost / total cost
@@ -82,19 +82,24 @@ class CLO(Tranche):
           if tranche.get_name() == "A":
               # after rein, before deal call
               if month > reinvest_per and tranche.get_size() > A_thres:
+                  #print('adding loan paydown')
                   princi_sum += loan_paydown
               else:
-                  # is size 0 yet or no?
+                  #print('adding tranche size')
                   princi_sum += tranche.get_size()
           else:
               if self.get_tranches()[0].get_size() > A_thres:
+                  #print('adding 0')
                   princi_sum += 0
               else:
+                  #print('adding tranche size 2')
                   princi_sum += tranche.get_size()
         return princi_sum
   
     def total_tranche_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value):
         if month == 0: # should return a negative number
+            print("DDA " + str(self.get_dda()))
+            print("TOB " + str(self.get_tob()))
             return (self.get_dda() + upfront_cost - self.get_tob())
         else:
             interest_sum = 0

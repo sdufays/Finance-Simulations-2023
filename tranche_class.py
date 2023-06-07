@@ -7,6 +7,14 @@ class Tranche:
         self.__spread = spread
         self.__offered = offered
         self.__price = price
+        self.__AAA_bal_list = []
+    
+    def save_AAA_balance(self):
+        if self.get_name() == 'A':
+            self.__AAA_bal_list.append(self.get_size())
+    
+    def get_AAA_bal_list(self):
+        return self.__AAA_bal_list
 
     def get_name(self):
         return self.__name

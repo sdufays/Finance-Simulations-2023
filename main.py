@@ -3,6 +3,7 @@ from clo_class import CLO
 import pandas as pd
 import numpy_financial as npf
 import math
+import numpy as np
 
 def get_date_array(date):
     if date[2] % 4 == 0:
@@ -112,9 +113,12 @@ if __name__ == "__main__":
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed)
       
+      # add current AAA balance to list
+      clo.get_tranches()[0].save_AAA_balance()
+
       # po_indexes = [] # just for testing
       # monthly calculations 
-      print("\nmonth " + str(months_passed))
+      #print("\nmonth " + str(months_passed))
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
@@ -127,7 +131,7 @@ if __name__ == "__main__":
         loan_data = loan_data.reindex(loan_index)
         loan_data = loan_data.fillna(0)
 
-        # GET CALCULATION
+        # GET CALCULATIONS
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
         #print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
@@ -136,9 +140,6 @@ if __name__ == "__main__":
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
         # somehow all these calculations are 0
-        if loan.get_loan_id() > 21:
-          print("LOAN #"+str(loan.get_loan_id()))
-          print([beginning_bal, principal_pay, ending_bal, interest_inc])
 
         # save to dataframe
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
@@ -149,7 +150,7 @@ if __name__ == "__main__":
 
         # paying off loans
         if principal_pay != 0: 
-           print("loan payed off  prev loan term length: " + str(loan.get_term_length()) + ", loan id: " + str(loan.get_loan_id()))
+           print("loan payed off,  prev loan term length: " + str(loan.get_term_length()) + ", loan id: " + str(loan.get_loan_id()))
            loan_portfolio.remove_loan(loan)
            
            # reinvestment calculations 
@@ -159,21 +160,23 @@ if __name__ == "__main__":
               new_loan = loan_portfolio.get_active_portfolio()[-1]
               # set beginnning balance of newly created loan in spreadsheet
               # it's not 0 but then gets overwritten as 0
-              print(loan_portfolio.get_active_portfolio()[-1].get_loan_id())
+              #print(loan_portfolio.get_active_portfolio()[-1].get_loan_id())
               loan_data.loc[(loan_portfolio.get_active_portfolio()[-1].get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
               #print(loan_data.tail(longest_duration)) 
            else:
               clo.get_tranches()[0].subtract_size(beginning_bal)
               # switched from beginning balance 
-              print("\nLOAN: " + str(loan.get_loan_id()))
-              print("Subtracted beginning balance: " + str(beginning_bal))
-              print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))
-              print("THRESHOLD " + str(threshold))
+              #print("\nLOAN: " + str(loan.get_loan_id()))
+              #print("Subtracted beginning balance: " + str(beginning_bal))
+              #print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))
+              #print("THRESHOLD " + str(threshold))
         else:
            portfolio_index += 1
              
         clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
         clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
+        if not np.isnan(clo_cashflow):
+            print('\nmonth ' + str(months_passed) + ' single cashflow ' + str(clo_cashflow))
         # appends to list of cashflows
         total_tranche_cfs.append(clo_cashflow)
         #po_indexes.append(portfolio_index)
@@ -187,7 +190,6 @@ if __name__ == "__main__":
          break 
       
       if clo.get_tranches()[0].get_size() <= threshold:
-          print("WORK")
           terminate_next = True 
       
       
@@ -208,14 +210,17 @@ if __name__ == "__main__":
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
     print(deal_call_mos) # only one so far
+    """
     # WEIGHTED AVG COST OF FUNDS
     # multiplied by 100 cuz percent
     total_tranche_cfs = [x for x in total_tranche_cfs if not math.isnan(x)] # takes out NaN values from list
+    print(total_tranche_cfs)
+    print(npf.irr(total_tranche_cfs))
     wa_cof = (npf.irr(total_tranche_cfs)*360/365 - SOFR) * 100
-    """
+    
     # WEIGHTED AVG ADVANCE RATE
     # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
-    avg_AAA_bal = # sum of all AAA bals over time / deal_call_mos[0]
+    avg_AAA_bal = sum(clo.get_tranches()[0].get_AAA_bal_list()) / deal_call_mos[0]
     avg_clo_bal = (initial_clo_tob - initial_AAA_bal) / deal_call_mos[0] + avg_AAA_bal
     avg_collateral_bal = loan_data['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
@@ -232,4 +237,5 @@ if __name__ == "__main__":
     projected_equity_yield = (equity_net_spread + origination_fee) * 100
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    print(calculations_for_one_trial) """
+    print(calculations_for_one_trial)
+  """
