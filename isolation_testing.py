@@ -94,7 +94,7 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_data = loan_data.fillna(0)
-    current_loan = 5
+    current_loan = 3
 
     while months_passed in range(50): # longest duration 
       portfolio_index = 0 
@@ -179,7 +179,6 @@ if __name__ == "__main__":
 
     # for the tranches, put 0 as all the values
     # for the loans, leave as if (still outstanding)
-<<<<<<< Updated upstream
      
     # Get the relevant loan data
     loan_data_subset = loan_data.loc[(current_loan, slice(None)), :].copy()
@@ -190,21 +189,6 @@ if __name__ == "__main__":
       loan_data_subset[col] = loan_data_subset[col].apply(lambda x: "{:,.0f}".format(x))
     # Now, print the DataFrame
     print(loan_data_subset)
-=======
-      
-    # test to make sure loan data is right
-    # test to make sure loan data is right
-    display = loan_data.loc[(current_loan, slice(None)), :].copy()
-
-    # Format the display DataFrame
-    format_display = display.applymap(lambda x: "{:,}".format(x))
-
-    # Display the formatted DataFrame
-    styled_df = format_display.style
-
-    print(styled_df.data.loc[(3, slice(None)), :])
-
->>>>>>> Stashed changes
 
     # loan_data.to_excel('output.xlsx', index=True)
 

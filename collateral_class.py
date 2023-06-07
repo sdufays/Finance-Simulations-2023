@@ -26,7 +26,7 @@ class CollateralPortfolio(Loan):
 
     # only during reinvestment period
     def add_new_loan(self, loan_balance, margin, month):
-        print("new loan balance " + str(loan_balance))
+        print("new loan balance " + str("{:,}".format(loan_balance)))
         # make loan id higher than storage portfolio length -> so like 26
         loan_id = len(self.__storage_portfolio) + 1
         # index will be 20 cuz just removed another loan, where the list goes from [0, 1, ... 20]
