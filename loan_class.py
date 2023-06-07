@@ -45,14 +45,14 @@ class Loan:
         return self.__starting_month
 
     def print_loan_info(self):
-        print("Loan ID: ", self.get_loan_id())
-        print("Loan Balance: ", self.get_loan_balance())
-        print("Margin: ", self.get_margin())
-        print("Index Floor: ", self.get_index_floor())
-        print("Remaining Loan Term: ", self.get_remaining_loan_term())
-        print("Extension Period: ", self.get_extension_period())
-        print("Open Prepayment Period: ", self.get_open_prepayment_period())
-        print("Term Length: ", self.get_term_length())
+        print("Loan ID: ", "{:,}".format(self.get_loan_id()))
+        print("Loan Balance: ", "{:,}".format(self.get_loan_balance()))
+        print("Margin: ", "{:,}".format(self.get_margin()))
+        print("Index Floor: ", "{:,}".format(self.get_index_floor()))
+        print("Remaining Loan Term: ", "{:,}".format(self.get_remaining_loan_term()))
+        print("Extension Period: ", "{:,}".format(self.get_extension_period()))
+        print("Open Prepayment Period: ", "{:,}".format(self.get_open_prepayment_period()))
+        print("Term Length: ", "{:,}".format(self.get_term_length()))
 
 
     # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
@@ -66,6 +66,8 @@ class Loan:
     # month = months passed
     def principal_paydown(self, month, loan_data):
         if month == self.get_term_length() + self.get_starting_month():
+            print("term length " + str(self.get_term_length()))
+            print("startomg " + str(self.get_starting_month()))
             # ending/beginning balance is same
             return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']
         else:

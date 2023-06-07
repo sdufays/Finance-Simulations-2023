@@ -25,13 +25,17 @@ class CollateralPortfolio(Loan):
         self.__storage_portfolio.append(loan)
 
     # only during reinvestment period
-    def add_new_loan(self, loan_balance, margin, month):
-        print("new loan balance " + str(loan_balance))
+    def add_new_loan(self, loan_balance, margin, month,ramp):
+        # print("new loan balance " + str("{:,}".format(loan_balance)))
         # make loan id higher than storage portfolio length -> so like 26
         loan_id = len(self.__storage_portfolio) + 1
         # index will be 20 cuz just removed another loan, where the list goes from [0, 1, ... 20]
         # same even if active portfolio shrinks
-        index_in_portfolio = len(self.__active_portfolio)
+        if not ramp:
+            index_in_portfolio = len(self.__active_portfolio)
+        else:
+            index_in_portfolio = len(self.__active_portfolio) + 1
+
         self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
         # sets term length in active portfolio
         self.__active_portfolio[index_in_portfolio].set_term_length(20)
@@ -60,7 +64,6 @@ class CollateralPortfolio(Loan):
             sum+=loan.get_loan_balance()
         return sum
 
-    """
     #run this at the beginning of main
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
@@ -76,16 +79,15 @@ class CollateralPortfolio(Loan):
         # Shuffle the list to randomize the terms
         np.random.shuffle(loan_terms)
         # Assign each loan a term from the list
-        for loan, term_type in zip(self.active___portfolio, loan_terms):
+        for loan, term_type in zip(self.__active_portfolio, loan_terms):
             if term_type == "initial":
                 loan.set_term_length(loan.get_remaining_loan_term())
             elif term_type == "extended":
                 loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
             else:
                 loan.set_term_length(loan.get_open_prepayment_period())
-        """
     
-    def generate_loan_terms(self, case):
+    def initial_loan_terms(self, case):
         term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
 
         for i, loan in enumerate(self.__active_portfolio):

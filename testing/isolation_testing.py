@@ -71,11 +71,11 @@ if __name__ == "__main__":
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.generate_loan_terms(base)
+    loan_portfolio.initial_loan_terms(base)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
-    loan_ids = list(range(1, 1 + len(loan_portfolio.get_portfolio())))  # 21 loan IDs
+    loan_ids = list(range(1, 1 + len(loan_portfolio.get_storage_portfolio())))  # 21 loan IDs
     months = list(range(0, longest_duration))
     loan_index = pd.MultiIndex.from_product([loan_ids, months],
                                    names=['Loan ID', 'Months Passed'])
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_data = loan_data.fillna(0)
-    current_loan = 1
+    current_loan = 3
 
     while months_passed in range(50): # longest duration 
       portfolio_index = 0 
@@ -105,12 +105,12 @@ if __name__ == "__main__":
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
             print("added ramp-up loan")
-            ramp_up_loan = loan_portfolio.get_portfolio()[-1]
+            ramp_up_loan = loan_portfolio.get_active_portfolio()[-1]
             ramp_up_loan.print_loan_info()
       # monthly calculations 
       # NEED TO ADD REINVESTMENT LOANS
       #print("\nmonth " + str(months_passed))
-      loan = loan_portfolio.get_portfolio()[current_loan - 1]
+      loan = loan_portfolio.get_active_portfolio()[current_loan - 1]
       beginning_bal = loan.beginning_balance(months_passed, loan_data)
       #print(months_passed)
       principal_pay = loan.principal_paydown(months_passed, loan_data)
@@ -126,13 +126,13 @@ if __name__ == "__main__":
       #print("\n")
 
 
-      # save to dataframe
+        # save to dataframe
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
-
+      
       # paying off loans
       if principal_pay != 0: 
           print("months: " + str(months_passed) + '\n')
@@ -141,20 +141,20 @@ if __name__ == "__main__":
         
           # reinvestment calculations 
           if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(beginning_bal, margin)
+              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed)
               print('new loan added! \n')
-              new_loan1 = loan_portfolio.get_portfolio()[-1]
+              new_loan1 = loan_portfolio.get_active_portfolio()[-1]
               new_loan1.print_loan_info()
 
 
           else:
-              print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))             
+              print("AAA SIZE: " + str("{:,}".format(clo.get_tranches()[0].get_size())))             
               clo.get_tranches()[0].subtract_size(beginning_bal)
               # switched from beginning balance 
-              print("Subtracted beginning balance: " + str(beginning_bal))
-              print("AAA NEW SIZE " + str(clo.get_tranches()[0].get_size()))
-              print("THRESHOLD " + str(threshold))
-              print("AMOUNT TO REACH THRESHOLD: " + str(clo.get_tranches()[0].get_size() - threshold))
+              print("Subtracted beginning balance: " + str("{:,}".format(beginning_bal)))
+              print("AAA NEW SIZE: " + str("{:,}".format(clo.get_tranches()[0].get_size())))
+              print("THRESHOLD: " + str("{:,}".format(threshold)))
+              print("AMOUNT TO REACH THRESHOLD: " + str("{:,}".format(clo.get_tranches()[0].get_size() - threshold)))
               portfolio_index -= 1
             
 
@@ -179,9 +179,17 @@ if __name__ == "__main__":
 
     # for the tranches, put 0 as all the values
     # for the loans, leave as if (still outstanding)
-      
-    # test to make sure loan data is right
-    print(loan_data.loc[(current_loan, slice(None)), :])
+     
+    # Get the relevant loan data
+    loan_data_subset = loan_data.loc[(current_loan, slice(None)), :].copy()
+    # Specify the columns to format
+    cols_to_format = ['Beginning Balance', 'Ending Balance', 'Interest Income']
+    # Apply the formatting directly to the DataFrame
+    for col in cols_to_format:
+      loan_data_subset[col] = loan_data_subset[col].apply(lambda x: "{:,.0f}".format(x))
+    # Now, print the DataFrame
+    print(loan_data_subset)
+
     # loan_data.to_excel('output.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
