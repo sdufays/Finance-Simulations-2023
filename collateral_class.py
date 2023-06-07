@@ -79,7 +79,7 @@ class CollateralPortfolio(Loan):
         # Shuffle the list to randomize the terms
         np.random.shuffle(loan_terms)
         # Assign each loan a term from the list
-        for loan, term_type in zip(self.active___portfolio, loan_terms):
+        for loan, term_type in zip(self.__active_portfolio, loan_terms):
             if term_type == "initial":
                 loan.set_term_length(loan.get_remaining_loan_term())
             elif term_type == "extended":
