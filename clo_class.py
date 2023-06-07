@@ -80,26 +80,6 @@ class CLO(Tranche):
     def get_threshold(self):
         return self.get_tranches()[0].get_size() * 0.2
     
-    def get_tranche_principal_sum(self, month,  reinvest_per, loan_paydown, A_thres, dataframe):
-        princi_sum = 0
-        for tranche in self.get_tranches():
-          if tranche.get_name() == "A":
-              # after rein, before deal call
-              if month > reinvest_per and tranche.get_size() > A_thres:
-                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = loan_paydown
-                  princi_sum += loan_paydown
-              else:
-                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche.get_size()
-                  princi_sum += tranche.get_size()
-          else:
-              if self.get_tranches()[0].get_size() > A_thres:
-                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = 0
-                  princi_sum += 0
-              else:
-                  dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche.get_size()
-                  princi_sum += tranche.get_size()
-        return princi_sum
-  
     def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value, dataframe):
         if month == 0: # should return a negative number
             self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
