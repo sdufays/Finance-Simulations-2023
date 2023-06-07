@@ -37,6 +37,17 @@ class Loan:
     def get_term_length(self):
         return self.__term_length
 
+    def print_loan_info(self):
+        print("Loan ID: ", self.get_loan_id())
+        print("Loan Balance: ", self.get_loan_balance())
+        print("Margin: ", self.get_margin())
+        print("Index Floor: ", self.get_index_floor())
+        print("Remaining Loan Term: ", self.get_remaining_loan_term())
+        print("Extension Period: ", self.get_extension_period())
+        print("Open Prepayment Period: ", self.get_open_prepayment_period())
+        print("Term Length: ", self.get_term_length())
+
+
     # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
     # month = months passed
     def beginning_balance(self, month, loan_data):

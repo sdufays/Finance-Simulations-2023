@@ -92,8 +92,8 @@ if __name__ == "__main__":
     initial_AAA_bal = clo.get_tranches()[0].get_size()
     initial_clo_tob = clo.get_tob()
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
-    loan_data = loan_data.fillna(0)
     margin = loan_portfolio.generate_initial_margin()
+    loan_data = loan_data.fillna(0)
 
     while months_passed in range(longest_duration): # longest duration 
       portfolio_index = 0 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
-      po_indexes = []
+      po_indexes = [] #testing indexes
       # monthly calculations 
       # NEED TO ADD REINVESTMENT LOANS
       print("\nmonth " + str(months_passed))
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     # for the loans, leave as if (still outstanding)
       
     # test to make sure loan data is right
-    print(loan_data.head(longest_duration))
+    print(loan_data.loc[(3, slice(None)), :])
     # loan_data.to_excel('output.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
