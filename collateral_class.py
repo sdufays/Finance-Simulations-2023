@@ -25,13 +25,17 @@ class CollateralPortfolio(Loan):
         self.__storage_portfolio.append(loan)
 
     # only during reinvestment period
-    def add_new_loan(self, loan_balance, margin, month):
+    def add_new_loan(self, loan_balance, margin, month,ramp):
         print("new loan balance " + str("{:,}".format(loan_balance)))
         # make loan id higher than storage portfolio length -> so like 26
         loan_id = len(self.__storage_portfolio) + 1
         # index will be 20 cuz just removed another loan, where the list goes from [0, 1, ... 20]
         # same even if active portfolio shrinks
-        index_in_portfolio = len(self.__active_portfolio)
+        if not ramp:
+            index_in_portfolio = len(self.__active_portfolio)
+        else:
+            index_in_portfolio = len(self.__active_portfolio) + 1
+
         self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
         # sets term length in active portfolio
         self.__active_portfolio[index_in_portfolio].set_term_length(20)

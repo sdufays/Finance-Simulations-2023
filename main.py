@@ -71,7 +71,7 @@ if __name__ == "__main__":
       loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
   
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengths
+    # sets term lengthsi think
     loan_portfolio.generate_loan_terms(base)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
@@ -109,16 +109,13 @@ if __name__ == "__main__":
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
-         extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
+         extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed)
       
       # add current AAA balance to list
       clo.get_tranches()[0].save_AAA_balance()
 
-      # po_indexes = [] # just for testing
-      # monthly calculations 
-      #print("\nmonth " + str(months_passed))
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
@@ -150,26 +147,13 @@ if __name__ == "__main__":
 
         # paying off loans
         if principal_pay != 0: 
-           print("loan payed off,  prev loan term length: " + str(loan.get_term_length()) + ", loan id: " + str(loan.get_loan_id()))
            loan_portfolio.remove_loan(loan)
            
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              print('new loan added, beginning bal: ' + str(beginning_bal))
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed)
-              new_loan = loan_portfolio.get_active_portfolio()[-1]
-              # set beginnning balance of newly created loan in spreadsheet
-              # it's not 0 but then gets overwritten as 0
-              #print(loan_portfolio.get_active_portfolio()[-1].get_loan_id())
-              loan_data.loc[(loan_portfolio.get_active_portfolio()[-1].get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
-              #print(loan_data.tail(longest_duration)) 
            else:
               clo.get_tranches()[0].subtract_size(beginning_bal)
-              # switched from beginning balance 
-              #print("\nLOAN: " + str(loan.get_loan_id()))
-              #print("Subtracted beginning balance: " + str(beginning_bal))
-              #print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))
-              #print("THRESHOLD " + str(threshold))
         else:
            portfolio_index += 1
              
@@ -179,10 +163,8 @@ if __name__ == "__main__":
             print('\nmonth ' + str(months_passed) + ' single cashflow ' + str(clo_cashflow))
         # appends to list of cashflows
         total_tranche_cfs.append(clo_cashflow)
-        #po_indexes.append(portfolio_index)
-        
 
-      # inner loop ends 
+      # INNER LOOP ENDS 
 
       # terminate in outer loop
       if terminate_next:
@@ -191,13 +173,7 @@ if __name__ == "__main__":
       
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
-      
-      
-      #print(po_indexes)
-      #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
-      #print("Thre " + str(threshold))
 
-       
       months_passed += 1
 
     # for the tranches, put 0 as all the values
