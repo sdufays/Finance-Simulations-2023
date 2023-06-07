@@ -122,7 +122,7 @@ if __name__ == "__main__":
       
       # add current balances to list
       for tranche in clo.get_tranches():
-        tranche.save__balance(tranche_df, months_passed)
+        tranche.save_balance(tranche_df, months_passed)
 
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
@@ -161,14 +161,17 @@ if __name__ == "__main__":
               clo.get_tranches()[0].subtract_size(beginning_bal)
         else:
            portfolio_index += 1
-             
-        clo_principal = clo.get_tranche_principal(months_passed, reinvestment_period, principal_pay, threshold, tranche_df, terminate_next)
+
+        clo_principal_sum = 0   
+        for tranche in clo.get_tranches():
+           tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+
         if months_passed == 0:
            print("month: " + str(months_passed))
            for tranche in clo.get_tranches():
               print("tranche: " + tranche.get_name())
               print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
-        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR, tranche_df) 
+        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
         
 
       # inner loop ends 

@@ -119,8 +119,9 @@ if __name__ == "__main__":
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
       
-      # add current AAA balance to list
-      clo.get_tranches()[0].save_AAA_balance()
+      # add current balances to list
+      for tranche in clo.get_tranches():
+        tranche.save_balance(tranche_df, months_passed)
 
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
@@ -166,9 +167,17 @@ if __name__ == "__main__":
         else:
            portfolio_index += 1
              
-        clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
-        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
-        #po_indexes.append(portfolio_index)
+        clo_principal_sum = 0   
+        for tranche in clo.get_tranches():
+           tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+
+        if months_passed == 0:
+           print("month: " + str(months_passed))
+           for tranche in clo.get_tranches():
+              print("tranche: " + tranche.get_name())
+              print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
+        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
+        
         
 
       # inner loop ends 
