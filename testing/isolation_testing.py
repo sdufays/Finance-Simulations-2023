@@ -71,7 +71,7 @@ if __name__ == "__main__":
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.generate_loan_terms(base)
+    loan_portfolio.initial_loan_terms(base)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME

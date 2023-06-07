@@ -33,11 +33,11 @@ if __name__ == "__main__":
     # print(po.get_portfolio())
 
     print("\nUPSIDE")
-    po.generate_loan_terms(upside)
+    po.initial_loan_terms(upside)
     print("\nDOWNSIDE")
-    po.generate_loan_terms(downside)
+    po.initial_loan_terms(downside)
     print('\nBASE')
-    po.generate_loan_terms(base)
+    po.initial_loan_terms(base)
     
     print("TESTING GET LONGEST TERM")
     print("LONGEST TERM:")
