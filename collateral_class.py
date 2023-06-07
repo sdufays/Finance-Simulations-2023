@@ -64,7 +64,6 @@ class CollateralPortfolio(Loan):
             sum+=loan.get_loan_balance()
         return sum
 
-    """
     #run this at the beginning of main
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
@@ -87,9 +86,8 @@ class CollateralPortfolio(Loan):
                 loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
             else:
                 loan.set_term_length(loan.get_open_prepayment_period())
-        """
     
-    def generate_loan_terms(self, case):
+    def initial_loan_terms(self, case):
         term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
 
         for i, loan in enumerate(self.__active_portfolio):
