@@ -94,16 +94,19 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_data = loan_data.fillna(0)
-    current_loan = 8
+    current_loan = 1
 
     while months_passed in range(50): # longest duration 
       portfolio_index = 0 
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
-         extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
+         extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
+            print("added ramp-up loan")
+            ramp_up_loan = loan_portfolio.get_portfolio()[-1]
+            ramp_up_loan.print_loan_info()
       # monthly calculations 
       # NEED TO ADD REINVESTMENT LOANS
       #print("\nmonth " + str(months_passed))
@@ -151,6 +154,7 @@ if __name__ == "__main__":
               print("Subtracted beginning balance: " + str(beginning_bal))
               print("AAA NEW SIZE " + str(clo.get_tranches()[0].get_size()))
               print("THRESHOLD " + str(threshold))
+              print("AMOUNT TO REACH THRESHOLD: " + str(clo.get_tranches()[0].get_size() - threshold))
               portfolio_index -= 1
             
 
