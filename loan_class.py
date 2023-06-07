@@ -9,15 +9,8 @@ class Loan:
         self.__extension_period = extension_period
         self.__open_prepayment_period = open_prepayment_period
         self.__term_length = 0
-        self.__reinvestment = False
         self.__starting_month = 0
     
-    def get_reinvestment(self):
-        return self.__reinvestment
-    
-    def set_reinvestment(self, rein):
-        self.__reinvestment = rein
-
     def get_loan_id(self):
         return self.__loan_id
 

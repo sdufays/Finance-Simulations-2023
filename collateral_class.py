@@ -33,7 +33,6 @@ class CollateralPortfolio(Loan):
         # same even if active portfolio shrinks
         index_in_portfolio = len(self.__active_portfolio)
         self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
-        self.__active_portfolio[index_in_portfolio].set_reinvestment(True)
         # sets term length in active portfolio
         self.__active_portfolio[index_in_portfolio].set_term_length(20)
         # sets month the loan came to birth
