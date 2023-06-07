@@ -111,7 +111,7 @@ if __name__ == "__main__":
       if months_passed == 1:
          extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
          if extra_balance > 0:
-            loan_portfolio.add_new_loan(extra_balance, margin, months_passed)
+            loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
       
       # add current AAA balance to list
       clo.get_tranches()[0].save_AAA_balance()
@@ -151,7 +151,7 @@ if __name__ == "__main__":
            
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed)
+              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else:
               clo.get_tranches()[0].subtract_size(beginning_bal)
         else:
