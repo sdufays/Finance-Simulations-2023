@@ -126,13 +126,13 @@ if __name__ == "__main__":
       #print("\n")
 
 
-      # save to dataframe
+        # save to dataframe
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
       loan_data.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
-
+      
       # paying off loans
       if principal_pay != 0: 
           print("months: " + str(months_passed) + '\n')
@@ -148,13 +148,13 @@ if __name__ == "__main__":
 
 
           else:
-              print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))             
+              print("AAA SIZE: " + str("{:,}".format(clo.get_tranches()[0].get_size())))             
               clo.get_tranches()[0].subtract_size(beginning_bal)
               # switched from beginning balance 
-              print("Subtracted beginning balance: " + str(beginning_bal))
-              print("AAA NEW SIZE " + str(clo.get_tranches()[0].get_size()))
-              print("THRESHOLD " + str(threshold))
-              print("AMOUNT TO REACH THRESHOLD: " + str(clo.get_tranches()[0].get_size() - threshold))
+              print("Subtracted beginning balance: " + str("{:,}".format(beginning_bal)))
+              print("AAA NEW SIZE: " + str("{:,}".format(clo.get_tranches()[0].get_size())))
+              print("THRESHOLD: " + str("{:,}".format(threshold)))
+              print("AMOUNT TO REACH THRESHOLD: " + str("{:,}".format(clo.get_tranches()[0].get_size() - threshold)))
               portfolio_index -= 1
             
 
@@ -179,6 +179,7 @@ if __name__ == "__main__":
 
     # for the tranches, put 0 as all the values
     # for the loans, leave as if (still outstanding)
+<<<<<<< Updated upstream
      
     # Get the relevant loan data
     loan_data_subset = loan_data.loc[(current_loan, slice(None)), :].copy()
@@ -189,6 +190,21 @@ if __name__ == "__main__":
       loan_data_subset[col] = loan_data_subset[col].apply(lambda x: "{:,.0f}".format(x))
     # Now, print the DataFrame
     print(loan_data_subset)
+=======
+      
+    # test to make sure loan data is right
+    # test to make sure loan data is right
+    display = loan_data.loc[(current_loan, slice(None)), :].copy()
+
+    # Format the display DataFrame
+    format_display = display.applymap(lambda x: "{:,}".format(x))
+
+    # Display the formatted DataFrame
+    styled_df = format_display.style
+
+    print(styled_df.data.loc[(3, slice(None)), :])
+
+>>>>>>> Stashed changes
 
     # loan_data.to_excel('output.xlsx', index=True)
 
