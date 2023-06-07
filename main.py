@@ -75,7 +75,7 @@ if __name__ == "__main__":
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
-    loan_ids = list(range(1, 1 + len(loan_portfolio.get_portfolio())))  # 21 loan IDs
+    loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # 21 loan IDs
     months = list(range(0, longest_duration))
     loan_index = pd.MultiIndex.from_product([loan_ids, months],
                                    names=['Loan ID', 'Months Passed'])
@@ -84,31 +84,50 @@ if __name__ == "__main__":
 
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
-    # will need loop that makes sim happen 100 or 1000x 
+    # storage variables
+    total_tranche_cfs = [] # stores tranche cashflow for IRR calculation
+    deal_call_mos = [] # stores month when each deal is called
+
+    # initializing variables
     months_passed = 0
     terminate_next = False
-    total_tranche_cfs = []
-    deal_call_mos = []
+    # fill nan values in dataframe
+    loan_data = loan_data.fillna(0)
+    # initial CLO variables
     initial_AAA_bal = clo.get_tranches()[0].get_size()
     initial_clo_tob = clo.get_tob()
+    # initial collateral portfolio variables
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_data = loan_data.fillna(0)
 
     while months_passed in range(longest_duration): # longest duration 
+      # loan counter starts at 0 
       portfolio_index = 0 
+      # keeps track of current month
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
          extra_balance = clo.get_tda() - loan_portfolio.get_collateral_sum()
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance)
-      po_indexes = [] #testing indexes
+      
+      # po_indexes = [] # just for testing
       # monthly calculations 
-      # NEED TO ADD REINVESTMENT LOANS
       print("\nmonth " + str(months_passed))
-      while portfolio_index < len(loan_portfolio.get_portfolio()):
-        loan = loan_portfolio.get_portfolio()[portfolio_index]
+      # loops through ACTIVE loans only
+      while portfolio_index < len(loan_portfolio.get_active_portfolio()):
+        # initialize loan object
+        loan = loan_portfolio.get_active_portfolio()[portfolio_index]
+        loan_id = loan.get_loan_id()
+        if loan_id not in loan_ids:
+            loan_ids.append(loan_id)
+        # UPDATE DATAFRAME WITH HIGHER LOAN INDEXES
+        loan_index = pd.MultiIndex.from_product([loan_ids, months], names=['Loan ID', 'Months Passed'])
+        loan_data = loan_data.reindex(loan_index)
+        loan_data = loan_data.fillna(0)
+
+        # GET CALCULATION
         beginning_bal = loan.beginning_balance(months_passed, loan_data)
         #print(months_passed)
         principal_pay = loan.principal_paydown(months_passed, loan_data)
@@ -116,6 +135,10 @@ if __name__ == "__main__":
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
+        # somehow all these calculations are 0
+        if loan.get_loan_id() > 21:
+          print("LOAN #"+str(loan.get_loan_id()))
+          print([beginning_bal, principal_pay, ending_bal, interest_inc])
 
         # save to dataframe
         loan_data.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
@@ -126,14 +149,19 @@ if __name__ == "__main__":
 
         # paying off loans
         if principal_pay != 0: 
-           print("loan payed off")
+           print("loan payed off  prev loan term length: " + str(loan.get_term_length()) + ", loan id: " + str(loan.get_loan_id()))
            loan_portfolio.remove_loan(loan)
-           
            
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              print('new loan added, prev loan term length: ' + str(loan.get_term_length()) + ", loan id: " + str(loan.get_loan_id()))
+              print('new loan added, beginning bal: ' + str(beginning_bal))
               loan_portfolio.add_new_loan(beginning_bal, margin)
+              new_loan = loan_portfolio.get_active_portfolio()[-1]
+              # set beginnning balance of newly created loan in spreadsheet
+              # it's not 0 but then gets overwritten as 0
+              print(loan_portfolio.get_active_portfolio()[-1].get_loan_id())
+              loan_data.loc[(loan_portfolio.get_active_portfolio()[-1].get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
+              #print(loan_data.tail(longest_duration)) 
            else:
               clo.get_tranches()[0].subtract_size(beginning_bal)
               # switched from beginning balance 
@@ -141,15 +169,15 @@ if __name__ == "__main__":
               print("Subtracted beginning balance: " + str(beginning_bal))
               print("AAA SIZE " + str(clo.get_tranches()[0].get_size()))
               print("THRESHOLD " + str(threshold))
-              portfolio_index -= 1
-              
-
+        else:
+           portfolio_index += 1
+             
         clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
         clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
         # appends to list of cashflows
         total_tranche_cfs.append(clo_cashflow)
-        po_indexes.append(portfolio_index)
-        portfolio_index += 1
+        #po_indexes.append(portfolio_index)
+        
 
       # inner loop ends 
 
@@ -163,7 +191,7 @@ if __name__ == "__main__":
           terminate_next = True 
       
       
-      print(po_indexes)
+      #print(po_indexes)
       #print("AAA balance " + str(clo.get_tranches()[0].get_size()))
       #print("Thre " + str(threshold))
 
@@ -174,7 +202,7 @@ if __name__ == "__main__":
     # for the loans, leave as if (still outstanding)
       
     # test to make sure loan data is right
-    print(loan_data.loc[(3, slice(None)), :])
+    print(loan_data.head(longest_duration))
     # loan_data.to_excel('output.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
