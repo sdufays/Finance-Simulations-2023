@@ -166,14 +166,21 @@ if __name__ == "__main__":
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else: #waterfall
-              if clo.get_tranches()[0].get_size() > beginning_bal:
-                     clo.get_tranches()[0].subtract_size(beginning_bal)
-              else:
-                     remaining_subtract = beginning_bal - clo.get_tranches()[0].get_size()
-                     clo.get_tranches()[0].subtract_size(clo.get_tranches()[0].get_size())
-                     print("MONTH " + str(months_passed) + " T2 SIZE " + str(clo.get_tranches()[1].get_size()))
-                     clo.get_tranches()[1].subtract_size(remaining_subtract)
-
+               remaining_subtract = beginning_bal
+               for tranche in clo.get_tranches():
+                     if tranche.get_size() >= remaining_subtract:
+                        tranche.subtract_size(remaining_subtract)
+                        remaining_subtract = 0
+                        break
+                     else:
+                        remaining_subtract -= tranche.get_size()
+                        tranche.subtract_size(tranche.get_size())
+                     # Check if remaining_subtract is 0, if it is, break the loop
+                     if remaining_subtract == 0:
+                        break
+               # error condition if there's not enough total size in all tranches
+               if remaining_subtract > 0:
+                     raise ValueError("Not enough total size in all tranches to cover the subtraction.")
         else:
            portfolio_index += 1
 
