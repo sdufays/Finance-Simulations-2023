@@ -71,9 +71,9 @@ class CollateralPortfolio(Loan):
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
         num_loans = len(self.__active_portfolio)
-        prepay_amt = round(num_loans * case[2])
+        prepay_amt = round(num_loans * case[0])
         # print("prepay: " + str(prepay_amt/num_loans))
-        initial_amt = round(num_loans * case[0])
+        initial_amt = round(num_loans * case[1])
         # print("initial: " + str(initial_amt/num_loans))
         extended_amt = num_loans - prepay_amt - initial_amt
         # print("extended: " + str(extended_amt/num_loans))
@@ -91,16 +91,6 @@ class CollateralPortfolio(Loan):
                 loan.set_term_length(loan.get_open_prepayment_period())
     
     def initial_loan_terms(self, case):
-        # EXTREME CASE
-        #term_lengths = [8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
-        
-        # [.1,.1,.8]
-        #term_lengths = [15, 20, 12, 18, 15, 16, 12, 43, 36, 19, 19, 43, 15, 15, 14, 12, 8, 11, 7, 13, 8]
-
-        # [.1,.8,.1]
-        #term_lengths = [46, 15, 31, 48, 48, 47, 43, 55, 36, 19, 43, 43, 33, 58, 45, 42, 22, 54, 42, 26, 39]
-
-        # HIS MODEL
         term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
 
         for i, loan in enumerate(self.__active_portfolio):
