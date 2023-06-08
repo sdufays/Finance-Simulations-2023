@@ -114,7 +114,12 @@ def run_simulation(case):
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else:
-              clo.get_tranches()[0].subtract_size(beginning_bal)
+              if clo.get_tranches()[0].get_size() > beginning_bal:
+                     clo.get_tranches()[0].subtract_size(beginning_bal)
+              else:
+                     remaining_subtract = beginning_bal - clo.get_tranches()[0].get_size()
+                     clo.get_tranches()[0].subtract_size(clo.get_tranches()[0].get_size())
+                     clo.get_tranches()[1].subtract_size(remaining_subtract)
         else:
            portfolio_index += 1
              
