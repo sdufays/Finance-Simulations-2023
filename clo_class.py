@@ -1,4 +1,5 @@
 from tranche_class import Tranche
+import math
 
 class CLO(Tranche):
     def __init__(self, ramp_up, reinvestment_period, starting_date):
@@ -12,15 +13,20 @@ class CLO(Tranche):
         self.__base_last_months = []
         self.__downside_last_months = []
         self.__upside_last_months = []
+        self.__total_cashflows = []
 
     def remove_unsold_tranches(self):
-        for tranche in self.get_tranches():
-            if tranche.get_offered() != 1:
-                self.__tranches.remove(tranche)
-        for tranche in self.__tranches:
-            print(tranche.get_name())
+        t = 0
+        while t in range(len(self.get_tranches())):
+            if self.get_tranches()[t].get_offered() == 0:
+                self.__tranches.remove(self.get_tranches()[t])
+            else:
+                t+=1
+
     
     def get_total_cashflows(self):
+        self.__total_cashflows = [x for x in self.__total_cashflows if x != 0]
+        self.__total_cashflows = [x for x in self.__total_cashflows if not math.isnan(x)]
         return self.__total_cashflows
     
     def get_ramp_up(self):
@@ -101,6 +107,7 @@ class CLO(Tranche):
     
     def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value, dataframe):
         if month == 0: # should return a negative number
+            print("in function " + str(num_days))
             self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
         else:
             interest_sum = 0
