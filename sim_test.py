@@ -11,68 +11,10 @@ def get_date_array(date):
     else: 
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-
-if __name__ == "__main__":
-    # ------------------------ GENERAL INFO ------------------------ #
-    base = [.33, .33, .34]
-    downside = [.30, .25, .45]
-    upside = [.40, .35, .25]
-
-    # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications", header=None)
-
-    # assume they're giving us a date at the end of the month
-    first_payment_date = df_os.iloc[2, 1]
-    date_str = first_payment_date.strftime("%m-%d-%Y")
-    date = date_str.split("-") # ["MM", "DD", "YYYY"]
-    date = list(map(int, date)) # [MM, DD, YYYY]
-    # starting payment month
-    starting_month = date[0]
-    days_in_month = get_date_array(date)
-
-    reinvestment_period = df_os.iloc[1,1]
-    SOFR = df_os.iloc[3,1]
-
-
-    # --------------------------- UPFRONT COSTS --------------------------- #
-
-    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
-    placement_percent = df_uc.iloc[0,1]
-    legal = df_uc.iloc[1, 1]
-    accounting = df_uc.iloc[2, 1]
-    trustee = df_uc.iloc[3, 1]
-    printing = df_uc.iloc[4, 1]
-    RA_site = df_uc.iloc[5, 1]
-    modeling = df_uc.iloc[6, 1]
-    misc = df_uc.iloc[7, 1]
-
-    # ------------------------ INITIALIZE OBJECTS ------------------------ #
-    ramp_up = df_os.iloc[0, 1]
-    clo = CLO(ramp_up, reinvestment_period, first_payment_date)
-    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
-
-    # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
-
-    # add tranches in a loop
-    for index_t, row_t in df_cs.iterrows():
-      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
-    threshold = clo.get_threshold()
-  
-    loan_portfolio = CollateralPortfolio()
-
-    # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
-
-    # add loans in a loop
-    for index_l, row_l in df_cp.iterrows():
-      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
-  
+def run_simulation(case):
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengthsi think
-    loan_portfolio.generate_loan_terms(upside)
+    # sets term lengths 
+    loan_portfolio.generate_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -177,8 +119,6 @@ if __name__ == "__main__":
               print("tranche: " + tranche.get_name())
               print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
         clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
-        
-        
 
       # inner loop ends 
 
@@ -231,3 +171,71 @@ if __name__ == "__main__":
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
     print(calculations_for_one_trial)
   """
+
+if __name__ == "__main__":
+   # ------------------------ GENERAL INFO ------------------------ #
+    base = [.33, .33, .34]
+    downside = [.30, .25, .45]
+    upside = [.40, .35, .25]
+
+    # read excel file for Other Specifications
+    df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications", header=None)
+
+    # assume they're giving us a date at the end of the month
+    first_payment_date = df_os.iloc[2, 1]
+    date_str = first_payment_date.strftime("%m-%d-%Y")
+    date = date_str.split("-") # ["MM", "DD", "YYYY"]
+    date = list(map(int, date)) # [MM, DD, YYYY]
+    # starting payment month
+    starting_month = date[0]
+    days_in_month = get_date_array(date)
+
+    reinvestment_period = df_os.iloc[1,1]
+    SOFR = df_os.iloc[3,1]
+
+
+    # --------------------------- UPFRONT COSTS --------------------------- #
+
+    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
+    placement_percent = df_uc.iloc[0,1]
+    legal = df_uc.iloc[1, 1]
+    accounting = df_uc.iloc[2, 1]
+    trustee = df_uc.iloc[3, 1]
+    printing = df_uc.iloc[4, 1]
+    RA_site = df_uc.iloc[5, 1]
+    modeling = df_uc.iloc[6, 1]
+    misc = df_uc.iloc[7, 1]
+
+ # ------------------------ INITIALIZE OBJECTS ------------------------ #
+    ramp_up = df_os.iloc[0, 1]
+    clo = CLO(ramp_up, reinvestment_period, first_payment_date)
+    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
+
+    # read excel file for capital stack
+    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
+
+    # add tranches in a loop
+    for index_t, row_t in df_cs.iterrows():
+      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
+    threshold = clo.get_threshold()
+  
+    loan_portfolio = CollateralPortfolio()
+
+    # read excel file for loans
+    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
+
+    # add loans in a loop
+    for index_l, row_l in df_cp.iterrows():
+      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+
+   # ------------------------ RUN SIMULATION ------------------------ #
+
+    run_simulation(base)
+
+
+
+
+
+    

@@ -9,7 +9,11 @@ class CLO(Tranche):
         self.__reinvestment_period = reinvestment_period
         self.__starting_date = starting_date
         self.__total_cashflows = []
-    
+        self.__base_last_months = []
+        self.__downside_last_months = []
+        self.__upside_last_months = []
+
+
     def get_total_cashflows(self):
         return self.__total_cashflows
     
@@ -21,6 +25,15 @@ class CLO(Tranche):
 
     def get_starting_date(self):
         return self.__starting_date
+    
+    def get_base_last_months(self):
+        return self.__base_last_months
+    
+    def get_downside_last_months(self):
+        return self.__downside_last_months
+    
+    def get_upside_last_months(self):
+        return self.__upside_last_months
 
     def add_tranche(self, name, rating, offered, size, spread, price):
         tranche = Tranche(name, rating, offered, size, spread, price)
@@ -88,3 +101,12 @@ class CLO(Tranche):
             for tranche in self.get_tranches():
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             self.__total_cashflows.append(interest_sum + principal_sum)
+
+    def append_base_last_month(self, value):
+        self.__base_last_months.append(value)
+
+    def append_downside_last_month(self, value):
+        self.__downside_last_months.append(value)
+
+    def append_upside_last_month(self, value):
+        self.__upside_last_months.append(value)
