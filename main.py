@@ -38,7 +38,6 @@ if __name__ == "__main__":
 
     df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0,1]
-    print(placement_percent)
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
     trustee = df_uc.iloc[3, 1]
@@ -173,7 +172,9 @@ if __name__ == "__main__":
               else:
                      remaining_subtract = beginning_bal - clo.get_tranches()[0].get_size()
                      clo.get_tranches()[0].subtract_size(clo.get_tranches()[0].get_size())
+                     print("MONTH " + str(months_passed) + " T2 SIZE " + str(clo.get_tranches()[1].get_size()))
                      clo.get_tranches()[1].subtract_size(remaining_subtract)
+
         else:
            portfolio_index += 1
            
@@ -194,8 +195,6 @@ if __name__ == "__main__":
               clo_principal_sum += tranche_principal_sum
 
       # inner loop ends 
-      if months_passed == 0:
-         print("NUM DAYS right before" + str(days))
       clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
 
       # terminate in outer loop
@@ -216,8 +215,8 @@ if __name__ == "__main__":
     # loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
-    #print(tranche_df.loc['A'])
-    print(tranche_df.tail(longest_duration))
+    print(tranche_df.loc['A-S'])
+    #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
