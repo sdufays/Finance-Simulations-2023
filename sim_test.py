@@ -141,7 +141,13 @@ def run_simulation(case):
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
-    print(deal_call_mos) # only one so far
+    if case == "base":
+       clo.append_base_last_month(deal_call_mos)
+    elif case == "downside":
+       clo.append_downside_last_month(deal_call_mos)
+    else:
+       clo.append_upside_last_month(deal_call_mos)
+       
     """
     # WEIGHTED AVG COST OF FUNDS
     # multiplied by 100 cuz percent
@@ -233,6 +239,14 @@ if __name__ == "__main__":
    # ------------------------ RUN SIMULATION ------------------------ #
 
     run_simulation(base)
+
+   # ------------------------ GET OUTPUTS ------------------------ #
+    print(clo.get_base_last_months)
+    print(clo.get_downside_last_months)
+    print(clo.get_upside_last_months)
+   
+
+
 
 
 
