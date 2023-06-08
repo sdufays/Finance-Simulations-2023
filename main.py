@@ -127,10 +127,6 @@ if __name__ == "__main__":
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
       
-      # add current balances to list
-      for tranche in clo.get_tranches():
-        tranche.save_balance(tranche_df, months_passed)
-      #print(tranche_df.tail(longest_duration))
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
@@ -169,10 +165,12 @@ if __name__ == "__main__":
               if clo.get_tranches()[0].get_size() > beginning_bal:
                      clo.get_tranches()[0].subtract_size(beginning_bal)
               else:
+                     print("loan {}".format(loan.get_loan_id()))
                      remaining_subtract = beginning_bal - clo.get_tranches()[0].get_size()
                      clo.get_tranches()[0].subtract_size(clo.get_tranches()[0].get_size())
-                     print("MONTH " + str(months_passed) + " T2 SIZE " + str(clo.get_tranches()[1].get_size()))
                      clo.get_tranches()[1].subtract_size(remaining_subtract)
+                     print("MONTH {:,.2f} T2 SIZE {:,.2f}".format(months_passed,clo.get_tranches()[1].get_size()))
+                     print("subtracted already by {:,.2f}".format(remaining_subtract))
 
         else:
            portfolio_index += 1
@@ -192,6 +190,13 @@ if __name__ == "__main__":
               tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
               tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
               clo_principal_sum += tranche_principal_sum
+
+      # add current balances to list
+      for tranche in clo.get_tranches():
+        tranche.save_balance(tranche_df, months_passed)
+      
+      if months_passed == 35:
+         print("tranche AAA month 34 {:,.2f}".format(clo.get_tranches()[0].get_size()))
 
       # inner loop ends 
       clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 

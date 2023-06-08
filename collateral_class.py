@@ -1,5 +1,6 @@
 from loan_class import Loan
 import numpy as np
+import random
 
 class CollateralPortfolio(Loan):
     def __init__(self):
@@ -26,6 +27,8 @@ class CollateralPortfolio(Loan):
 
     # only during reinvestment period
     def add_new_loan(self, loan_balance, margin, month,ramp):
+        new_loan_terms = [18, 20, 30]
+        term = new_loan_terms[random.randint(0,2)]
         # print("new loan balance " + str("{:,}".format(loan_balance)))
         # make loan id higher than storage portfolio length -> so like 26
         loan_id = len(self.__storage_portfolio) + 1
@@ -38,14 +41,14 @@ class CollateralPortfolio(Loan):
 
         self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
         # sets term length in active portfolio
-        self.__active_portfolio[index_in_portfolio].set_term_length(20)
+        self.__active_portfolio[index_in_portfolio].set_term_length(term)
         # sets month the loan came to birth
         self.__active_portfolio[index_in_portfolio].set_starting_month(month)
         # sets term length in storage portfolio by finding loan by its id
         # cuz storage portfolio will look like [1,2,..., None (was 21), 22]
         for lo in self.__storage_portfolio:
             if lo != None and lo.get_loan_id() == loan_id:
-                lo.set_term_length(20)
+                lo.set_term_length(term)
       
     def generate_initial_margin(self):
         sum = 0
