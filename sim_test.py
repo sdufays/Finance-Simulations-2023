@@ -13,11 +13,8 @@ def get_date_array(date):
 
 def run_simulation(case):
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengths think
-    # initial, extended, prepay
-    loan_portfolio.generate_loan_terms(case)
-    #for loan in loan_portfolio.get_active_portfolio():
-       #print(loan.get_term_length())
+    # sets term lengthsi think
+    loan_portfolio.initial_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -34,14 +31,13 @@ def run_simulation(case):
         tranche_names.append(tranche.get_name())
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
-
     # SET DATAFRAME FORMAT OPTIONS
     # Set the display format for floating-point numbers
     pd.options.display.float_format = '{:,.2f}'.format
+
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
     # storage variables
-    total_tranche_cfs = [] # stores tranche cashflow for IRR calculation
     deal_call_mos = [] # stores month when each deal is called
 
     # initializing variables
@@ -58,11 +54,12 @@ def run_simulation(case):
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
-
+    
+    # removing unsold tranches so they don't get in the way
+    clo.remove_unsold_tranches()
     while months_passed in range(longest_duration): # longest duration 
       # loan counter starts at 0 
       portfolio_index = 0 
-      # keeps track of current month
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
@@ -70,10 +67,6 @@ def run_simulation(case):
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
       
-      # add current balances to list
-      for tranche in clo.get_tranches():
-        tranche.save_balance(tranche_df, months_passed)
-
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
@@ -85,21 +78,17 @@ def run_simulation(case):
         loan_index = pd.MultiIndex.from_product([loan_ids, months], names=['Loan ID', 'Months Passed'])
         loan_df = loan_df.reindex(loan_index)
         loan_df = loan_df.fillna(0)
+        
+        tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance(months_passed, loan_df)
-        #print(months_passed)
-        #if months_passed == 0:
-           #print(loan.get_loan_id())
-            #print("begin bal isn't the issue")
         principal_pay = loan.principal_paydown(months_passed, loan_df)
-        #print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days)
-        # somehow all these calculations are 0
 
-        # save to dataframe
+        # save to loan dataframe
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
@@ -109,25 +98,34 @@ def run_simulation(case):
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-           else:
-              if clo.get_tranches()[0].get_size() > beginning_bal:
-                     clo.get_tranches()[0].subtract_size(beginning_bal)
-              else:
-                     remaining_subtract = beginning_bal - clo.get_tranches()[0].get_size()
-                     clo.get_tranches()[0].subtract_size(clo.get_tranches()[0].get_size())
-                     clo.get_tranches()[1].subtract_size(remaining_subtract)
+           else: #waterfall
+               remaining_subtract = beginning_bal
+               for tranche in clo.get_tranches():
+                     if tranche.get_size() >= remaining_subtract:
+                        tranche.subtract_size(remaining_subtract)
+                        remaining_subtract = 0
+                        break
+                     else:
+                        remaining_subtract -= tranche.get_size()
+                        tranche.subtract_size(tranche.get_size())
+                     # Check if remaining_subtract is 0, if it is, break the loop
+                     if remaining_subtract == 0:
+                        break
+               # error condition if there's not enough total size in all tranches
+               if remaining_subtract > 0:
+                     raise ValueError("Not enough total size in all tranches to cover the subtraction.")
         else:
            portfolio_index += 1
-             
-        append = False
+
+        append = False # this fixes non-AAA tranches principal payment
         clo_principal_sum = 0 
         for tranche in clo.get_tranches():
+          # if we're on the last loan in the month
           if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
-             append = True
+             append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
           tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append)
           # if we're on the last iteration for the month
           if portfolio_index == len(loan_portfolio.get_active_portfolio()):
@@ -137,9 +135,13 @@ def run_simulation(case):
               tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
               tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
               clo_principal_sum += tranche_principal_sum
-        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
+
+      # add current balances to list
+      for tranche in clo.get_tranches():
+        tranche.save_balance(tranche_df, months_passed)
 
       # inner loop ends 
+      clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
 
       # terminate in outer loop
       if terminate_next:
@@ -151,12 +153,14 @@ def run_simulation(case):
 
       months_passed += 1
 
-    # for the tranches, put 0 as all the values
-    # for the loans, leave as if (still outstanding)
-      
-    # test to make sure loan data is right
-    print(loan_df.tail(longest_duration))
+    # testing loan data
+    #print(loan_df.tail(longest_duration))
     # loan_df.to_excel('output.xlsx', index=True)
+
+    # testing tranche data
+    #print(tranche_df.loc['A-S'])
+    #print(tranche_df.head(longest_duration))
+    #tranche_df.to_excel('tranches.xlsx', index=True)
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
@@ -167,17 +171,10 @@ def run_simulation(case):
     else:
        clo.append_upside_last_month(deal_call_mos)
        
-    """
-    # WEIGHTED AVG COST OF FUNDS
-    # multiplied by 100 cuz percent
-    total_tranche_cfs = [x for x in total_tranche_cfs if not math.isnan(x)] # takes out NaN values from list
-    print(total_tranche_cfs)
-    print(npf.irr(total_tranche_cfs))
-    wa_cof = (npf.irr(total_tranche_cfs)*360/365 - SOFR) * 100
+    wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
-    # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
-    avg_AAA_bal = sum(clo.get_tranches()[0].get_AAA_bal_list()) / deal_call_mos[0]
+    avg_AAA_bal = sum(clo.get_tranches()[0].get_bal_list()) / deal_call_mos[0]
     avg_clo_bal = (initial_clo_tob - initial_AAA_bal) / deal_call_mos[0] + avg_AAA_bal
     avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
@@ -194,8 +191,6 @@ def run_simulation(case):
     projected_equity_yield = (equity_net_spread + origination_fee) * 100
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    print(calculations_for_one_trial)
-  """
 
 if __name__ == "__main__":
    # ------------------------ GENERAL INFO ------------------------ #

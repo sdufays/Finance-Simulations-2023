@@ -190,8 +190,6 @@ if __name__ == "__main__":
           # if we're on the last iteration for the month
           if portfolio_index == len(loan_portfolio.get_active_portfolio()):
              if tranche.get_offered() == 1:
-              #print("month " + str(months_passed) + " tranche " + tranche.get_name())
-              #print(tranche.get_principal_dict()[months_passed])
               tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
               tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
               clo_principal_sum += tranche_principal_sum
@@ -199,9 +197,6 @@ if __name__ == "__main__":
       # add current balances to list
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
-      
-      if months_passed == 35:
-         print("tranche AAA month 34 {:,.2f}".format(clo.get_tranches()[0].get_size()))
 
       # inner loop ends 
       clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
