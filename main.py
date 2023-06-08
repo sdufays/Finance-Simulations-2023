@@ -90,6 +90,10 @@ if __name__ == "__main__":
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
 
+    # SET DATAFRAME FORMAT OPTIONS
+    # Set the display format for floating-point numbers
+    pd.options.display.float_format = '{:,.2f}'.format
+
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
     # storage variables
@@ -104,11 +108,15 @@ if __name__ == "__main__":
     # initial CLO variables
     initial_AAA_bal = clo.get_tranches()[0].get_size()
     initial_clo_tob = clo.get_tob()
+    for tranche in clo.get_tranches():
+       tranche.init_principal_dict(longest_duration)
     # initial collateral portfolio variables
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
-
+    
+    # removing unsold tranches so they don't get in the way
+    clo.remove_unsold_tranches()
     while months_passed in range(longest_duration): # longest duration 
       # loan counter starts at 0 
       portfolio_index = 0 
@@ -135,6 +143,8 @@ if __name__ == "__main__":
         loan_index = pd.MultiIndex.from_product([loan_ids, months], names=['Loan ID', 'Months Passed'])
         loan_df = loan_df.reindex(loan_index)
         loan_df = loan_df.fillna(0)
+        
+        tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance(months_passed, loan_df)
@@ -158,19 +168,27 @@ if __name__ == "__main__":
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else:
+              print("AAA BAL " + str(clo.get_tranches()[0].get_size()))
+              print("month: " + str(months_passed) + " subtracting by loan: " + str(loan.get_loan_id()) + " beginning balance: " + str(beginning_bal))
               clo.get_tranches()[0].subtract_size(beginning_bal)
         else:
            portfolio_index += 1
 
-        clo_principal_sum = 0   
+        clo_principal_sum = 0 
         for tranche in clo.get_tranches():
-           tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+          # if we're on the last iteration for the month
+          if portfolio_index == len(loan_portfolio.get_active_portfolio()):
+             if tranche.get_offered() == 1:
+              print("month " + str(months_passed) + " tranche " + tranche.get_name())
+              print(tranche.get_principal_dict()[months_passed])
+              tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
+              tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
+              clo_principal_sum += tranche_principal_sum
 
-        if months_passed == 0:
-           print("month: " + str(months_passed))
-           for tranche in clo.get_tranches():
-              print("tranche: " + tranche.get_name())
-              print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
+        #for tranche in clo.get_tranches():
+            #print("tranche: " + tranche.get_name())
+            #print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
         clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
         
 
@@ -194,7 +212,7 @@ if __name__ == "__main__":
     # loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
-    print(tranche_df.head(longest_duration))
+    print(tranche_df.tail(longest_duration))
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH

@@ -13,7 +13,13 @@ class CLO(Tranche):
         self.__downside_last_months = []
         self.__upside_last_months = []
 
-
+    def remove_unsold_tranches(self):
+        for tranche in self.get_tranches():
+            if tranche.get_offered() != 1:
+                self.__tranches.remove(tranche)
+        for tranche in self.__tranches:
+            print(tranche.get_name())
+    
     def get_total_cashflows(self):
         return self.__total_cashflows
     

@@ -13,8 +13,12 @@ def get_date_array(date):
 
 def run_simulation(case):
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengths 
-    loan_portfolio.generate_loan_terms(case)
+    # sets term lengthsi think
+    # initial, extended, prepay
+    extreme = [.1,.8,.1]
+    loan_portfolio.generate_loan_terms(extreme)
+    for loan in loan_portfolio.get_active_portfolio():
+       print(loan.get_term_length())
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -27,10 +31,14 @@ def run_simulation(case):
     # CREATE TRANCHE DATAFRAME
     tranche_names = []
     for tranche in clo.get_tranches():
-       tranche_names.append(tranche.get_name())
+       if tranche.get_offered() == 1:
+        tranche_names.append(tranche.get_name())
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
-    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment'])
+    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
 
+    # SET DATAFRAME FORMAT OPTIONS
+    # Set the display format for floating-point numbers
+    pd.options.display.float_format = '{:,.2f}'.format
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
     # storage variables
@@ -45,6 +53,8 @@ def run_simulation(case):
     # initial CLO variables
     initial_AAA_bal = clo.get_tranches()[0].get_size()
     initial_clo_tob = clo.get_tob()
+    for tranche in clo.get_tranches():
+       tranche.init_principal_dict(longest_duration)
     # initial collateral portfolio variables
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
@@ -109,15 +119,17 @@ def run_simulation(case):
         else:
            portfolio_index += 1
              
-        clo_principal_sum = 0   
+        clo_principal_sum = 0 
         for tranche in clo.get_tranches():
-           tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
-
-        if months_passed == 0:
-           print("month: " + str(months_passed))
-           for tranche in clo.get_tranches():
-              print("tranche: " + tranche.get_name())
-              print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
+          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+          # if we're on the last iteration for the month
+          if portfolio_index == len(loan_portfolio.get_active_portfolio()):
+             if tranche.get_offered() == 1:
+              print("month " + str(months_passed) + " tranche " + tranche.get_name())
+              print(tranche.get_principal_dict()[months_passed])
+              tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
+              tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
+              clo_principal_sum += tranche_principal_sum
         clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
 
       # inner loop ends 

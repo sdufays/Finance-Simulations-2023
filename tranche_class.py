@@ -8,12 +8,21 @@ class Tranche:
         self.__offered = offered
         self.__price = price
         self.__bal_list = []
+        self.__principal_dict = {}
+
+    def get_principal_dict(self):
+        return self.__principal_dict
+
+    # initializes dictionary to {1:[], 2:[],...}
+    def init_principal_dict(self, total_months):
+        for i in range(0, total_months):
+            self.__principal_dict[i] = []
     
     def save_balance(self, dataframe, month):
         self.__bal_list.append(self.get_size())
-        dataframe.loc[('A', month), 'Tranche Size'] = self.get_size()
+        dataframe.loc[(self.get_name(), month), 'Tranche Size'] = self.get_size()
     
-    def get__bal_list(self):
+    def get_bal_list(self):
         return self.__bal_list
 
     def get_name(self):
@@ -47,14 +56,17 @@ class Tranche:
     
     def tranche_principal(self, month, reinvest_per, dataframe, loan_paydown, termin_next):
         if self.get_name() == 'A':
-            if month > reinvest_per:
-                principal = loan_paydown
+            if month > reinvest_per and loan_paydown != 0: # yes
+                print("principal pay " + str(loan_paydown) + ", month " + str(month))
+                principal = loan_paydown # loan princi pay
+            elif termin_next:
+                principal = self.get_bal_list()[month-1]
             else:
-                principal = self.get_size()
+                principal = 0 #self.get_size()
         else:
             if termin_next:
-                principal = self.get__bal_list()[month-1]
+                principal = self.get_bal_list()[month-1]
             else:
                 principal = 0
-        dataframe.loc[(self.get_name(), month), 'Principal Payment'] = principal
+        self.__principal_dict[month].append(principal)
         return principal
