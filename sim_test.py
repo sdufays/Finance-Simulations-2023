@@ -119,14 +119,17 @@ def run_simulation(case):
         else:
            portfolio_index += 1
              
+        append = False
         clo_principal_sum = 0 
         for tranche in clo.get_tranches():
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+          if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
+             append = True
+          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append)
           # if we're on the last iteration for the month
           if portfolio_index == len(loan_portfolio.get_active_portfolio()):
              if tranche.get_offered() == 1:
-              print("month " + str(months_passed) + " tranche " + tranche.get_name())
-              print(tranche.get_principal_dict()[months_passed])
+              #print("month " + str(months_passed) + " tranche " + tranche.get_name())
+              #print(tranche.get_principal_dict()[months_passed])
               tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
               tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
               clo_principal_sum += tranche_principal_sum
@@ -253,9 +256,9 @@ if __name__ == "__main__":
     run_simulation(base)
 
    # ------------------------ GET OUTPUTS ------------------------ #
-    print(clo.get_base_last_months)
-    print(clo.get_downside_last_months)
-    print(clo.get_upside_last_months)
+    print(clo.get_base_last_months())
+    print(clo.get_downside_last_months())
+    print(clo.get_upside_last_months())
    
 
 

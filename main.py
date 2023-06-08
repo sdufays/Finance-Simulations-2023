@@ -168,20 +168,23 @@ if __name__ == "__main__":
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else:
-              print("AAA BAL " + str(clo.get_tranches()[0].get_size()))
-              print("month: " + str(months_passed) + " subtracting by loan: " + str(loan.get_loan_id()) + " beginning balance: " + str(beginning_bal))
+              #print("AAA BAL " + str(clo.get_tranches()[0].get_size()))
+              #print("month: " + str(months_passed) + " subtracting by loan: " + str(loan.get_loan_id()) + " beginning balance: " + str(beginning_bal))
               clo.get_tranches()[0].subtract_size(beginning_bal)
         else:
            portfolio_index += 1
 
+        append = False # this fixes non-AAA tranches principal payment
         clo_principal_sum = 0 
         for tranche in clo.get_tranches():
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next)
+          if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
+             append = True
+          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append)
           # if we're on the last iteration for the month
           if portfolio_index == len(loan_portfolio.get_active_portfolio()):
              if tranche.get_offered() == 1:
-              print("month " + str(months_passed) + " tranche " + tranche.get_name())
-              print(tranche.get_principal_dict()[months_passed])
+              #print("month " + str(months_passed) + " tranche " + tranche.get_name())
+              #print(tranche.get_principal_dict()[months_passed])
               tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
               tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
               clo_principal_sum += tranche_principal_sum
@@ -191,7 +194,6 @@ if __name__ == "__main__":
             #print(tranche.tranche_interest(days, SOFR, tranche_df, months_passed))
         clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
         
-
       # inner loop ends 
 
       # terminate in outer loop
@@ -212,7 +214,8 @@ if __name__ == "__main__":
     # loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
-    print(tranche_df.tail(longest_duration))
+    #print(tranche_df.loc['A'])
+    print(tranche_df.head(longest_duration))
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
