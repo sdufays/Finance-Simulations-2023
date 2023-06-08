@@ -59,15 +59,18 @@ class Tranche:
     def tranche_principal(self, month, reinvest_per, dataframe, loan_paydown, termin_next, append):
         if self.get_name() == 'A':
             if month > reinvest_per and loan_paydown != 0: # yes
-                #print("principal pay " + str(loan_paydown) + ", month " + str(month))
-                principal = loan_paydown # loan princi pay
+                principal = min(loan_paydown,self.get_bal_list()[month-1]) # loan princi pay
             elif termin_next:
                 principal = self.get_bal_list()[month-1]
             else:
                 principal = 0 #self.get_size()
         else:
             if termin_next and append:
-                principal = self.get_bal_list()[month-1]
+                # if AAA_bal == 0:
+                    # if self.get_name() == 'A-S':
+                        #principal = min(self.get_bal_list()[month-1], loan_paydown - )
+                # else:
+                    principal = self.get_bal_list()[month-1]
             else:
                 principal = 0
         self.__principal_dict[month].append(principal)

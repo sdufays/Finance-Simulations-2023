@@ -128,6 +128,10 @@ class CLO(Tranche):
             interest_sum = 0
             for tranche in self.get_tranches():
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
+            if principal_sum!=0:
+                print("month {}".format(month))
+                print("interest {:,.2f} principal {:,.2f}".format(interest_sum, principal_sum))
+                print("cashflow {:,.2f}".format(interest_sum + principal_sum))
             self.__total_cashflows.append(interest_sum + principal_sum)
 
     def append_base_last_month(self, value):
