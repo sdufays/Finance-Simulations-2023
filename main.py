@@ -219,7 +219,7 @@ if __name__ == "__main__":
     # loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
-    print(tranche_df.loc['A-S'])
+    print(tranche_df.loc['A'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
@@ -229,6 +229,9 @@ if __name__ == "__main__":
     # WEIGHTED AVG COST OF FUNDS
     # multiplied by 100 cuz percent
     print(clo.get_total_cashflows())
+    data = {'Cashflows': clo.get_total_cashflows()}
+    #print(pd.DataFrame(data))
+
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
