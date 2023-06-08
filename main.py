@@ -119,7 +119,6 @@ if __name__ == "__main__":
     while months_passed in range(longest_duration): # longest duration 
       # loan counter starts at 0 
       portfolio_index = 0 
-      # keeps track of current month
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations 
       if months_passed == 1:
@@ -162,11 +161,10 @@ if __name__ == "__main__":
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           
            # reinvestment calculations 
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-           else:
+           else: #waterfall
               if clo.get_tranches()[0].get_size() > beginning_bal:
                      clo.get_tranches()[0].subtract_size(beginning_bal)
               else:
@@ -177,7 +175,7 @@ if __name__ == "__main__":
 
         else:
            portfolio_index += 1
-           
+
         append = False # this fixes non-AAA tranches principal payment
         clo_principal_sum = 0 
         for tranche in clo.get_tranches():

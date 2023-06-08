@@ -234,7 +234,6 @@ if __name__ == "__main__":
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, reinvestment_period, first_payment_date)
-    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
@@ -244,6 +243,8 @@ if __name__ == "__main__":
       tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
       clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
     threshold = clo.get_threshold()
+
+    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
   
     loan_portfolio = CollateralPortfolio()
 
@@ -266,7 +267,6 @@ if __name__ == "__main__":
       # chnage 10 to number of simulation runs per scenario 
       for _ in range(10):
           run_simulation(scenario)"""
-
 
    # ------------------------ GET OUTPUTS ------------------------ #
     print(clo.get_base_last_months())
