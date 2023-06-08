@@ -13,7 +13,7 @@ def get_date_array(date):
 
 def run_simulation(case):
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengthsi think
+    # sets term lengths think
     # initial, extended, prepay
     loan_portfolio.generate_loan_terms(case)
     #for loan in loan_portfolio.get_active_portfolio():
