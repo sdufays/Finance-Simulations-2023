@@ -265,7 +265,6 @@ if __name__ == "__main__":
 
 
    # ------------------------ GET OUTPUTS ------------------------ #
-<<<<<<< Updated upstream
     print(clo.get_base_last_months())
     print(clo.get_downside_last_months())
     print(clo.get_upside_last_months())
@@ -278,9 +277,3 @@ if __name__ == "__main__":
 
 
     
-=======
-    print(clo.get_base_last_months)
-    print(clo.get_downside_last_months)
-    print(clo.get_upside_last_months)
-   
->>>>>>> Stashed changes
