@@ -15,10 +15,9 @@ def run_simulation(case):
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengthsi think
     # initial, extended, prepay
-    extreme = [.1,.8,.1]
-    loan_portfolio.generate_loan_terms(extreme)
-    for loan in loan_portfolio.get_active_portfolio():
-       print(loan.get_term_length())
+    loan_portfolio.generate_loan_terms(case)
+    #for loan in loan_portfolio.get_active_portfolio():
+       #print(loan.get_term_length())
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -90,9 +89,9 @@ def run_simulation(case):
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance(months_passed, loan_df)
         #print(months_passed)
-        if months_passed == 0:
-            print(loan.get_loan_id())
-            print("begin bal isn't the issue")
+        #if months_passed == 0:
+           #print(loan.get_loan_id())
+            #print("begin bal isn't the issue")
         principal_pay = loan.principal_paydown(months_passed, loan_df)
         #print("Begin bal " + str(principal_pay) + " Loan id " + str(loan.get_loan_id()))
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
