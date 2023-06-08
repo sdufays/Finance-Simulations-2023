@@ -255,7 +255,17 @@ if __name__ == "__main__":
 
     run_simulation(base)
 
+   # ------------------------ RUN SIMULATION LOOPS ------------------------ #
+    """scenarios = [base, downside, upside]
+
+    for scenario in scenarios:
+      # chnage 10 to number of simulation runs per scenario 
+      for _ in range(10):
+          run_simulation(scenario)"""
+
+
    # ------------------------ GET OUTPUTS ------------------------ #
+<<<<<<< Updated upstream
     print(clo.get_base_last_months())
     print(clo.get_downside_last_months())
     print(clo.get_upside_last_months())
@@ -268,3 +278,9 @@ if __name__ == "__main__":
 
 
     
+=======
+    print(clo.get_base_last_months)
+    print(clo.get_downside_last_months)
+    print(clo.get_upside_last_months)
+   
+>>>>>>> Stashed changes
