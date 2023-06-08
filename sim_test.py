@@ -267,7 +267,6 @@ if __name__ == "__main__":
       for _ in range(10):
           run_simulation(scenario)"""
 
-
    # ------------------------ GET OUTPUTS ------------------------ #
     print(clo.get_base_last_months())
     print(clo.get_downside_last_months())
