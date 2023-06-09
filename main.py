@@ -120,6 +120,10 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
+    replen_months = 0
+    replen_cumulative = 0
+    incremented_replen_month = False
+
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -168,7 +172,6 @@ if __name__ == "__main__":
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else: #waterfall
-
                remaining_subtract = beginning_bal
                for tranche in clo.get_tranches():
                      if tranche.get_size() >= remaining_subtract:
@@ -204,6 +207,7 @@ if __name__ == "__main__":
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
 
+      incremented_replen_month = False
       months_passed += 1
 
     # for the tranches, put 0 as all the values
