@@ -14,10 +14,6 @@ class CLO(Tranche):
         self.__replenishment_amount = replenishment_amount             
         self.__starting_date = starting_date
         self.__total_cashflows = []
-        self.__base_last_months = []
-        self.__downside_last_months = []
-        self.__upside_last_months = []
-        self.__total_cashflows = []
 
     def remove_unsold_tranches(self):
         t = 0
@@ -53,15 +49,6 @@ class CLO(Tranche):
 
     def get_starting_date(self):
         return self.__starting_date
-    
-    def get_base_last_months(self):
-        return self.__base_last_months
-    
-    def get_downside_last_months(self):
-        return self.__downside_last_months
-    
-    def get_upside_last_months(self):
-        return self.__upside_last_months
 
     def add_tranche(self, name, rating, offered, size, spread, price):
         tranche = Tranche(name, rating, offered, size, spread, price)
@@ -130,15 +117,6 @@ class CLO(Tranche):
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             self.__total_cashflows.append(interest_sum + principal_sum)
 
-    def append_base_last_month(self, value):
-        self.__base_last_months.append(value)
-
-    def append_downside_last_month(self, value):
-        self.__downside_last_months.append(value)
-
-    def append_upside_last_month(self, value):
-        self.__upside_last_months.append(value)
-    
     def clo_principal_sum(self, month, reinvest_per, dataframe, loan_paydown, termin_next, loan, portfolio, po_index):
         append = False
         need_waterfall = False
@@ -148,7 +126,7 @@ class CLO(Tranche):
             if loan.get_loan_id() == portfolio.get_active_portfolio()[-1].get_loan_id():
                 append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
             if tranche.get_name() == "A":
-                 # if a loan pays down while noti in reinvestment
+                 # if a loan pays down while not in reinvestment
                 if month > reinvest_per and loan_paydown != 0:
                     principal = loan_paydown
                 elif termin_next:
@@ -167,7 +145,7 @@ class CLO(Tranche):
                 tranche_principal_sum = sum(tranche.get_principal_dict()[month]) # sum for one tranche
                 if tranche.get_name() == 'A':
                     tranche_principal_sum = min(tranche_principal_sum, tranche.get_size())
-                    print("A PRINC SUM {:,.2f}".format(tranche_principal_sum))
+                    #print("A PRINC SUM {:,.2f}".format(tranche_principal_sum))
                     need_waterfall = True
                 elif tranche.get_name() == 'A-S' and need_waterfall:
                     tranche_principal_sum = min(tranche_principal_sum, tranche.get_size())

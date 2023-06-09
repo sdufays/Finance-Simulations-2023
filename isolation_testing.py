@@ -32,6 +32,14 @@ if __name__ == "__main__":
     reinvestment_period = df_os.iloc[1,1]
     SOFR = df_os.iloc[3,1]
 
+    has_reinvestment = df_os.iloc[7,1]
+    has_replenishment = df_os.iloc[5,1]
+
+    reinvestment_period = df_os.iloc[1,1]
+    replenishment_period = df_os.iloc[4,1]
+
+    replenishment_amount = df_os.iloc[6,1]
+
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
@@ -47,7 +55,7 @@ if __name__ == "__main__":
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
-    clo = CLO(ramp_up, reinvestment_period, first_payment_date)
+    clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
     upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
     # read excel file for capital stack
@@ -82,6 +90,17 @@ if __name__ == "__main__":
     # Create an empty DataFrame with the multi-index
     loan_data = pd.DataFrame(index=loan_index, columns=['Current Month', 'Beginning Balance', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
 
+    # CREATE TRANCHE DATAFRAME
+    tranche_names = []
+    for tranche in clo.get_tranches():
+       if tranche.get_offered() == 1:
+        tranche_names.append(tranche.get_name())
+    tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
+    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
+    # SET DATAFRAME FORMAT OPTIONS
+    # Set the display format for floating-point numbers
+    pd.options.display.float_format = '{:,.2f}'.format
+    
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
     # will need loop that makes sim happen 100 or 1000x 
@@ -94,6 +113,9 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_data = loan_data.fillna(0)
+    replen_months = 0
+    replen_cumulative = 0
+    incremented_replen_month = False
     current_loan = 3
 
     while months_passed in range(50): # longest duration 
@@ -135,46 +157,70 @@ if __name__ == "__main__":
       
       # paying off loans
       if principal_pay != 0: 
-          print("months: " + str(months_passed) + '\n')
-          print("loan payed off! \n")
           loan_portfolio.remove_loan(loan)
-        
-          # reinvestment calculations 
-          if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed)
-              print('new loan added! \n')
-              new_loan1 = loan_portfolio.get_active_portfolio()[-1]
-              new_loan1.print_loan_info()
+          reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+          replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+          replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
+          if reinvestment_bool:
+              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+          elif replenishment_bool:
+              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+              replen_cumulative += beginning_bal
+          elif replen_after_reinv_bool:
+              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+              replen_cumulative += beginning_bal
+                # increment replen_months only once in a month
+              if not incremented_replen_month:
+                  replen_months += 1
+                  incremented_replen_month = True # set flag to True so that it won't increment again within this month
+          else: #waterfall it
+              remaining_subtract = beginning_bal
+              for tranche in clo.get_tranches():
+                  if tranche.get_size() >= remaining_subtract:
+                      print(str(tranche.get_name()) + " SIZE: " + str("{:,}".format(tranche.get_size()))) 
+                      tranche.subtract_size(remaining_subtract)
+                      print("Subtracted beginning balance: " + str("{:,}".format(remaining_subtract)))
+                      print("NEW SIZE: " + str("{:,}".format(tranche.get_size())))
+                      if str(tranche.get_name()) == 'AAA':
+                        print("THRESHOLD: " + str("{:,}".format(threshold)))
+                        print("AMOUNT TO REACH THRESHOLD: " + str("{:,}".format(tranche.get_size() - threshold)))
+                      remaining_subtract = 0
+                      break
+                  else:
+                      print(str(tranche.get_name()) + " SIZE: " + str("{:,}".format(tranche.get_size()))) 
+                      remaining_subtract -= tranche.get_size()
+                      tranche.subtract_size(tranche.get_size())
+                      print("Subtracted beginning balance: " + str("{:,}".format(remaining_subtract)))
+                      print("NEW SIZE: " + str("{:,}".format(tranche.get_size())))
+                      
+                  # Check if remaining_subtract is 0, if it is, break the loop
+                  if remaining_subtract == 0:
+                      break
+              # error condition if there's not enough total size in all tranches
+              if remaining_subtract > 0:
+                  raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
+              
+      else:
+          portfolio_index += 1
 
-          else:
-              print("AAA SIZE: " + str("{:,}".format(clo.get_tranches()[0].get_size())))             
-              clo.get_tranches()[0].subtract_size(beginning_bal)
-              # switched from beginning balance 
-              print("Subtracted beginning balance: " + str("{:,}".format(beginning_bal)))
-              print("AAA NEW SIZE: " + str("{:,}".format(clo.get_tranches()[0].get_size())))
-              print("THRESHOLD: " + str("{:,}".format(threshold)))
-              print("AMOUNT TO REACH THRESHOLD: " + str("{:,}".format(clo.get_tranches()[0].get_size() - threshold)))
-              portfolio_index -= 1
-            
+      clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
+      # add current balances to list
+      for tranche in clo.get_tranches():
+        tranche.save_balance(tranche_df, months_passed)
 
-      clo_principal = clo.get_tranche_principal_sum(months_passed, reinvestment_period, principal_pay, threshold)
-      clo_cashflow = clo.total_tranche_cashflow(months_passed, upfront_costs, days, clo_principal, SOFR) 
-      # appends to list of cashflows
-      total_tranche_cfs.append(clo_cashflow)
-      portfolio_index += 1
+      # inner loop ends 
+      clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
 
-    # inner loop ends 
-
-  # terminate in outer loop
+    # terminate in outer loop
       if terminate_next:
         deal_call_mos.append(months_passed)
         break 
     
       if clo.get_tranches()[0].get_size() <= threshold:
-        print("WORK")
         terminate_next = True 
-       
+      
+      incremented_replen_month = False
       months_passed += 1
 
     # for the tranches, put 0 as all the values
@@ -189,6 +235,8 @@ if __name__ == "__main__":
       loan_data_subset[col] = loan_data_subset[col].apply(lambda x: "{:,.0f}".format(x))
     # Now, print the DataFrame
     print(loan_data_subset)
+
+    print(tranche_df.loc['A-S'])
 
     # loan_data.to_excel('output.xlsx', index=True)
 

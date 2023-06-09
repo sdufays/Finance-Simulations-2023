@@ -80,6 +80,9 @@ def run_simulation(case):
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
+    replen_months = 0
+    replen_cumulative = 0
+    incremented_replen_month = False
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -124,43 +127,43 @@ def run_simulation(case):
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           # reinvestment calculations 
-           if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-           else: #waterfall
-               remaining_subtract = beginning_bal
-               for tranche in clo.get_tranches():
-                     if tranche.get_size() >= remaining_subtract:
+           reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+
+           if reinvestment_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+           elif replenishment_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                replen_cumulative += beginning_bal
+           elif replen_after_reinv_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                replen_cumulative += beginning_bal
+                 # increment replen_months only once in a month
+                if not incremented_replen_month:
+                   replen_months += 1
+                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
+           else: #waterfall it
+                remaining_subtract = beginning_bal
+                for tranche in clo.get_tranches():
+                    if tranche.get_size() >= remaining_subtract:
                         tranche.subtract_size(remaining_subtract)
                         remaining_subtract = 0
                         break
-                     else:
+                    else:
                         remaining_subtract -= tranche.get_size()
                         tranche.subtract_size(tranche.get_size())
-                     # Check if remaining_subtract is 0, if it is, break the loop
-                     if remaining_subtract == 0:
+                    # Check if remaining_subtract is 0, if it is, break the loop
+                    if remaining_subtract == 0:
                         break
-               # error condition if there's not enough total size in all tranches
-               if remaining_subtract > 0:
-                     raise ValueError("Not enough total size in all tranches to cover the subtraction.")
+                # error condition if there's not enough total size in all tranches
+                if remaining_subtract > 0:
+                    raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
+                
         else:
            portfolio_index += 1
 
-        append = False # this fixes non-AAA tranches principal payment
-        clo_principal_sum = 0 
-        for tranche in clo.get_tranches():
-          # if we're on the last loan in the month
-          if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
-             append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append)
-          # if we're on the last iteration for the month
-          if portfolio_index == len(loan_portfolio.get_active_portfolio()):
-             if tranche.get_offered() == 1:
-              #print("month " + str(months_passed) + " tranche " + tranche.get_name())
-              #print(tranche.get_principal_dict()[months_passed])
-              tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
-              tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
-              clo_principal_sum += tranche_principal_sum
+        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -190,12 +193,12 @@ def run_simulation(case):
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
-    if case == "base":
-       clo.append_base_last_month(deal_call_mos)
-    elif case == "downside":
-       clo.append_downside_last_month(deal_call_mos)
-    else:
-       clo.append_upside_last_month(deal_call_mos)
+    if case == base:
+       base_last_month.append(deal_call_mos)
+    elif case == downside:
+       downside_last_month.append(deal_call_mos)
+    elif case == upside:
+       upside_last_month.append(deal_call_mos)
        
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
@@ -261,6 +264,10 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
+    base_last_month = []
+    downside_last_month = []
+    upside_last_month = []
+
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
@@ -275,9 +282,14 @@ if __name__ == "__main__":
           run_simulation(scenario)"""
 
    # ------------------------ GET OUTPUTS ------------------------ #
-    print(clo.get_base_last_months()) # [34, 36, 36, 37, 32 ... ] x = sim 
-    print(clo.get_downside_last_months())
-    print(clo.get_upside_last_months())
+    print("base_last_month: ", end="")
+    print(*base_last_month, sep=", ")
+
+    print("downside_last_month: ", end="")
+    print(*downside_last_month, sep=", ")
+
+    print("upside_last_month: ", end="")
+    print(*upside_last_month, sep=", ")
    
 
 

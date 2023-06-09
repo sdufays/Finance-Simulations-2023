@@ -120,6 +120,8 @@ if __name__ == "__main__":
     loan_df = loan_df.fillna(0)
     replen_months = 0
     replen_cumulative = 0
+    incremented_replen_month = False
+
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -176,7 +178,10 @@ if __name__ == "__main__":
            elif replen_after_reinv_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
                 replen_cumulative += beginning_bal
-                replen_months += 1
+                 # increment replen_months only once in a month
+                if not incremented_replen_month:
+                   replen_months += 1
+                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
            else: #waterfall it
                 remaining_subtract = beginning_bal
                 for tranche in clo.get_tranches():
@@ -197,19 +202,7 @@ if __name__ == "__main__":
         else:
            portfolio_index += 1
 
-        append = False # this fixes non-AAA tranches principal payment
-        clo_principal_sum = 0 
-        for tranche in clo.get_tranches():
-          # if we're on the last loan in the month
-          if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
-             append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append)
-          # if we're on the last iteration for the month
-          if portfolio_index == len(loan_portfolio.get_active_portfolio()):
-             if tranche.get_offered() == 1:
-              tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
-              tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
-              clo_principal_sum += tranche_principal_sum
+        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -226,6 +219,7 @@ if __name__ == "__main__":
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
 
+      incremented_replen_month = False
       months_passed += 1
 
     # for the tranches, put 0 as all the values
@@ -242,10 +236,11 @@ if __name__ == "__main__":
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
-    print(deal_call_mos) # only one so far
+    print("Deal call month: " + ", ".join(str(item) for item in deal_call_mos)) # only one right now
+
     # WEIGHTED AVG COST OF FUNDS
     # multiplied by 100 cuz percent
-    print(clo.get_total_cashflows())
+    #print(clo.get_total_cashflows())
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
@@ -267,4 +262,4 @@ if __name__ == "__main__":
     projected_equity_yield = (equity_net_spread + origination_fee) * 100
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    print(calculations_for_one_trial)
+    #print(calculations_for_one_trial)
