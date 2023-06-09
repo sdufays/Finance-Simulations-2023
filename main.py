@@ -33,6 +33,15 @@ if __name__ == "__main__":
     reinvestment_period = df_os.iloc[1,1]
     SOFR = df_os.iloc[3,1]
 
+    
+    has_reinvestment = df_os.iloc[7,1]
+    has_replenishment = df_os.iloc[5,1]
+
+    reinvestment_period = df_os.iloc[1,1]
+    replenishment_period = df_os.iloc[4,1]
+
+    replenishment_amount = df_os.iloc[6,1]
+
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
@@ -48,7 +57,7 @@ if __name__ == "__main__":
 
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
-    clo = CLO(ramp_up, reinvestment_period, first_payment_date)
+    clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")

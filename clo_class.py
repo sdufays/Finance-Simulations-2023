@@ -2,12 +2,16 @@ from tranche_class import Tranche
 import math
 
 class CLO(Tranche):
-    def __init__(self, ramp_up, reinvestment_period, starting_date):
+    def __init__(self, ramp_up, reinvestment_bool, replenishment_bool, reinvestment_period, replenishment_period, replenishment_amount, starting_date):
         # tranche objects stored here
         self.__tranches = []
         # boolean, default no
         self.__ramp_up = ramp_up
+        self.__reinvestment_bool = reinvestment_bool
+        self.__replenishment_bool = replenishment_bool
         self.__reinvestment_period = reinvestment_period
+        self.__replenishment_period = replenishment_period
+        self.__replenishment_amount = replenishment_amount             
         self.__starting_date = starting_date
         self.__total_cashflows = []
         self.__base_last_months = []
@@ -32,8 +36,20 @@ class CLO(Tranche):
     def get_ramp_up(self):
         return self.__ramp_up
 
-    def get_reinvestment_period(self):
+    def get_reinv_period(self):
         return self.__reinvestment_period
+    
+    def get_replen_period(self):
+        return self.__replenishment_period
+    
+    def get_reinv_bool(self):
+        return self.__reinvestment_bool
+    
+    def get_replen_bool(self):
+        return self.__replenishment_bool
+    
+    def get_replen_amount(self):
+        return self.__replenishment_amount
 
     def get_starting_date(self):
         return self.__starting_date
