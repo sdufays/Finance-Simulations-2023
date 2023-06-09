@@ -29,11 +29,8 @@ if __name__ == "__main__":
     # starting payment month
     starting_month = date[0]
     days_in_month = get_date_array(date)
-
-    reinvestment_period = df_os.iloc[1,1]
     SOFR = df_os.iloc[3,1]
 
-    
     has_reinvestment = df_os.iloc[7,1]
     has_replenishment = df_os.iloc[5,1]
 
@@ -41,7 +38,6 @@ if __name__ == "__main__":
     replenishment_period = df_os.iloc[4,1]
 
     replenishment_amount = df_os.iloc[6,1]
-
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
@@ -58,6 +54,7 @@ if __name__ == "__main__":
     # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+
 
     # read excel file for capital stack
     df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
@@ -171,6 +168,7 @@ if __name__ == "__main__":
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else: #waterfall
+
                remaining_subtract = beginning_bal
                for tranche in clo.get_tranches():
                      if tranche.get_size() >= remaining_subtract:
