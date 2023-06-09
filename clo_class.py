@@ -117,6 +117,7 @@ class CLO(Tranche):
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             self.__total_cashflows.append(interest_sum + principal_sum)
 
+    """
     def clo_principal_sum(self, month, reinvest_per, dataframe, loan_paydown, termin_next, loan, portfolio, po_index):
         append = False
         clo_principal_sum = 0
@@ -150,6 +151,61 @@ class CLO(Tranche):
             # {month 0: [principay1, principay 2, .... for all loans]}
             tranche.append_to_principal_dict(month, single_loan_principal)
 
+            # ----------- PRINCIPAL PAYMENTS FOR ONE MONTH FOR EVERY TRANCHE ----------#
+            # if on last iteration of the month
+            if po_index == len(portfolio.get_active_portfolio()):
+                # get sum of all principal payments for this ONE tranche for this ONE month
+                tranche_principal_sum = sum(tranche.get_principal_dict()[month])
+                # if this tranche is tranche AAA
+                if tranche == self.get_tranches()[0]:
+                    # if the principal is more than the tranche balance, need waterfall!
+                    if month > 0 and tranche_principal_sum > dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']:
+                        need_waterfall_1 = True
+                        waterfall_value_1 = tranche_principal_sum - dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
+                    # calculate final value of tranche principal sum for this month
+                    tranche_principal_sum = min(tranche_principal_sum, tranche.get_size())
+                # else if this tranche is the second one AND you need waterfall
+                elif tranche == self.get_tranches()[1] and need_waterfall_1:
+                    print("Waterfall value {:,.2f}".format(waterfall_value_1))
+                    tranche_principal_sum = waterfall_value_1 # waterfall value is original sum - AAA bal():
+                # why is it one off for AAA???
+                dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_principal_sum
+                clo_principal_sum += tranche_principal_sum
+        return clo_principal_sum # sum for ALL TRANCHES
+    """
+# version that worked?
+    def clo_principal_sum(self, month, reinvest_per, dataframe, loan_paydown, termin_next, loan, portfolio, po_index):
+        append = False
+        clo_principal_sum = 0
+        need_waterfall_1 = False
+        waterfall_value_1 = 0
+        need_waterfall_2 = False
+        waterfall_value_2 = 0
+        for tranche in self.get_tranches():
+            # if we're on the last loan in the month
+            if loan.get_loan_id() == portfolio.get_active_portfolio()[-1].get_loan_id():
+                append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
+            # ------- PRINCIPAL PAYMENTS FOR EVERY LOAN IN A MONTH ------- #
+            # IF TRANCHE AAA
+            if tranche == self.get_tranches()[0]: 
+                 # if a loan pays down while not in reinvestment
+                if month > reinvest_per and loan_paydown != 0: 
+                    single_loan_principal = loan_paydown
+                # elif we're about to call the deal -> it's the prev month AAA balance (except rn it's the current month? what)
+                elif termin_next and append:
+                    single_loan_principal = dataframe.loc[('A', month - 1), 'Tranche Size']
+                else:
+                    single_loan_principal = 0
+            # ELSE IF OTHER TRANCHES
+            else:
+                if (termin_next and append): # CANT ONLY BE TERMIN NEXT IF WATERFAL
+                    # if loan paydown is greater than the last element of the AAA balance list
+                    single_loan_principal = tranche.get_size()
+                else:
+                    single_loan_principal = 0
+            # APPENDS INDIV PRINCIPAL PAYMENTS TO DICTIONARY
+            # {month 0: [principay1, principay 2, .... for all loans]}
+            tranche.append_to_principal_dict(month, single_loan_principal)
             # ----------- PRINCIPAL PAYMENTS FOR ONE MONTH FOR EVERY TRANCHE ----------#
             # if on last iteration of the month
             if po_index == len(portfolio.get_active_portfolio()):
