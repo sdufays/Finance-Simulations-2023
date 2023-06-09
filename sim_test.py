@@ -12,6 +12,32 @@ def get_date_array(date):
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 def run_simulation(case):
+
+ # ------------------------ INITIALIZE OBJECTS ------------------------ #
+    ramp_up = df_os.iloc[0, 1]
+    clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+
+    # read excel file for capital stack
+    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
+
+    # add tranches in a loop
+    for index_t, row_t in df_cs.iterrows():
+      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
+    threshold = clo.get_threshold()
+
+    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
+  
+    loan_portfolio = CollateralPortfolio()
+
+    # read excel file for loans
+    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
+
+    # add loans in a loop
+    for index_l, row_l in df_cp.iterrows():
+      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengthsi think
     loan_portfolio.initial_loan_terms(case)
@@ -235,30 +261,6 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
- # ------------------------ INITIALIZE OBJECTS ------------------------ #
-    ramp_up = df_os.iloc[0, 1]
-    clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
-
-    # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
-
-    # add tranches in a loop
-    for index_t, row_t in df_cs.iterrows():
-      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
-    threshold = clo.get_threshold()
-
-    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
-  
-    loan_portfolio = CollateralPortfolio()
-
-    # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
-
-    # add loans in a loop
-    for index_l, row_l in df_cp.iterrows():
-      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
