@@ -112,10 +112,6 @@ class CLO(Tranche):
             interest_sum = 0
             for tranche in self.get_tranches():
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
-            if principal_sum!=0:
-                print("month {}".format(month))
-                print("interest {:,.2f} principal {:,.2f}".format(interest_sum, principal_sum))
-                print("cashflow {:,.2f}".format(interest_sum + principal_sum))
             self.__total_cashflows.append(interest_sum + principal_sum)
 
     def append_base_last_month(self, value):
@@ -126,3 +122,40 @@ class CLO(Tranche):
 
     def append_upside_last_month(self, value):
         self.__upside_last_months.append(value)
+    
+    def clo_principal_sum(self, month, reinvest_per, dataframe, loan_paydown, termin_next, loan, portfolio, po_index):
+        append = False
+        need_waterfall = False
+        clo_principal_sum = 0
+        for tranche in self.get_tranches():
+            # if we're on the last loan in the month
+            if loan.get_loan_id() == portfolio.get_active_portfolio()[-1].get_loan_id():
+                append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
+            if tranche.get_name() == "A":
+                 # if a loan pays down while noti in reinvestment
+                if month > reinvest_per and loan_paydown != 0:
+                    principal = loan_paydown
+                elif termin_next:
+                    principal = tranche.get_bal_list()[month-1]
+                else:
+                    principal = 0 #self.get_size()
+            else:
+                if (termin_next and append): # CANT ONLY BE TERMIN NEXT IF WATERFAL
+                    # if loan paydown is greater than the last element of the AAA balance list
+                    principal = tranche.get_size()
+                else:
+                    principal = 0
+            tranche.append_to_principal_dict(month, principal)
+            # if on last iteration of the month
+            if po_index == len(portfolio.get_active_portfolio()):
+                tranche_principal_sum = sum(tranche.get_principal_dict()[month]) # sum for one tranche
+                if tranche.get_name() == 'A':
+                    tranche_principal_sum = min(tranche_principal_sum, tranche.get_size())
+                    print("A PRINC SUM {:,.2f}".format(tranche_principal_sum))
+                    need_waterfall = True
+                elif tranche.get_name() == 'A-S' and need_waterfall:
+                    tranche_principal_sum = min(tranche_principal_sum, tranche.get_size())
+                # why is it one off for AAA???
+                dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_principal_sum
+                clo_principal_sum += tranche_principal_sum
+        return clo_principal_sum # sum for ALL TRANCHES

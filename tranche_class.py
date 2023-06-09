@@ -13,6 +13,9 @@ class Tranche:
     def get_principal_dict(self):
         return self.__principal_dict
 
+    def append_to_principal_dict(self, month, value):
+        self.__principal_dict[month].append(value)
+
     # initializes dictionary to {1:[], 2:[],...}
     def init_principal_dict(self, total_months):
         for i in range(0, total_months):
@@ -56,9 +59,11 @@ class Tranche:
         else:
             return 0
     
-    def tranche_principal(self, month, reinvest_per, dataframe, loan_paydown, termin_next, append):
+    def tranche_principal(self, month, reinvest_per, dataframe, loan_paydown, termin_next, append, AAA_bal_list):
+        # if in first tranche
         if self.get_name() == 'A':
-            if month > reinvest_per and loan_paydown != 0: # yes
+            # if a loan pays down while not in reinvestment
+            if month > reinvest_per and loan_paydown != 0:
                 principal = min(loan_paydown,self.get_bal_list()[month-1]) # loan princi pay
             elif termin_next:
                 principal = self.get_bal_list()[month-1]
@@ -66,14 +71,22 @@ class Tranche:
                 principal = 0 #self.get_size()
         else:
             if termin_next and append:
-                # if AAA_bal == 0:
-                    # if self.get_name() == 'A-S':
-                        #principal = min(self.get_bal_list()[month-1], loan_paydown - )
-                # else:
+                if AAA_bal_list[month-1] == 0:
+                    if self.get_name() == 'A-S':
+                        principal = min(self.get_bal_list()[month-1], loan_paydown - AAA_bal_list[month-1])
+                else:
                     principal = self.get_bal_list()[month-1]
             else:
                 principal = 0
         self.__principal_dict[month].append(principal)
+        if month == 36: 
+                    print("princpal {:,.2f}".format(principal))
+                    print(self.get_principal_dict()[36])
         #if self.get_name() == 'A':
             #print(self.__principal_dict[month])
         return principal
+
+            
+
+
+            

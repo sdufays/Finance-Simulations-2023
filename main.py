@@ -179,20 +179,21 @@ if __name__ == "__main__":
                      raise ValueError("Not enough total size in all tranches to cover the subtraction.")
         else:
            portfolio_index += 1
-
+        """
         append = False # this fixes non-AAA tranches principal payment
         clo_principal_sum = 0 
         for tranche in clo.get_tranches():
           # if we're on the last loan in the month
           if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
              append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append)
+          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append, clo.get_tranches()[0].get_bal_list())
           # if we're on the last iteration for the month
           if portfolio_index == len(loan_portfolio.get_active_portfolio()):
-             if tranche.get_offered() == 1:
               tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
               tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
               clo_principal_sum += tranche_principal_sum
+        """
+        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -220,6 +221,7 @@ if __name__ == "__main__":
 
     # testing tranche data
     print(tranche_df.loc['A'])
+    print(tranche_df.loc['A-S'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
