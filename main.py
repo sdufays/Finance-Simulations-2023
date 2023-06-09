@@ -120,6 +120,10 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
+    replen_months = 0
+    replen_cumulative = 0
+    incremented_replen_month = False
+
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -168,7 +172,6 @@ if __name__ == "__main__":
            if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else: #waterfall
-
                remaining_subtract = beginning_bal
                for tranche in clo.get_tranches():
                      if tranche.get_size() >= remaining_subtract:
@@ -186,20 +189,7 @@ if __name__ == "__main__":
                      raise ValueError("Not enough total size in all tranches to cover the subtraction.")
         else:
            portfolio_index += 1
-        """
-        append = False # this fixes non-AAA tranches principal payment
-        clo_principal_sum = 0 
-        for tranche in clo.get_tranches():
-          # if we're on the last loan in the month
-          if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
-             append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append, clo.get_tranches()[0].get_bal_list())
-          # if we're on the last iteration for the month
-          if portfolio_index == len(loan_portfolio.get_active_portfolio()):
-              tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
-              tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
-              clo_principal_sum += tranche_principal_sum
-        """
+
         clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
@@ -217,6 +207,7 @@ if __name__ == "__main__":
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
 
+      incremented_replen_month = False
       months_passed += 1
 
     # for the tranches, put 0 as all the values
