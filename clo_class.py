@@ -221,7 +221,7 @@ class CLO(Tranche):
                     tranche_principal_sum = min(tranche_principal_sum, tranche.get_size())
                 # else if this tranche is the second one AND you need waterfall
                 elif tranche == self.get_tranches()[1] and need_waterfall_1:
-                    print("Waterfall value {:,.2f}".format(waterfall_value_1))
+                    #print("Waterfall value {:,.2f}".format(waterfall_value_1))
                     tranche_principal_sum = waterfall_value_1 # waterfall value is original sum - AAA bal():
                 # why is it one off for AAA???
                 dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_principal_sum

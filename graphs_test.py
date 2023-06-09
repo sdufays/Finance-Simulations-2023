@@ -5,6 +5,7 @@ import numpy_financial as npf
 import math
 import numpy as np
 import xlsxwriter
+import os
 
 def get_date_array(date):
     if date[2] % 4 == 0:
@@ -66,7 +67,6 @@ def run_simulation(case):
     # START LOOP: goes for the longest possible month duration
     # storage variables
     deal_call_mos = [] # stores month when each deal is called
-    AAA_bal_list = []
 
     # initializing variables
     months_passed = 0
@@ -82,6 +82,9 @@ def run_simulation(case):
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
+    replen_months = 0
+    replen_cumulative = 0
+    incremented_replen_month = False
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -126,43 +129,43 @@ def run_simulation(case):
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           # reinvestment calculations 
-           if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-           else: #waterfall
-               remaining_subtract = beginning_bal
-               for tranche in clo.get_tranches():
-                     if tranche.get_size() >= remaining_subtract:
+           reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+
+           if reinvestment_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+           elif replenishment_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                replen_cumulative += beginning_bal
+           elif replen_after_reinv_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                replen_cumulative += beginning_bal
+                 # increment replen_months only once in a month
+                if not incremented_replen_month:
+                   replen_months += 1
+                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
+           else: #waterfall it
+                remaining_subtract = beginning_bal
+                for tranche in clo.get_tranches():
+                    if tranche.get_size() >= remaining_subtract:
                         tranche.subtract_size(remaining_subtract)
                         remaining_subtract = 0
                         break
-                     else:
+                    else:
                         remaining_subtract -= tranche.get_size()
                         tranche.subtract_size(tranche.get_size())
-                     # Check if remaining_subtract is 0, if it is, break the loop
-                     if remaining_subtract == 0:
+                    # Check if remaining_subtract is 0, if it is, break the loop
+                    if remaining_subtract == 0:
                         break
-               # error condition if there's not enough total size in all tranches
-               if remaining_subtract > 0:
-                     raise ValueError("Not enough total size in all tranches to cover the subtraction.")
+                # error condition if there's not enough total size in all tranches
+                if remaining_subtract > 0:
+                    raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
+                
         else:
            portfolio_index += 1
 
-        append = False # this fixes non-AAA tranches principal payment
-        clo_principal_sum = 0 
-        for tranche in clo.get_tranches():
-          # if we're on the last loan in the month
-          if loan.get_loan_id() == loan_portfolio.get_active_portfolio()[-1].get_loan_id():
-             append = True # then append the nonzero principal paydown ONLY ONCE to the list of principal paydowns in non-AAA tranches
-          tranche.tranche_principal(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, append, AAA_bal_list)
-          # if we're on the last iteration for the month
-          if portfolio_index == len(loan_portfolio.get_active_portfolio()):
-             if tranche.get_offered() == 1:
-              #print("month " + str(months_passed) + " tranche " + tranche.get_name())
-              #print(tranche.get_principal_dict()[months_passed])
-              tranche_principal_sum = sum(tranche.get_principal_dict()[months_passed])
-              tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = tranche_principal_sum
-              clo_principal_sum += tranche_principal_sum
+        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -192,12 +195,12 @@ def run_simulation(case):
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
-    if case == "base":
-       clo.append_base_last_month(deal_call_mos)
-    elif case == "downside":
-       clo.append_downside_last_month(deal_call_mos)
-    else:
-       clo.append_upside_last_month(deal_call_mos)
+    if case == base:
+       base_last_month.append(deal_call_mos)
+    elif case == downside:
+       downside_last_month.append(deal_call_mos)
+    elif case == upside:
+       upside_last_month.append(deal_call_mos)
        
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
@@ -263,95 +266,183 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
+    base_last_month = []
+    downside_last_month = []
+    upside_last_month = []
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
-    run_simulation(base)
+    #run_simulation(base)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
     scenarios = [base, downside, upside]
     num_of_runs = 10
 
     for scenario in scenarios:
+      # this means that it will run each scenario 10 times
+      # so i need three batches
       # chnage 10 to number of simulation runs per scenario 
       for _ in range(num_of_runs):
           run_simulation(scenario)
+          base_combined_list = [num for sublist in base_last_month for num in sublist]
+          downside_combined_list = [num for sublist in downside_last_month for num in sublist]
+          upside_combined_list = [num for sublist in upside_last_month for num in sublist]
 
    # ------------------------ GET OUTPUTS ------------------------ #
-    print(clo.get_base_last_months()) # [34, 36, 36, 37, 32 ... ] x = sim 
-    print(clo.get_downside_last_months())
-    print(clo.get_upside_last_months())
+    print("base_last_month: ", end="")
+    print(base_combined_list, sep=", ")
+
+    print("downside_last_month: ", end="")
+    print(downside_combined_list, sep=", ")
+
+    print("upside_last_month: ", end="")
+    print(upside_combined_list, sep=", ")
 
    # ---------------------- GRAPHING DEAL CALL MONTHS ---------------------- #
-    workbook = xlsxwriter.Workbook('chart_scatter.xlsx')
-
-    worksheet = workbook.add_worksheet()
-
+    workbook = xlsxwriter.Workbook('scatter_plot.xlsx')
+    worksheet_dcm = workbook.add_worksheet("Deal Call Months")
+    worksheet_base = workbook.add_worksheet("Base")
+    worksheet_downside = workbook.add_worksheet("Downside")
+    worksheet_upside = workbook.add_worksheet("Upside")
     bold = workbook.add_format({'bold': 1})
+    headings_dcm = ['Sims', 'Base', 'Downside', 'Upside']
+    headings_base = ['Sims', 'Base']
+    headings_downside = ['Sims', 'Downside']
+    headings_upside = ['Sims', 'Upside']
 
-    headings = ['Number of Sims', 'Deal Call Months']
-
-    """
-    for scenario in scenarios:
-       # chnage 10 to number of simulation runs per scenario 
-       # i think 10 needs to be made into a variable so that whatever number is in that variable 
-       # can be inputed into the data list below
-       for _ in range(10):
-           run_simulation(scenario)"""
-
-    data = [
+    # deal call months
+    data_dcm = [
        list(range(1, num_of_runs + 1)), # this is my x-axis
-       [clo.get_base_last_months()], # this is one batch of data aka the y-axis
-       # i need this one to be deal call months
+       base_combined_list, # this is one batch of data aka the y-axis
+       downside_combined_list,
+       upside_combined_list
     ]
 
-    worksheet.write_row('A1', headings, bold)
+    data_base = [ # lol
+       list(range(1, num_of_runs + 1)),
+       base_combined_list
+    ]
+
+    data_downside = [
+       list(range(1, num_of_runs + 1)),
+       downside_combined_list
+    ]
+
+    data_upside = [
+       list(range(1, num_of_runs + 1)),
+       upside_combined_list
+    ]
+
+    # Weighted Average Cost of Funds
+    # TODO: wa_cof
+
+    # Equity Yield
+    # TODO: equity yield
+
+    worksheet_dcm.write_row('A1', headings_dcm, bold)
+    worksheet_base.write_row('A1', headings_base, bold)
+    worksheet_downside.write_row('A1', headings_downside, bold)
+    worksheet_upside.write_row('A1', headings_upside, bold)
    
-    # Write a column of data starting from 
-    # 'A2', 'B2', 'C2' respectively .
-    worksheet.write_column('A2', data[0])
-    worksheet.write_column('B2', data[1])
+    # writing columns for dcm
+    worksheet_dcm.write_column('A2', data_dcm[0])
+    worksheet_dcm.write_column('B2', data_dcm[1])
+    worksheet_dcm.write_column('C2', data_dcm[2])
+    worksheet_dcm.write_column('D2', data_dcm[3])
 
-    # here we create a scatter chart object .
+    # writing columns for base
+    worksheet_base.write_column('A2', data_base[0])
+    worksheet_base.write_column('B2', data_base[1])
+
+    # writing columns for downside
+    worksheet_downside.write_column('A2', data_downside[0])
+    worksheet_downside.write_column('B2', data_downside[1])
+
+    # writing columns for upside
+    worksheet_upside.write_column('A2', data_upside[0])
+    worksheet_upside.write_column('B2', data_upside[1])
+
+    # scatter chart object
     chart1 = workbook.add_chart({'type': 'scatter'})
+    chart2 = workbook.add_chart({'type': 'scatter'})
+    chart3 = workbook.add_chart({'type': 'scatter'})
+    chart4 = workbook.add_chart({'type': 'scatter'})
 
+    # base, downside, upside
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 1],
-       'categories': ['Deal Call Months', 1, 0, 6, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
-       'values':     ['Deal Call Months', 1, 1, 6, 1], # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
     })
 
-    # Add a chart title 
+    chart1.add_series({
+       'name':       ['Deal Call Months', 0, 2],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
+       'values':     ['Deal Call Months', 1, 2, num_of_runs, 2], 
+    })
+
+    chart1.add_series({
+       'name':       ['Deal Call Months', 0, 3],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0],
+       'values':     ['Deal Call Months', 1, 3, num_of_runs, 3],
+    })
+
+    # just base
+    chart2.add_series({
+       'name':       ['Deal Call Months', 0, 1],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], 
+    })
+
+    # just downside
+    chart3.add_series({
+       'name':       ['Deal Call Months', 0, 2],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0],
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], 
+    })
+
+    # just upside
+    chart4.add_series({
+       'name':       ['Deal Call Months', 0, 3],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1],
+    })
+
+    # chart title 
     chart1.set_title ({'name': 'Results of CLO Simulation'})
+    chart2.set_title ({'name': 'Results of CLO Simulation'})
+    chart3.set_title ({'name': 'Results of CLO Simulation'})
+    chart4.set_title ({'name': 'Results of CLO Simulation'})
    
-    # Add x-axis label
-    chart1.set_x_axis({'name': 'Sim Number'})
+    # x-axis label
+    chart1.set_x_axis({'name': 'Simulation Number'})
+    chart2.set_x_axis({'name': 'Simulation Number'})
+    chart3.set_x_axis({'name': 'Simulation Number'})
+    chart4.set_x_axis({'name': 'Simulation Number'})
    
-    # Add y-axis label
+    # y-axis label
     chart1.set_y_axis({'name': 'Deal Call Month'})
+    chart2.set_y_axis({'name': 'Deal Call Month'})
+    chart3.set_y_axis({'name': 'Deal Call Month'})
+    chart4.set_y_axis({'name': 'Deal Call Month'})
    
     # Set an Excel chart style.
-    # 1 - grey
-    # 2 - blue, red
-    # 3 - blues
-    # 4 - reds   
-    # 5  - greens
-    # 6 - purples
-    # 7 - like a light blueish green
-    # 8 - oranges
-    # 9 - ew
-    # 10 - blue, orangey red
-    chart1.set_style(6)
+    # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
+    # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
+    chart1.set_style(2)
+    chart2.set_style(3)
+    chart3.set_style(4)
+    chart4.set_style(5)
 
-    # add chart to the worksheet 
-    # the top-left corner of a chart 
-    # is anchored to cell E2 . 
-    worksheet.insert_chart('E2', chart1)
+    worksheet_dcm.insert_chart('F2', chart1)
+    worksheet_base.insert_chart('E2', chart2)
+    worksheet_downside.insert_chart('E2', chart3)
+    worksheet_upside.insert_chart('E2', chart4)
 
     # TODO: i need a summary kind of thing to go near
     # so user can specify month they are looking for the deal to be called
     # and then it prints how many times it was called as well as shows it in the graph
-   
-    # Finally, close the Excel file 
-    # via the close() method. 
+ 
     workbook.close()
+    excel_file_path = 'scatter_plot.xlsx'
+    os.startfile(excel_file_path)

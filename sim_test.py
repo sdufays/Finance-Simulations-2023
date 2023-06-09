@@ -274,12 +274,14 @@ if __name__ == "__main__":
     run_simulation(base)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
-    """scenarios = [base, downside, upside]
+    """
+    scenarios = [base, downside, upside]
 
     for scenario in scenarios:
       # chnage 10 to number of simulation runs per scenario 
       for _ in range(10):
-          run_simulation(scenario)"""
+          run_simulation(scenario)
+    """
 
    # ------------------------ GET OUTPUTS ------------------------ #
     print("base_last_month: ", end="")
