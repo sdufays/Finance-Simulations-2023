@@ -204,13 +204,13 @@ if __name__ == "__main__":
       else:
           portfolio_index += 1
 
-      clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
+      #clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
       # add current balances to list
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
 
       # inner loop ends 
-      clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
+      #clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
 
     # terminate in outer loop
       if terminate_next:
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     # Now, print the DataFrame
     print(loan_data_subset)
 
-    print(tranche_df.loc['A-S'])
+    #print(tranche_df.loc['A-S'])
 
     # loan_data.to_excel('output.xlsx', index=True)
 
