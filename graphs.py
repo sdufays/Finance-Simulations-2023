@@ -26,9 +26,9 @@ worksheet.write_column('C2', data[2])
 chart1 = workbook.add_chart({'type': 'scatter'})
 
 chart1.add_series({
-    'name':       '= Sheet1 !$B$1',
-    'categories': '= Sheet1 !$A$2:$A$7',
-    'values':     '= Sheet1 !$B$2:$B$7',
+    'name':       ['Sheet1', 0, 1],
+    'categories': ['Sheet1', 1, 0, 6, 0],
+    'values':     ['Sheet1', 1, 1, 6, 1],
 })
 
 chart1.add_series({
