@@ -132,7 +132,7 @@ class CLO(Tranche):
             # IF TRANCHE AAA
             if tranche == self.get_tranches()[0]: 
                  # if a loan pays down while not in reinvestment
-                if month > reinvest_per and loan_paydown != 0: 
+                if month > reinvest_per and loan_paydown != 0 and not termin_next: 
                     single_loan_principal = loan_paydown
                 # elif we're about to call the deal -> it's the prev month AAA balance (except rn it's the current month? what)
                 elif termin_next and append:
@@ -158,7 +158,7 @@ class CLO(Tranche):
                 # if this tranche is tranche AAA
                 if tranche == self.get_tranches()[0]:
                     # if the principal is more than the tranche balance, need waterfall!
-                    if tranche_principal_sum > tranche.get_size():
+                    if month > 0 and tranche_principal_sum > dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']:
                         need_waterfall_1 = True
                         waterfall_value_1 = tranche_principal_sum - dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
                     # calculate final value of tranche principal sum for this month

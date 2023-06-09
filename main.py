@@ -229,6 +229,7 @@ if __name__ == "__main__":
     # testing tranche data
     print(tranche_df.loc['A'])
     print(tranche_df.loc['A-S'])
+    print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
