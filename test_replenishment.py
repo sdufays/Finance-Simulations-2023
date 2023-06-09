@@ -118,7 +118,7 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
-    remain_replen_period = clo.get_replen_period
+    replen_months = 0
     replen_cumulative = 0
     
     # removing unsold tranches so they don't get in the way
@@ -164,19 +164,19 @@ if __name__ == "__main__":
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           reinvestment_bool = (clo.get_reinv_bool) and (months_passed <= clo.get_reinv_period) and (months_passed == loan.get_term_length())
-           replenishment_bool = (clo.get_replen_bool and not clo.get_reinv_bool) and (months_passed <= clo.get_replen_period and replen_cumulative <= clo.get_replen_amount) and (months_passed == loan.get_term_length())
-           replishment_after_reinv_bool = (clo.get_reinv_bool and clo.get_replen_bool) and (months_passed > clo.get_reinv_period) and (remain_replen_period > 0 and replen_cumulative <= clo.get_replen_amount) and (months_passed == loan.get_term_length())
+           reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
            if reinvestment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            elif replenishment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
                 replen_cumulative += beginning_bal
-           elif replishment_after_reinv_bool:
+           elif replen_after_reinv_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
                 replen_cumulative += beginning_bal
-                remain_replen_period = remain_replen_period - 1
+                replen_months += 1
            else: #waterfall it
                 remaining_subtract = beginning_bal
                 for tranche in clo.get_tranches():
