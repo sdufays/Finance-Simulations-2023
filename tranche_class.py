@@ -52,8 +52,6 @@ class Tranche:
     def tranche_interest(self, num_days, sofr_value, dataframe, month):
         if self.get_offered() == 1:
             interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
-            if self.get_name() == 'A' and month == 0:
-                print("NUM DAYS" + str(num_days))
             dataframe.loc[(self.get_name(), month), 'Interest Payment'] = interest
             return interest
         else:
