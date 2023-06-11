@@ -236,8 +236,11 @@ if __name__ == "__main__":
     
     # WEIGHTED AVG ADVANCE RATE
     # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
-    avg_AAA_bal = sum(clo.get_tranches()[0].get_bal_list()) / deal_call_mos[0]
-    avg_clo_bal = (initial_clo_tob - initial_AAA_bal) / deal_call_mos[0] + avg_AAA_bal
+    #print(tranche_df.loc[tranche_df.index.get_level_values('Tranche Name') == 'A', 'Tranche Size'].sum())
+    #print(sum(clo.get_tranches()[0].get_bal_list()))
+    avg_clo_bal = 0
+    for i in range(len(clo.get_tranches())):
+       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
     avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
 
