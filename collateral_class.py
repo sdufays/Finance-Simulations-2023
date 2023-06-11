@@ -108,4 +108,5 @@ class CollateralPortfolio(Loan):
         margin_balance_sum = 0
         for loan in self.__active_portfolio:
           margin_balance_sum += (loan.get_margin() + sofr_value) * dataframe.loc[(loan.get_loan_id(), 0), 'Ending Balance']
+        # maybe not /month and not *12
         return 12 * margin_balance_sum / months # CLO interest cost is number per year, but all income is over duration of deal -> need to conv to annual num
