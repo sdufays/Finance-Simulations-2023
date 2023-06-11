@@ -51,39 +51,16 @@ class Tranche:
 
     def tranche_interest(self, num_days, sofr_value, dataframe, month):
         if self.get_offered() == 1:
-            interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
+            if month > 0:
+                interest = dataframe.loc[(self.get_name(), month-1), 'Tranche Size'] * (self.get_spread() + sofr_value) * num_days / 360
+            else:
+                interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
             dataframe.loc[(self.get_name(), month), 'Interest Payment'] = interest
+            if month == 36 and self.get_name() == 'A-S':
+                print("interst {:,.2f}".format(interest))
             return interest
         else:
             return 0
-    
-    def tranche_principal(self, month, reinvest_per, dataframe, loan_paydown, termin_next, append, AAA_bal_list):
-        # if in first tranche
-        if self.get_name() == 'A':
-            # if a loan pays down while not in reinvestment
-            if month > reinvest_per and loan_paydown != 0:
-                principal = min(loan_paydown,self.get_bal_list()[month-1]) # loan princi pay
-            elif termin_next:
-                principal = self.get_bal_list()[month-1]
-            else:
-                principal = 0 #self.get_size()
-        else:
-            if termin_next and append:
-                if AAA_bal_list[month-1] == 0:
-                    if self.get_name() == 'A-S':
-                        principal = min(self.get_bal_list()[month-1], loan_paydown - AAA_bal_list[month-1])
-                else:
-                    principal = self.get_bal_list()[month-1]
-            else:
-                principal = 0
-        self.__principal_dict[month].append(principal)
-        if month == 36: 
-                    print("princpal {:,.2f}".format(principal))
-                    print(self.get_principal_dict()[36])
-        #if self.get_name() == 'A':
-            #print(self.__principal_dict[month])
-        return principal
-
             
 
 
