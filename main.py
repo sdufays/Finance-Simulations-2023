@@ -78,9 +78,9 @@ if __name__ == "__main__":
       loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
   
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengthsi think
+    # sets term lengths
     loan_portfolio.initial_loan_terms(base)
-    longest_duration = 60 # int(loan_portfolio.get_longest_term())
+    longest_duration = 61 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # 21 loan IDs
@@ -142,6 +142,7 @@ if __name__ == "__main__":
         # initialize loan object
         loan = loan_portfolio.get_active_portfolio()[portfolio_index]
         loan_id = loan.get_loan_id()
+        # adding it to loan dataframe
         if loan_id not in loan_ids:
             loan_ids.append(loan_id)
         # UPDATE DATAFRAME WITH HIGHER LOAN INDEXES
@@ -152,7 +153,7 @@ if __name__ == "__main__":
         tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
-        beginning_bal = loan.beginning_balance(months_passed, loan_df)
+        beginning_bal = loan.beginning_balance(months_passed, loan_df
         principal_pay = loan.principal_paydown(months_passed, loan_df)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
            # reinvestment calculations 
-           if months_passed <= reinvestment_period and months_passed == loan.get_term_length():
+           if months_passed <= clo.get_reinv_period() and months_passed == loan.get_term_length():
               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
            else: #waterfall
                remaining_subtract = beginning_bal
