@@ -4,6 +4,8 @@ import pandas as pd
 import numpy_financial as npf
 import math
 import numpy as np
+import xlsxwriter
+import os
 
 def get_date_array(date):
     if date[2] % 4 == 0:
@@ -268,36 +270,179 @@ if __name__ == "__main__":
     downside_last_month = []
     upside_last_month = []
 
-
    # ------------------------ RUN SIMULATION ------------------------ #
 
-    run_simulation(base)
+    #run_simulation(base)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
-    """
     scenarios = [base, downside, upside]
+    num_of_runs = 10
 
     for scenario in scenarios:
+      # this means that it will run each scenario 10 times
+      # so i need three batches
       # chnage 10 to number of simulation runs per scenario 
-      for _ in range(10):
+      for _ in range(num_of_runs):
           run_simulation(scenario)
-    """
+          base_combined_list = [num for sublist in base_last_month for num in sublist]
+          downside_combined_list = [num for sublist in downside_last_month for num in sublist]
+          upside_combined_list = [num for sublist in upside_last_month for num in sublist]
 
    # ------------------------ GET OUTPUTS ------------------------ #
     print("base_last_month: ", end="")
-    print(*base_last_month, sep=", ")
+    print(base_combined_list, sep=", ")
 
     print("downside_last_month: ", end="")
-    print(*downside_last_month, sep=", ")
+    print(downside_combined_list, sep=", ")
 
     print("upside_last_month: ", end="")
-    print(*upside_last_month, sep=", ")
+    print(upside_combined_list, sep=", ")
+
+   # ---------------------- GRAPHING DEAL CALL MONTHS ---------------------- #
+    workbook = xlsxwriter.Workbook('scatter_plot.xlsx')
+    worksheet_dcm = workbook.add_worksheet("Deal Call Months")
+    worksheet_base = workbook.add_worksheet("Base")
+    worksheet_downside = workbook.add_worksheet("Downside")
+    worksheet_upside = workbook.add_worksheet("Upside")
+    bold = workbook.add_format({'bold': 1})
+    headings_dcm = ['Sims', 'Base', 'Downside', 'Upside']
+    headings_base = ['Sims', 'Base']
+    headings_downside = ['Sims', 'Downside']
+    headings_upside = ['Sims', 'Upside']
+
+    # deal call months
+    data_dcm = [
+       list(range(1, num_of_runs + 1)), # this is my x-axis
+       base_combined_list, # this is one batch of data aka the y-axis
+       downside_combined_list,
+       upside_combined_list
+    ]
+
+    data_base = [ # lol
+       list(range(1, num_of_runs + 1)),
+       base_combined_list
+    ]
+
+    data_downside = [
+       list(range(1, num_of_runs + 1)),
+       downside_combined_list
+    ]
+
+    data_upside = [
+       list(range(1, num_of_runs + 1)),
+       upside_combined_list
+    ]
+
+    # Weighted Average Cost of Funds
+    # TODO: wa_cof
+
+    # Equity Yield
+    # TODO: equity yield
+
+    worksheet_dcm.write_row('A1', headings_dcm, bold)
+    worksheet_base.write_row('A1', headings_base, bold)
+    worksheet_downside.write_row('A1', headings_downside, bold)
+    worksheet_upside.write_row('A1', headings_upside, bold)
    
+    # writing columns for dcm
+    worksheet_dcm.write_column('A2', data_dcm[0])
+    worksheet_dcm.write_column('B2', data_dcm[1])
+    worksheet_dcm.write_column('C2', data_dcm[2])
+    worksheet_dcm.write_column('D2', data_dcm[3])
 
+    # writing columns for base
+    worksheet_base.write_column('A2', data_base[0])
+    worksheet_base.write_column('B2', data_base[1])
 
+    # writing columns for downside
+    worksheet_downside.write_column('A2', data_downside[0])
+    worksheet_downside.write_column('B2', data_downside[1])
 
+    # writing columns for upside
+    worksheet_upside.write_column('A2', data_upside[0])
+    worksheet_upside.write_column('B2', data_upside[1])
 
+    # scatter chart object
+    chart1 = workbook.add_chart({'type': 'scatter'})
+    chart2 = workbook.add_chart({'type': 'scatter'})
+    chart3 = workbook.add_chart({'type': 'scatter'})
+    chart4 = workbook.add_chart({'type': 'scatter'})
 
+    # base, downside, upside
+    chart1.add_series({
+       'name':       ['Deal Call Months', 0, 1],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+    })
 
+    chart1.add_series({
+       'name':       ['Deal Call Months', 0, 2],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
+       'values':     ['Deal Call Months', 1, 2, num_of_runs, 2], 
+    })
 
-    
+    chart1.add_series({
+       'name':       ['Deal Call Months', 0, 3],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0],
+       'values':     ['Deal Call Months', 1, 3, num_of_runs, 3],
+    })
+
+    # just base
+    chart2.add_series({
+       'name':       ['Deal Call Months', 0, 1],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], 
+    })
+
+    # just downside
+    chart3.add_series({
+       'name':       ['Deal Call Months', 0, 2],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0],
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], 
+    })
+
+    # just upside
+    chart4.add_series({
+       'name':       ['Deal Call Months', 0, 3],
+       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
+       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1],
+    })
+
+    # chart title 
+    chart1.set_title ({'name': 'Results of CLO Simulation'})
+    chart2.set_title ({'name': 'Results of CLO Simulation'})
+    chart3.set_title ({'name': 'Results of CLO Simulation'})
+    chart4.set_title ({'name': 'Results of CLO Simulation'})
+   
+    # x-axis label
+    chart1.set_x_axis({'name': 'Simulation Number'})
+    chart2.set_x_axis({'name': 'Simulation Number'})
+    chart3.set_x_axis({'name': 'Simulation Number'})
+    chart4.set_x_axis({'name': 'Simulation Number'})
+   
+    # y-axis label
+    chart1.set_y_axis({'name': 'Deal Call Month'})
+    chart2.set_y_axis({'name': 'Deal Call Month'})
+    chart3.set_y_axis({'name': 'Deal Call Month'})
+    chart4.set_y_axis({'name': 'Deal Call Month'})
+   
+    # Set an Excel chart style.
+    # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
+    # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
+    chart1.set_style(2)
+    chart2.set_style(3)
+    chart3.set_style(4)
+    chart4.set_style(5)
+
+    worksheet_dcm.insert_chart('F2', chart1)
+    worksheet_base.insert_chart('E2', chart2)
+    worksheet_downside.insert_chart('E2', chart3)
+    worksheet_upside.insert_chart('E2', chart4)
+
+    # TODO: i need a summary kind of thing to go near
+    # so user can specify month they are looking for the deal to be called
+    # and then it prints how many times it was called as well as shows it in the graph
+ 
+    workbook.close()
+    excel_file_path = 'scatter_plot.xlsx'
+    os.startfile(excel_file_path)
