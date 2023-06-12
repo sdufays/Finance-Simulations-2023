@@ -325,13 +325,22 @@ if __name__ == "__main__":
    # ---------------------------- READING DF ----------------------------- #
     deal_call_months = output_df['Deal Call Month'].unique()
     deal_call_months_dict ={}
+    deal_call_months_list = []
     for case in cases:
        case_call_months =[]
        for trial in trial_numbers:
           call_month = output_df.loc[(case, trial), 'Deal Call Month']
           case_call_months.append(call_month)
+          deal_call_months_list.append(call_month)
 
        deal_call_months_dict[case] = case_call_months
+
+    deal_call_months_sort = sorted(deal_call_months_list)
+
+    dcm_unique = []
+    for num in deal_call_months_sort:
+       if num not in dcm_unique:
+          dcm_unique.append(num)
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('scatter_plot.xlsx')
@@ -342,7 +351,7 @@ if __name__ == "__main__":
     worksheet_upside = workbook.add_worksheet("Upside")
     bold = workbook.add_format({'bold': 1})
     headings_dcm = ['Sims', 'Base', 'Downside', 'Upside']
-    headings_swapped = ['Sims', 'Base', 'Downside', 'Upside']
+    headings_swapped = ['Deal Call Months', 'Sims']
     headings_base = ['Sims', 'Base']
     headings_downside = ['Sims', 'Downside']
     headings_upside = ['Sims', 'Upside']
@@ -355,12 +364,10 @@ if __name__ == "__main__":
        deal_call_months_dict['upside']
     ]
 
-    #data_swapped = [
-       #list(range(1, num_of_runs + 1)), 
-       #base_combined_list,
-       #downside_combined_list,
-       #upside_combined_list
-    #]
+    data_swapped = [
+       dcm_unique, 
+       deal_call_months_list
+    ]
 
     data_base = [ # lol
        list(range(1, NUM_TRIALS + 1)),
@@ -384,6 +391,7 @@ if __name__ == "__main__":
     # TODO: equity yield
 
     worksheet_dcm.write_row('A1', headings_dcm, bold)
+    worksheet_swapped.write_row('A1', headings_swapped, bold)
     worksheet_base.write_row('A1', headings_base, bold)
     worksheet_downside.write_row('A1', headings_downside, bold)
     worksheet_upside.write_row('A1', headings_upside, bold)
@@ -393,6 +401,10 @@ if __name__ == "__main__":
     worksheet_dcm.write_column('B2', data_dcm[1])
     worksheet_dcm.write_column('C2', data_dcm[2])
     worksheet_dcm.write_column('D2', data_dcm[3])
+
+    # writing columns for swapped
+    worksheet_swapped.write_column('A2', data_swapped[0])
+    worksheet_swapped.write_column('B2', data_swapped[1])
 
     # writing columns for base
     worksheet_base.write_column('A2', data_base[0])
@@ -408,6 +420,7 @@ if __name__ == "__main__":
 
     # scatter chart object
     chart1 = workbook.add_chart({'type': 'scatter'})
+    chart5 = workbook.add_chart({'type': 'scatter'})
     chart2 = workbook.add_chart({'type': 'scatter'})
     chart3 = workbook.add_chart({'type': 'scatter'})
     chart4 = workbook.add_chart({'type': 'scatter'})
@@ -429,6 +442,13 @@ if __name__ == "__main__":
        'name':       ['Deal Call Months', 0, 3],
        'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0],
        'values':     ['Deal Call Months', 1, 3, NUM_TRIALS, 3],
+    })
+
+    # swapped *******************************************************************************************************************
+    chart5.add_series({
+       'name':       ['Deal Call Months 2.0', 0, 2],
+       'categories': ['Deal Call Months 2.0', 1, 0, max(dcm_unique), 0],
+       'values':     ['Deal Call Months 2.0', 1, 1, max(dcm_unique), 1]
     })
 
     # just base
@@ -454,18 +474,21 @@ if __name__ == "__main__":
 
     # chart title 
     chart1.set_title ({'name': 'Results of CLO Simulation'})
+    chart5.set_title ({'name': 'Results of CLO Simulation'})
     chart2.set_title ({'name': 'Results of CLO Simulation'})
     chart3.set_title ({'name': 'Results of CLO Simulation'})
     chart4.set_title ({'name': 'Results of CLO Simulation'})
    
     # x-axis label
     chart1.set_x_axis({'name': 'Simulation Number'})
+    chart5.set_x_axis({'name': 'Deal Call Month', 'min': 30})
     chart2.set_x_axis({'name': 'Simulation Number'})
     chart3.set_x_axis({'name': 'Simulation Number'})
     chart4.set_x_axis({'name': 'Simulation Number'})
    
     # y-axis label
     chart1.set_y_axis({'name': 'Deal Call Month', 'min': 30})
+    chart5.set_y_axis({'name': 'Simulation Number'})
     chart2.set_y_axis({'name': 'Deal Call Month'})
     chart3.set_y_axis({'name': 'Deal Call Month'})
     chart4.set_y_axis({'name': 'Deal Call Month'})
@@ -474,11 +497,13 @@ if __name__ == "__main__":
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
     # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
     chart1.set_style(2)
+    chart5.set_style(7)
     chart2.set_style(3)
     chart3.set_style(4)
     chart4.set_style(5)
 
     worksheet_dcm.insert_chart('F2', chart1)
+    worksheet_swapped.insert_chart('F2', chart5)
     worksheet_base.insert_chart('E2', chart2)
     worksheet_downside.insert_chart('E2', chart3)
     worksheet_upside.insert_chart('E2', chart4)
