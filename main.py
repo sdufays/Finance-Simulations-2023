@@ -2,7 +2,6 @@ from collateral_class import CollateralPortfolio
 from clo_class import CLO
 import pandas as pd
 import numpy_financial as npf
-import math
 import numpy as np
 
 def get_date_array(date):
@@ -10,6 +9,29 @@ def get_date_array(date):
       return [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     else: 
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+
+def waterfall(subtract_value, tranches):
+    """
+    Perform waterfall algorithm over tranches.
+    :param subtract_value: Value to be subtracted from tranches.
+    :param tranches: List of tranches.
+    :return: None.
+    """
+    for tranche in tranches:
+        if tranche.get_size() >= subtract_value:
+            tranche.subtract_size(subtract_value)
+            subtract_value = 0
+            break
+        else:
+            subtract_value -= tranche.get_size()
+            tranche.subtract_size(tranche.get_size())
+
+        if subtract_value == 0:
+            break
+
+    if subtract_value > 0:
+        raise ValueError("Not enough total size in all tranches to cover the subtraction.")  
 
 
 if __name__ == "__main__":
@@ -68,7 +90,6 @@ if __name__ == "__main__":
     upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
     loan_portfolio = CollateralPortfolio()
-
     # read excel file for loans
     df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
 
@@ -79,7 +100,7 @@ if __name__ == "__main__":
   
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.initial_loan_terms(base)
+    loan_portfolio.generate_loan_terms(base)
     longest_duration = 61 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -103,10 +124,10 @@ if __name__ == "__main__":
 
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
-    # storage variables
-    deal_call_mos = [] # stores month when each deal is called
 
-    # initializing variables
+    # STORAGE VARIABLES
+    deal_call_mos = [] # stores month when each deal is called
+    # initializing other variables
     months_passed = 0
     terminate_next = False
     # fill nan values in dataframe
@@ -120,6 +141,7 @@ if __name__ == "__main__":
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
     loan_df = loan_df.fillna(0)
+    # replenishment variables
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
@@ -127,7 +149,7 @@ if __name__ == "__main__":
     loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
     for loan in loan_portfolio.get_active_portfolio():
        loan.loan_income(SOFR, loan_income_df)
-    # calculate wa loan spread for day 1
+    # calculate weighted avg loan spread for day 1
     wa_spread = 0
     for loan in loan_portfolio.get_active_portfolio():
        wa_spread += loan.get_margin()
@@ -154,6 +176,7 @@ if __name__ == "__main__":
         # adding it to loan dataframe
         if loan_id not in loan_ids:
             loan_ids.append(loan_id)
+
         # UPDATE DATAFRAME WITH HIGHER LOAN INDEXES
         loan_index = pd.MultiIndex.from_product([loan_ids, months], names=['Loan ID', 'Months Passed'])
         loan_df = loan_df.reindex(loan_index)
@@ -180,43 +203,34 @@ if __name__ == "__main__":
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
            reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
-           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
-           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
            if reinvestment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR, loan_income_df)
            elif replenishment_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR,loan_income_df)
-                replen_cumulative += beginning_bal
-           elif replen_after_reinv_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR, loan_income_df)
-                replen_cumulative += beginning_bal
-                 # increment replen_months only once in a month
-                if not incremented_replen_month:
-                   replen_months += 1
-                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
-           else: #waterfall it
-                remaining_subtract = beginning_bal
-                for tranche in clo.get_tranches():
-                    if tranche.get_size() >= remaining_subtract:
-                        tranche.subtract_size(remaining_subtract)
-                        remaining_subtract = 0
-                        break
-                    else:
-                        remaining_subtract -= tranche.get_size()
-                        tranche.subtract_size(tranche.get_size())
-                    # Check if remaining_subtract is 0, if it is, break the loop
-                    if remaining_subtract == 0:
-                        break
-                # error condition if there's not enough total size in all tranches
+                loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
+                loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp = False)
+                replen_cumulative += loan_value
+                remaining_subtract = beginning_bal - loan_value
                 if remaining_subtract > 0:
-                    raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
-                
+                    waterfall(remaining_subtract, clo.get_tranches())
+
+           elif replen_after_reinv_bool:
+                loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
+                loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp = False)
+                replen_cumulative += loan_value
+                remaining_subtract = beginning_bal - loan_value
+                 # increment replen_months only once in a month                
+                if not incremented_replen_month:
+                    replen_months += 1
+                    incremented_replen_month = True # set flag to True so that it won't increment again within this month
+                if remaining_subtract > 0:
+                    waterfall(remaining_subtract, clo.get_tranches())
+           else: #waterfall it
+                waterfall(beginning_bal, clo.get_tranches())
         else:
-           portfolio_index += 1
+           portfolio_index += 1 
 
         
         clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
@@ -239,44 +253,41 @@ if __name__ == "__main__":
       incremented_replen_month = False
       months_passed += 1
 
-    # for the tranches, put 0 as all the values
-    # for the loans, leave as if (still outstanding)
-    
-    # testing loan data
-    #print(loan_df.head(longest_duration))
     loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
     #print(tranche_df.loc['A'])
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranches.xlsx', index=True)
+
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
-    # DEAL CALL MONTH
-    print(deal_call_mos) # only one so far
+   # DEAL CALL MONTH
+    print("\n\n")
+    print("==== Deal Call Month ====")
+    print(f"Month: {deal_call_mos[0]}\n")
     # WEIGHTED AVG COST OF FUNDS
-    # multiplied by 100 cuz percent
-    #print(clo.get_total_cashflows())
     data = {'Cashflows': clo.get_total_cashflows()}
-    #print(pd.DataFrame(data))
+    print("==== Weighted Average Cost of Funds ====")
+    print(pd.DataFrame(data))
+    print()
 
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
+    print(f"WA Cost of Funds: {wa_cof:.2f} bps")
+
     
     # WEIGHTED AVG ADVANCE RATE
-    # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
-    #print(tranche_df.loc[tranche_df.index.get_level_values('Tranche Name') == 'A', 'Tranche Size'].sum())
-    #print(sum(clo.get_tranches()[0].get_bal_list()))
     avg_clo_bal = 0
     for i in range(len(clo.get_tranches())):
        avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
     avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
+    print(f"WA Advance Rate: {wa_adv_rate:.2%}\n")
+
 
     # PROJECTED EQUITY YIELD
     # equity net spread
     collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
-    #collateral_income = loan_income_df['Income'].sum() * 12 / deal_call_mos[0]
     tranche_total_balance = 0
     clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
@@ -287,4 +298,6 @@ if __name__ == "__main__":
     projected_equity_yield = (equity_net_spread + origination_fee)
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    print(calculations_for_one_trial)
+    #print(calculations_for_one_trial)
+    print("==== Projected Equity Yield ====")
+    print(f"Yield: {projected_equity_yield:.2f}%\n")

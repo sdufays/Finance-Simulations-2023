@@ -29,6 +29,7 @@ class CollateralPortfolio(Loan):
     def add_new_loan(self, loan_balance, margin, month,ramp):
         new_loan_terms = [18, 20, 30]
         #term = new_loan_terms[1]
+        # ^ if you want consistent results
         term = new_loan_terms[random.randint(0,2)]
         # print("new loan balance " + str("{:,}".format(loan_balance)))
         # make loan id higher than storage portfolio length -> so like 26

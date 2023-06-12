@@ -11,8 +11,31 @@ def get_date_array(date):
     else: 
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-def run_simulation(case):
 
+def waterfall(subtract_value, tranches):
+    """
+    Perform waterfall algorithm over tranches.
+    :param subtract_value: Value to be subtracted from tranches.
+    :param tranches: List of tranches.
+    :return: None.
+    """
+    for tranche in tranches:
+        if tranche.get_size() >= subtract_value:
+            tranche.subtract_size(subtract_value)
+            subtract_value = 0
+            break
+        else:
+            subtract_value -= tranche.get_size()
+            tranche.subtract_size(tranche.get_size())
+
+        if subtract_value == 0:
+            break
+
+    if subtract_value > 0:
+        raise ValueError("Not enough total size in all tranches to cover the subtraction.")  
+
+
+def run_simulation(case):
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
