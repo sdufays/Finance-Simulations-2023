@@ -197,7 +197,7 @@ def run_simulation(case, output_dataframe, trial_index):
         else:
            portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
+            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -305,7 +305,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 5
+    NUM_TRIALS = 3
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])

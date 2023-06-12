@@ -159,6 +159,7 @@ class CLO(Tranche):
             # IF TRANCHE AAA
             if tranche == self.get_tranches()[0]: 
                 # if a loan pays down while not in reinvestment
+                # add only reinv, only replen, rein before replen, replen after rein 
                 if month > reinvest_per and loan_paydown != 0: 
                     single_loan_principal = loan_paydown
                 # elif we're about to call the deal -> it's the prev month AAA balance (except rn it's the current month? what)
