@@ -299,7 +299,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 5
+    NUM_TRIALS = 3
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
