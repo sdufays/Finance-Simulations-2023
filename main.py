@@ -153,7 +153,7 @@ if __name__ == "__main__":
         tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
-        beginning_bal = loan.beginning_balance(months_passed, loan_df
+        beginning_bal = loan.beginning_balance(months_passed, loan_df)
         principal_pay = loan.principal_paydown(months_passed, loan_df)
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
@@ -166,30 +166,46 @@ if __name__ == "__main__":
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
+
         # paying off loans
         if principal_pay != 0: 
            loan_portfolio.remove_loan(loan)
-           # reinvestment calculations 
-           if months_passed <= clo.get_reinv_period() and months_passed == loan.get_term_length():
-              loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-           else: #waterfall
-               remaining_subtract = beginning_bal
-               for tranche in clo.get_tranches():
-                     if tranche.get_size() >= remaining_subtract:
+           reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+
+           if reinvestment_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+           elif replenishment_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                replen_cumulative += beginning_bal
+           elif replen_after_reinv_bool:
+                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                replen_cumulative += beginning_bal
+                 # increment replen_months only once in a month
+                if not incremented_replen_month:
+                   replen_months += 1
+                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
+           else: #waterfall it
+                remaining_subtract = beginning_bal
+                for tranche in clo.get_tranches():
+                    if tranche.get_size() >= remaining_subtract:
                         tranche.subtract_size(remaining_subtract)
                         remaining_subtract = 0
                         break
-                     else:
+                    else:
                         remaining_subtract -= tranche.get_size()
                         tranche.subtract_size(tranche.get_size())
-                     # Check if remaining_subtract is 0, if it is, break the loop
-                     if remaining_subtract == 0:
+                    # Check if remaining_subtract is 0, if it is, break the loop
+                    if remaining_subtract == 0:
                         break
-               # error condition if there's not enough total size in all tranches
-               if remaining_subtract > 0:
-                     raise ValueError("Not enough total size in all tranches to cover the subtraction.")
+                # error condition if there's not enough total size in all tranches
+                if remaining_subtract > 0:
+                    raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
+                
         else:
            portfolio_index += 1
+
         
         clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 

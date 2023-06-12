@@ -40,7 +40,7 @@ def run_simulation(case):
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengthsi think
-    loan_portfolio.initial_loan_terms(case)
+    loan_portfolio.generate_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -187,11 +187,13 @@ def run_simulation(case):
     # loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
+    #print(tranche_df.loc['A'])
+    #print(tranche_df.loc['A-S'])
+    #print(deal_call_mos)
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
-    # ------------------ CALCULATING OUTPUTS ------------------ #
     # DEAL CALL MONTH
     if case == base:
        base_last_month.append(deal_call_mos)
@@ -199,12 +201,16 @@ def run_simulation(case):
        downside_last_month.append(deal_call_mos)
     elif case == upside:
        upside_last_month.append(deal_call_mos)
-       
+
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
-    avg_AAA_bal = sum(clo.get_tranches()[0].get_bal_list()) / deal_call_mos[0]
-    avg_clo_bal = (initial_clo_tob - initial_AAA_bal) / deal_call_mos[0] + avg_AAA_bal
+    # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
+    #print(tranche_df.loc[tranche_df.index.get_level_values('Tranche Name') == 'A', 'Tranche Size'].sum())
+    #print(sum(clo.get_tranches()[0].get_bal_list()))
+    avg_clo_bal = 0
+    for i in range(len(clo.get_tranches())):
+       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
     avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
 
@@ -214,12 +220,14 @@ def run_simulation(case):
     clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
+    #print("collateral income {:,.2f}\n clo interest cost {:,.2f}\n net equity amt {:,.2f}\n equity net spread {:,.2}\n\n".format(collateral_income, clo_interest_cost, net_equity_amt, equity_net_spread))
     # origination fee add on (fee for creating the clo)
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
-    projected_equity_yield = (equity_net_spread + origination_fee) * 100
+    projected_equity_yield = (equity_net_spread + origination_fee)
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
+    #print(calculations_for_one_trial)
 
 if __name__ == "__main__":
    # ------------------------ GENERAL INFO ------------------------ #
@@ -271,17 +279,16 @@ if __name__ == "__main__":
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
-    run_simulation(base)
+    #run_simulation(base)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
-    """
+   
     scenarios = [base, downside, upside]
 
     for scenario in scenarios:
       # chnage 10 to number of simulation runs per scenario 
-      for _ in range(10):
+      for _ in range(5):
           run_simulation(scenario)
-    """
 
    # ------------------------ GET OUTPUTS ------------------------ #
     print("base_last_month: ", end="")
