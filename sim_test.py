@@ -303,6 +303,8 @@ if __name__ == "__main__":
           results_df['Run'] = run
           results_df = results_df.append(result, ignore_index=True)
 
+    results_df.head()
+
    # ------------------------ GET OUTPUTS ------------------------ #
     """print("base_last_month: ", end="")
     print(*base_last_month, sep=", ")
