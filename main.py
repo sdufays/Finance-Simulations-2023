@@ -308,4 +308,5 @@ projected_equity_yield = (equity_net_spread + origination_fee)
 calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
 # print(calculations_for_one_trial)
 print("==== Projected Equity Yield ====")
-print(f"Yield: {(projected_equity_yield x 100):.2f}%\n")
+projected_equity_yield = projected_equity_yield * 100 
+print(f"Yield: {projected_equity_yield:.2f}%\n")
