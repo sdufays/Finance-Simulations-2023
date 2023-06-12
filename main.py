@@ -10,7 +10,6 @@ def get_date_array(date):
     else: 
         return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-
 def loan_waterfall(subtract_value, tranches):
     """
     Perform waterfall algorithm over tranches.
@@ -32,7 +31,6 @@ def loan_waterfall(subtract_value, tranches):
 
     if subtract_value > 0:
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
-
 
 if __name__ == "__main__":
     # ------------------------ GENERAL INFO ------------------------ #
@@ -276,22 +274,6 @@ if __name__ == "__main__":
     print(tranche_df.loc[('B', deal_call_mos[0])])
     print(tranche_df.loc[('C', deal_call_mos[0])])
     #print(tranche_df.head(longest_duration))
-
-
-    # ------------------ CALCULATING OUTPUTS ------------------ #
-   # DEAL CALL MONTH
-    print("\n\n")
-    print("==== Deal Call Month ====")
-    print(f"Month: {deal_call_mos[0]}\n")
-    # WEIGHTED AVG COST OF FUNDS
-    data = {'Cashflows': clo.get_total_cashflows()}
-    print("==== Weighted Average Cost of Funds ====")
-    #print(pd.DataFrame(data))
-    print()
-    print(tranche_df.loc['A'])
-    print(tranche_df.loc['A-S'])
-    print(tranche_df.head(longest_duration))
-    tranche_df.to_excel('tranches.xlsx', index=True)
     """
 # ------------------ CALCULATING OUTPUTS ------------------ #
 # DEAL CALL MONTH
