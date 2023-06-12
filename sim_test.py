@@ -93,7 +93,6 @@ def run_simulation(case, output_dataframe, trial_index):
     # fill nan values in dataframe
     loan_df = loan_df.fillna(0)
     # initial CLO variables
-    initial_AAA_bal = clo.get_tranches()[0].get_size()
     initial_clo_tob = clo.get_tob()
     for tranche in clo.get_tranches():
        tranche.init_principal_dict(longest_duration)
@@ -223,8 +222,8 @@ def run_simulation(case, output_dataframe, trial_index):
     # ------------------ CALCULATING OUTPUTS ------------------ #
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
-    #if wa_cof < 0:
-      #tranche_df.to_excel('output.xlsx', index=True)
+    if wa_cof < 0:
+      tranche_df.to_excel('output.xlsx', index=True)
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0

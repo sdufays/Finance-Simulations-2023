@@ -104,7 +104,7 @@ class CLO(Tranche):
     def get_threshold(self):
         return self.get_tranches()[0].get_size() * 0.2
 
-    def waterfall(self, index, month, remaining_payment, dataframe):
+    def loan_waterfall(self, index, month, remaining_payment, dataframe):
         if index >= len(self.get_tranches()): # if there are no more tranches left
             print(f"Warning: payment of {remaining_payment:,.2f} could not be allocated to any tranche.")
             outputs = [remaining_payment, False, True]
@@ -139,7 +139,7 @@ class CLO(Tranche):
                 just_ended = False
             else:
                 just_ended = True
-            remaining_payment = self.waterfall(index+1, month, remaining_payment, dataframe)[0]
+            remaining_payment = self.loan_waterfall(index+1, month, remaining_payment, dataframe)[0]
         
         return [remaining_payment, False, just_ended]
 
@@ -196,7 +196,7 @@ class CLO(Tranche):
                     dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_principal_sum
                 # else if this tranche is the second one AND you need waterfall
                 elif need_waterfall:
-                    outputs = self.waterfall(tranche_index, month, waterfall_value, dataframe)
+                    outputs = self.loan_waterfall(tranche_index, month, waterfall_value, dataframe)
                     need_waterfall = outputs[1]
                     just_ended = outputs[2]
                 elif just_ended: # waterfall just ended so the principal payment was already added to dataframe right??

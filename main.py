@@ -139,7 +139,6 @@ if __name__ == "__main__":
     # fill nan values in dataframe
     loan_df = loan_df.fillna(0)
     # initial CLO variables
-    initial_AAA_bal = clo.get_tranches()[0].get_size()
     initial_clo_tob = clo.get_tob()
     for tranche in clo.get_tranches():
         tranche.init_principal_dict(longest_duration)
@@ -265,13 +264,30 @@ if __name__ == "__main__":
         incremented_replen_month = False
         months_passed += 1
 
-    loan_df.to_excel('output.xlsx', index=True)
+    #loan_df.to_excel('output.xlsx', index=True)
 
     """
     #TESTING PURPOSES ONLY
     print(loan_df.tail(longest_duration))
     loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
+    #print(tranche_df.loc['A'])
+    print(tranche_df.loc[('A-S', deal_call_mos[0])])
+    print(tranche_df.loc[('B', deal_call_mos[0])])
+    print(tranche_df.loc[('C', deal_call_mos[0])])
+    #print(tranche_df.head(longest_duration))
+
+
+    # ------------------ CALCULATING OUTPUTS ------------------ #
+   # DEAL CALL MONTH
+    print("\n\n")
+    print("==== Deal Call Month ====")
+    print(f"Month: {deal_call_mos[0]}\n")
+    # WEIGHTED AVG COST OF FUNDS
+    data = {'Cashflows': clo.get_total_cashflows()}
+    print("==== Weighted Average Cost of Funds ====")
+    #print(pd.DataFrame(data))
+    print()
     print(tranche_df.loc['A'])
     print(tranche_df.loc['A-S'])
     print(tranche_df.head(longest_duration))
@@ -299,16 +315,16 @@ avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0]  # deal_
 wa_adv_rate = avg_clo_bal / avg_collateral_bal
 print(f"WA Advance Rate: {wa_adv_rate:.2%}\n")
 
+
 # PROJECTED EQUITY YIELD
 # equity net spread
-collateral_income = loan_portfolio.get_initial_deal_size() * (wa_spread + SOFR)
+collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
 tranche_total_balance = 0
-clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR)  # interest we pay to tranches
-net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob  # total amount of loans - amount offered as tranches
-equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt  # excess equity available
+clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
+net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
+equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
 # origination fee add on (fee for creating the clo)
-origination_fee = loan_portfolio.get_initial_deal_size() * 0.01 / (
-        net_equity_amt * deal_call_mos[0])  # remember in simulation to put deal_call_mos[trial]
+origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
 # projected equity yield (times 100 cuz percent), represents expected return on the clo
 projected_equity_yield = (equity_net_spread + origination_fee)
 

@@ -49,7 +49,7 @@ class CollateralPortfolio(Loan):
         # cuz storage portfolio will look like [1,2,..., None (was 21), 22]
         for lo in self.__storage_portfolio:
             if lo != None and lo.get_loan_id() == loan_id:
-                lo.set_term_length(term) # should be term variable
+                lo.set_term_length(15) # should be term variable
       
     def generate_initial_margin(self):
         sum = 0
