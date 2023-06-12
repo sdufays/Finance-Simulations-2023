@@ -239,7 +239,9 @@ if __name__ == "__main__":
             else:
                 portfolio_index += 1
 
-            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index, replen_cumulative, replen_months)
+            clo_principal_sum = clo.clo_principal_sum(months_passed, tranche_df, principal_pay, loan, replen_cumulative, replen_months, terminate_next, loan_portfolio)
+            tranche_df = tranche_df.fillna(0)
+            print("month {} principal sum {}".format(months_passed, clo_principal_sum))
 
         # add current balances to list
         for tranche in clo.get_tranches():

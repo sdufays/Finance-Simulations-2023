@@ -103,7 +103,7 @@ class CLO(Tranche):
 
     def get_threshold(self):
         return self.get_tranches()[0].get_size() * 0.2
-
+    """
     def principay_waterfall(self, index, month, remaining_payment, dataframe):
         if index >= len(self.get_tranches()): # if there are no more tranches left
             print(f"Warning: payment of {remaining_payment:,.2f} could not be allocated to any tranche.")
@@ -202,6 +202,7 @@ class CLO(Tranche):
                     dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_principal_sum
                 clo_principal_sum += tranche_principal_sum
         return clo_principal_sum # sum for ALL TRANCHES
+    """
    
     def append_cashflow(self, month, upfront_cost, num_days, principal_sum, sofr_value, dataframe):
         if month == 0: # should return a negative number
@@ -215,5 +216,64 @@ class CLO(Tranche):
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             self.__total_cashflows.append(interest_sum + principal_sum)
 
-    def clo_principal_sum():
+    def clo_principal_sum(self, month, dataframe, loan_principal_pay, loan, replen_cumu, replen_months, termin_next, portfolio):
+        total_monthly_principal_sum = 0
+        reinvestment_bool = (self.get_reinv_bool()) and (month <= self.get_reinv_period())
+        replenishment_bool = (self.get_replen_bool() and not self.get_reinv_bool()) and (month <= self.get_replen_period() and replen_cumu < self.get_replen_amount())
+        replen_after_reinv_bool = (self.get_reinv_bool() and self.get_replen_bool()) and (month > self.get_reinv_period()) and (replen_months < self.get_replen_period() and replen_cumu < self.get_replen_amount())
+        print(reinvestment_bool, replenishment_bool, replen_after_reinv_bool)
+        is_last_loan = False
+        if loan.get_loan_id() == portfolio.get_active_portfolio()[-1].get_loan_id():
+            is_last_loan = True
         
+        if termin_next:
+            for tranche in self.get_tranches():
+                monthly_principal_one_tranche = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
+                total_monthly_principal_sum += monthly_principal_one_tranche
+            return total_monthly_principal_sum
+        elif not reinvestment_bool and not replenishment_bool and not replen_after_reinv_bool:
+            for tranche in self.get_tranches():
+                tranche_name = tranche.get_name()
+                tranche_size = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
+                AAA_size = dataframe.loc[(self.get_tranches()[0].get_name(), month-1), 'Tranche Size']
+                if tranche_name == self.get_tranches()[0].get_name(): # AAA
+                    tranche.append_to_principal_dict(month, loan_principal_pay)
+                    if is_last_loan:
+                        monthly_principal_one_tranche = sum(tranche.get_principal_dict()[month])
+                        # no waterfall
+                        if AAA_size >= monthly_principal_one_tranche:
+                            total_monthly_principal_sum += monthly_principal_one_tranche
+                            dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = monthly_principal_one_tranche
+                            return total_monthly_principal_sum
+                        # if waterfall
+                        else:
+                            total_monthly_principal_sum += tranche_size
+                            dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_size
+                            waterfall_amount = monthly_principal_one_tranche - tranche_size
+                            total_monthly_principal_sum = self.principay_waterfall(waterfall_amount, dataframe, month)
+                return total_monthly_principal_sum
+        else:
+            return 0
+    
+
+    def principay_waterfall(self, waterfall_amount,dataframe, month):
+        tranche_i = 1
+        while tranche_i < range(len(self.get_tranches())):
+            tranche = self.get_tranches()[tranche_i]
+            tranche_size = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
+            # no waterfall
+            if tranche_size >= waterfall_amount:
+                total_monthly_principal_sum += waterfall_amount
+                dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = waterfall_amount
+                remaining_waterfall = 0
+                return total_monthly_principal_sum
+            # if waterfall
+            else:
+                total_monthly_principal_sum += tranche_size
+                dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_size
+                waterfall_amount = waterfall_amount - tranche_size
+        if waterfall_amount > 0:
+            raise ValueError("Not enough balance in tranches")
+
+                
+                    

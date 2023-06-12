@@ -16,7 +16,7 @@ class Tranche:
     def append_to_principal_dict(self, month, value):
         self.__principal_dict[month].append(value)
 
-    # initializes dictionary to {1:[], 2:[],...}
+    # initializes dictionary to {0:[0,0,0,50000, 40000, 0,], 1:[],...}
     def init_principal_dict(self, total_months):
         for i in range(0, total_months):
             self.__principal_dict[i] = []
