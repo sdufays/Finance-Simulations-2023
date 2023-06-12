@@ -195,12 +195,14 @@ def run_simulation(case):
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
     # DEAL CALL MONTH
+    """
     if case == base:
        base_last_month.append(deal_call_mos)
     elif case == downside:
        downside_last_month.append(deal_call_mos)
     elif case == upside:
        upside_last_month.append(deal_call_mos)
+       """
 
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
@@ -228,6 +230,7 @@ def run_simulation(case):
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
     #print(calculations_for_one_trial)
+    return {'Deal Month Call': deal_call_mos, 'WA COF': wa_cof, 'WA Adv Rate': wa_adv_rate, 'Projected Equity Rate': projected_equity_yield}
 
 if __name__ == "__main__":
    # ------------------------ GENERAL INFO ------------------------ #
@@ -276,6 +279,8 @@ if __name__ == "__main__":
     downside_last_month = []
     upside_last_month = []
 
+    results_df = pd.DataFrame(columns=['Case', 'Run', 'Deal Month Call', 'WA COF', 'WA Adv Rate', 'Projected Equity Rate'])
+
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
@@ -287,19 +292,21 @@ if __name__ == "__main__":
 
     for scenario in scenarios:
       # chnage 10 to number of simulation runs per scenario 
-      for _ in range(5):
-          run_simulation(scenario)
+      for run in range(5):
+          result = run_simulation(scenario)
+          results_df['Scenario'] = scenario
+          results_df['Run'] = run
+          results_df = results_df.append(result, ignore_index=True)
 
    # ------------------------ GET OUTPUTS ------------------------ #
-    print("base_last_month: ", end="")
+    """print("base_last_month: ", end="")
     print(*base_last_month, sep=", ")
 
     print("downside_last_month: ", end="")
     print(*downside_last_month, sep=", ")
 
     print("upside_last_month: ", end="")
-    print(*upside_last_month, sep=", ")
-   
+    print(*upside_last_month, sep=", ")"""
 
 
 
