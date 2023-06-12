@@ -6,6 +6,7 @@ import math
 import numpy as np
 import xlsxwriter
 import os
+from collections import Counter
 
 def get_date_array(date):
     if date[2] % 4 == 0:
@@ -307,7 +308,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 5
+    NUM_TRIALS = 10
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -331,34 +332,52 @@ if __name__ == "__main__":
 
    # ---------------------------- READING DF ----------------------------- #
     deal_call_months = output_df['Deal Call Month'].unique()
-    deal_call_months_dict ={}
-    deal_call_months_list = []
+    wa_cof_reader = output_df['WA COF'].unique()
+    deal_call_months_dict = {}
     for case in cases:
-       case_call_months =[]
+       deal_call_months_list = []
+       wa_cof_list = []
        for trial in trial_numbers:
           call_month = output_df.loc[(case, trial), 'Deal Call Month']
-          case_call_months.append(call_month)
+          call_month1 = output_df.loc[(case, trial), 'WA COF']
           deal_call_months_list.append(call_month)
+          wa_cof_list.append(call_month1)
 
-       deal_call_months_dict[case] = case_call_months
+       deal_call_months_dict[case] = deal_call_months_list
 
     deal_call_months_sort = sorted(deal_call_months_list)
+    wa_cof_sort = sorted(wa_cof_list)
 
     dcm_unique = []
+    wacof_unique = []
     for num in deal_call_months_sort:
        if num not in dcm_unique:
           dcm_unique.append(num)
 
+    for num in wa_cof_sort:
+       if num not in wacof_unique:
+          wacof_unique.append(num)
+
+    occurrences_dcm = Counter(deal_call_months_list)
+    occurrences_wacof = Counter(wa_cof_list)
+    occurrences_list_dcm = list(occurrences_dcm.items())
+    occurrences_list_wacof = list(occurrences_wacof.items())
+    occurrences_list_dcm.sort(key=lambda x: x[0])
+    occurrences_list_wacof.sort(key=lambda x: x[0])
+
+    counts_list_dcm = [count for num, count in occurrences_list_dcm]
+    counts_list_wacof = [count for num, count in occurrences_list_wacof]
+
+
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('scatter_plot.xlsx')
     worksheet_dcm = workbook.add_worksheet("Deal Call Months")
-    worksheet_swapped = workbook.add_worksheet("Deal Call Months 2.0")
     worksheet_base = workbook.add_worksheet("Base")
     worksheet_downside = workbook.add_worksheet("Downside")
     worksheet_upside = workbook.add_worksheet("Upside")
+    worksheet_swapped = workbook.add_worksheet("Deal Call Months 2.0")
     bold = workbook.add_format({'bold': 1})
     headings_dcm = ['Sims', 'Base', 'Downside', 'Upside']
-    headings_swapped = ['Deal Call Months', 'Sims']
     headings_base = ['Sims', 'Base']
     headings_downside = ['Sims', 'Downside']
     headings_upside = ['Sims', 'Upside']
@@ -369,11 +388,6 @@ if __name__ == "__main__":
        deal_call_months_dict['base'], # this is one batch of data aka the y-axis
        deal_call_months_dict['downside'],
        deal_call_months_dict['upside']
-    ]
-
-    data_swapped = [
-       dcm_unique, 
-       deal_call_months_list
     ]
 
     data_base = [ # lol
@@ -391,14 +405,10 @@ if __name__ == "__main__":
        deal_call_months_dict['upside']
     ]
 
-    # Weighted Average Cost of Funds
-    # TODO: wa_cof
-
     # Equity Yield
     # TODO: equity yield
 
     worksheet_dcm.write_row('A1', headings_dcm, bold)
-    worksheet_swapped.write_row('A1', headings_swapped, bold)
     worksheet_base.write_row('A1', headings_base, bold)
     worksheet_downside.write_row('A1', headings_downside, bold)
     worksheet_upside.write_row('A1', headings_upside, bold)
@@ -408,10 +418,6 @@ if __name__ == "__main__":
     worksheet_dcm.write_column('B2', data_dcm[1])
     worksheet_dcm.write_column('C2', data_dcm[2])
     worksheet_dcm.write_column('D2', data_dcm[3])
-
-    # writing columns for swapped
-    worksheet_swapped.write_column('A2', data_swapped[0])
-    worksheet_swapped.write_column('B2', data_swapped[1])
 
     # writing columns for base
     worksheet_base.write_column('A2', data_base[0])
@@ -427,7 +433,6 @@ if __name__ == "__main__":
 
     # scatter chart object
     chart1 = workbook.add_chart({'type': 'scatter'})
-    chart5 = workbook.add_chart({'type': 'scatter', 'enabled': True})
     chart2 = workbook.add_chart({'type': 'scatter'})
     chart3 = workbook.add_chart({'type': 'scatter'})
     chart4 = workbook.add_chart({'type': 'scatter'})
@@ -436,66 +441,56 @@ if __name__ == "__main__":
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 1],
        'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
-       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1], # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1] # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
     })
 
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 2],
        'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Deal Call Months', 1, 2, NUM_TRIALS, 2], 
+       'values':     ['Deal Call Months', 1, 2, NUM_TRIALS, 2]
     })
 
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 3],
        'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0],
-       'values':     ['Deal Call Months', 1, 3, NUM_TRIALS, 3],
-    })
-
-    # swapped *******************************************************************************************************************
-    chart5.add_series({
-       'name':       ['Deal Call Months 2.0', 0, 2],
-       'categories': ['Deal Call Months 2.0', 0, 0, len(dcm_unique) - 1, 0],
-       'values':     ['Deal Call Months 2.0', 0, 1, len(dcm_unique) - 1, 1],
+       'values':     ['Deal Call Months', 1, 3, NUM_TRIALS, 3]
     })
 
     # just base
     chart2.add_series({
        'name':       ['Base', 0, 1],
        'categories': ['Base', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Base', 1, 1, NUM_TRIALS, 1], 
+       'values':     ['Base', 1, 1, NUM_TRIALS, 1]
     })
 
     # just downside
     chart3.add_series({
        'name':       ['Downside', 0, 2],
        'categories': ['Downside', 1, 0, NUM_TRIALS, 0],
-       'values':     ['Downside', 1, 1, NUM_TRIALS, 1], 
+       'values':     ['Downside', 1, 1, NUM_TRIALS, 1]
     })
 
     # just upside
     chart4.add_series({
        'name':       ['Upside', 0, 3],
        'categories': ['Upside', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Upside', 1, 1, NUM_TRIALS, 1],
+       'values':     ['Upside', 1, 1, NUM_TRIALS, 1]
     })
 
     # chart title 
     chart1.set_title ({'name': 'Results of CLO Simulation'})
-    chart5.set_title ({'name': 'Results of CLO Simulation'})
     chart2.set_title ({'name': 'Results of CLO Simulation'})
     chart3.set_title ({'name': 'Results of CLO Simulation'})
     chart4.set_title ({'name': 'Results of CLO Simulation'})
    
     # x-axis label
     chart1.set_x_axis({'name': 'Simulation Number'})
-    chart5.set_x_axis({'name': 'Deal Call Month', 'min': 30})
     chart2.set_x_axis({'name': 'Simulation Number'})
     chart3.set_x_axis({'name': 'Simulation Number'})
     chart4.set_x_axis({'name': 'Simulation Number'})
    
     # y-axis label
     chart1.set_y_axis({'name': 'Deal Call Month', 'min': 30})
-    chart5.set_y_axis({'name': 'Simulation Number'})
     chart2.set_y_axis({'name': 'Deal Call Month'})
     chart3.set_y_axis({'name': 'Deal Call Month'})
     chart4.set_y_axis({'name': 'Deal Call Month'})
@@ -504,21 +499,73 @@ if __name__ == "__main__":
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
     # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
     chart1.set_style(2)
-    chart5.set_style(7)
     chart2.set_style(3)
     chart3.set_style(4)
     chart4.set_style(5)
 
     worksheet_dcm.insert_chart('F2', chart1)
-    worksheet_swapped.insert_chart('F2', chart5)
     worksheet_base.insert_chart('E2', chart2)
     worksheet_downside.insert_chart('E2', chart3)
     worksheet_upside.insert_chart('E2', chart4)
 
-    # TODO: i need a summary kind of thing to go near
-    # so user can specify month they are looking for the deal to be called
-    # and then it prints how many times it was called as well as shows it in the graph
- 
+    # ------------------------------- SWAPPED --------------------------------- #
+    bold = workbook.add_format({'bold': 1})
+    headings_swapped = ['Deal Call Months', 'Sims']
+
+    data_swapped = [
+        dcm_unique, 
+        counts_list_dcm
+    ]
+    
+    worksheet_swapped.write_row('A1', headings_swapped, bold)
+    worksheet_swapped.write_column('A2', data_swapped[0])
+    worksheet_swapped.write_column('B2', data_swapped[1])
+
+    chart5 = workbook.add_chart({'type': 'scatter', 'enable': True, 'fill': {'color': 'orange', 'transparency': 50}})
+    chart5.add_series({
+       'name':       ['Deal Call Months 2.0', 0, 1],
+       'categories': ['Deal Call Months 2.0', 1, 0, NUM_TRIALS, 0],
+       'values':     ['Deal Call Months 2.0', 1, 1, NUM_TRIALS, 1]
+    })
+
+    chart5.set_title ({'name': 'Results of CLO Simulation'})
+    chart5.set_x_axis({'name': 'Deal Call Month', 'min': 25})
+    chart5.set_y_axis({'name': 'Sim Number'})
+
+    chart5.set_style(8)
+    worksheet_swapped.insert_chart('F2', chart5)
+
+    # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS ------------------------------------ #
+    worksheet_wa_cof = workbook.add_worksheet("WA Cost of Funds")
+    headings_wa_cof = ['WA CoF', 'Sims']
+
+    data_wa_cof = [
+       list(range(0, 1)),
+       wa_cof_list
+    ]
+    # it's not working because the calculation is too specific
+    # i need to make multiple lists and attach the values to that range
+    # TODO: multiple lists of ranges for wa_cof
+
+    worksheet_wa_cof.write_row('A1', headings_wa_cof, bold)
+    worksheet_wa_cof.write_column('A2', data_wa_cof[0])
+    worksheet_wa_cof.write_column('B2', data_wa_cof[1])
+    chart6 = workbook.add_chart({'type': 'scatter'})
+
+    # base, downside, upside
+    chart6.add_series({
+       'name':       ['WA Cost of Funds', 0, 1],
+       'categories': ['WA Cost of Funds', 1, 0, NUM_TRIALS, 0], 
+       'values':     ['WA Cost of Funds', 1, 1, NUM_TRIALS, 1], 
+    })
+
+    chart6.set_title ({'name': 'Results of CLO Simulation'})
+    chart6.set_x_axis({'name': 'Weighted Average Cost of Fund'})
+    chart6.set_y_axis({'name': 'Sim Number'})
+   
+    chart6.set_style(6)
+    worksheet_wa_cof.insert_chart('E2', chart6)
+
     workbook.close()
     excel_file_path = 'scatter_plot.xlsx'
     os.startfile(excel_file_path)
