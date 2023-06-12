@@ -197,7 +197,7 @@ def run_simulation(case, output_dataframe, trial_index):
         else:
            portfolio_index += 1
 
-            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
+        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
 
       # add current balances to list
       for tranche in clo.get_tranches():
