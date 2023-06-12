@@ -123,8 +123,12 @@ if __name__ == "__main__":
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
+    # initial collateral income
+    #initial_collateral_income = loan_portfolio.get_collateral_income(SOFR) # income we get from loans
+    loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
+    for loan in loan_portfolio.get_active_portfolio():
+       loan.loan_income(SOFR, loan_income_df)
 
-    
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
     while months_passed in range(longest_duration): # longest duration 
@@ -136,6 +140,7 @@ if __name__ == "__main__":
          extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
          if extra_balance > 0:
             loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
+            loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR, loan_income_df)
       
       # loops through ACTIVE loans only
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
@@ -176,11 +181,14 @@ if __name__ == "__main__":
 
            if reinvestment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR, loan_income_df)
            elif replenishment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR,loan_income_df)
                 replen_cumulative += beginning_bal
            elif replen_after_reinv_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR, loan_income_df)
                 replen_cumulative += beginning_bal
                  # increment replen_months only once in a month
                 if not incremented_replen_month:
@@ -231,12 +239,12 @@ if __name__ == "__main__":
     # for the loans, leave as if (still outstanding)
     
     # testing loan data
-    #print(loan_df.tail(longest_duration))
-    # loan_df.to_excel('output.xlsx', index=True)
+    #print(loan_df.head(longest_duration))
+    loan_df.to_excel('output.xlsx', index=True)
 
     # testing tranche data
-    print(tranche_df.loc['A'])
-    print(tranche_df.loc['A-S'])
+    #print(tranche_df.loc['A'])
+    #print(tranche_df.loc['A-S'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
@@ -263,11 +271,12 @@ if __name__ == "__main__":
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_portfolio.get_collateral_income(loan_df, deal_call_mos[0], SOFR) # income we get from loans
+    collateral_income = loan_income_df['Income'].sum() * 12 / deal_call_mos[0]
     clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
     print("collateral income {:,.2f}\n clo interest cost {:,.2f}\n net equity amt {:,.2f}\n equity net spread {:,.2}\n\n".format(collateral_income, clo_interest_cost, net_equity_amt, equity_net_spread))
+    print("collateral - interest {:,.2f}\n".format(collateral_income - clo_interest_cost))
     # origination fee add on (fee for creating the clo)
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo

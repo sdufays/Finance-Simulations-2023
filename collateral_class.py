@@ -104,10 +104,12 @@ class CollateralPortfolio(Loan):
             if loan.get_term_length() > max:
                 max = loan.get_term_length()
         return max
-
-    def get_collateral_income(self, dataframe, months, sofr_value):
+"""
+# now unused
+    def get_collateral_income(self, dataframe, sofr_value, month):
         margin_balance_sum = 0
         for loan in self.__active_portfolio:
-          margin_balance_sum += (loan.get_margin() + sofr_value) * dataframe.loc[(loan.get_loan_id(), 0), 'Ending Balance']
-        # maybe not /month and not *12
-        return 12 * margin_balance_sum / months # CLO interest cost is number per year, but all income is over duration of deal -> need to conv to annual num
+          print(loan.get_initial_balance())
+          margin_balance_sum += (loan.get_margin() + sofr_value) * loan.get_initial_balance()
+        return 12 * margin_balance_sum / month # CLO interest cost is number per year, but all income is over duration of deal -> need to conv to annual num
+    """

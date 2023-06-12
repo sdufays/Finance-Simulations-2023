@@ -1,8 +1,8 @@
 # ------------------------ LOAN CLASS SETUP ------------------------ #
 class Loan:
-    def __init__(self, loan_id, collateral_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period):
+    def __init__(self, loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period):
         self.__loan_id = loan_id
-        self.__loan_balance = collateral_balance
+        self.__loan_balance = loan_balance
         self.__margin = margin
         self.__index_floor = index_floor
         self.__remaining_loan_term = remaining_loan_term
@@ -10,6 +10,16 @@ class Loan:
         self.__open_prepayment_period = open_prepayment_period
         self.__term_length = 0
         self.__starting_month = 0
+        self.__initial_balance = loan_balance
+        self.__income = 0
+    
+    def get_initial_balance(self):
+        return self.__initial_balance
+    
+    def loan_income(self, sofr_val, df):
+        self.__income = self.__initial_balance * (self.__margin + sofr_val)
+        df.loc[df.shape[0]] = [self.get_loan_id(), self.__income]
+        return self.__income
     
     def get_loan_id(self):
         return self.__loan_id
