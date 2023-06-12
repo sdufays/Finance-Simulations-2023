@@ -197,7 +197,7 @@ def run_simulation(case, output_dataframe, trial_index):
         else:
            portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
+        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index, replen_cumulative, replen_months)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -227,8 +227,8 @@ def run_simulation(case, output_dataframe, trial_index):
 
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
-    #if wa_cof < 0:
-      #tranche_df.to_excel('output.xlsx', index=True)
+    if wa_cof < 0:
+      tranche_df.to_excel('output.xlsx', index=True)
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0

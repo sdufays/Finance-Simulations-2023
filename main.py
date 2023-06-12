@@ -51,13 +51,13 @@ if __name__ == "__main__":
     days_in_month = get_date_array(date)
     SOFR = df_os.iloc[3, 1]
 
-    has_reinvestment = df_os.iloc[7, 1]
+    has_reinvestment = df_os.iloc[4, 1]
     has_replenishment = df_os.iloc[5, 1]
 
     reinvestment_period = df_os.iloc[1, 1]
-    replenishment_period = df_os.iloc[4, 1]
+    replenishment_period = df_os.iloc[6, 1]
 
-    replenishment_amount = df_os.iloc[6, 1]
+    replenishment_amount = df_os.iloc[7, 1]
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
@@ -125,6 +125,11 @@ if __name__ == "__main__":
     # SET DATAFRAME FORMAT OPTIONS
     # Set the display format for floating-point numbers
     pd.options.display.float_format = '{:,.2f}'.format
+    pd.set_option('display.max_columns', None)  # Display all columns
+    pd.set_option('display.max_rows', None)  # Display all rows
+    pd.set_option('display.width', None)  # Display the full width of the DataFrame
+    pd.set_option('display.max_colwidth', None)  # Display the full contents of each column
+
 
     # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
@@ -232,8 +237,7 @@ if __name__ == "__main__":
             else:
                 portfolio_index += 1
 
-            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay,
-                                                  terminate_next, loan, loan_portfolio, portfolio_index)
+            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index, replen_cumulative, replen_months)
 
         # add current balances to list
         for tranche in clo.get_tranches():
@@ -255,21 +259,23 @@ if __name__ == "__main__":
 
     #loan_df.to_excel('output.xlsx', index=True)
 
-
+    print(tranche_df.loc['A'])
+    print(tranche_df.loc['A-S'])
+    print(tranche_df.loc['B'])
     #print(tranche_df.loc[('A-S', deal_call_mos[0])])
     #print(tranche_df.loc[('B', deal_call_mos[0])])
     #print(tranche_df.loc[('C', deal_call_mos[0])])
-"""
+#"""
     #TESTING PURPOSES ONLY
-    print(loan_df.tail(longest_duration))
-    loan_df.to_excel('output.xlsx', index=True)
+    #print(loan_df.tail(longest_duration))
+    #loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
     #print(tranche_df.loc['A'])
-    print(tranche_df.loc[('A-S', deal_call_mos[0])])
-    print(tranche_df.loc[('B', deal_call_mos[0])])
-    print(tranche_df.loc[('C', deal_call_mos[0])])
+    #print(tranche_df.loc[('A-S', deal_call_mos[0])])
+    #print(tranche_df.loc[('B', deal_call_mos[0])])
+    #print(tranche_df.loc[('C', deal_call_mos[0])])
     #print(tranche_df.head(longest_duration))
-    """
+    #"""
 # ------------------ CALCULATING OUTPUTS ------------------ #
 # DEAL CALL MONTH
 print("\n\n")
@@ -278,11 +284,11 @@ print(f"Month: {deal_call_mos[0]}\n")
 # WEIGHTED AVG COST OF FUNDS
 data = {'Cashflows': clo.get_total_cashflows()}
 print("==== Weighted Average Cost of Funds ====")
-print(pd.DataFrame(data))
+#print(pd.DataFrame(data))
 print()
 
 wa_cof = (npf.irr(clo.get_total_cashflows()) * 12 * 360 / 365 - SOFR) * 100  # in bps
-print(f"WA Cost of Funds: {wa_cof:.2f} bps")
+print(f"WA Cost of Funds: {wa_cof:.2f}%")
 
 # WEIGHTED AVG ADVANCE RATE
 avg_clo_bal = 0
