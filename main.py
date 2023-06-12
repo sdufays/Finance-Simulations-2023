@@ -277,44 +277,42 @@ if __name__ == "__main__":
     print(tranche_df.head(longest_duration))
     tranche_df.to_excel('tranches.xlsx', index=True)
     """
+# ------------------ CALCULATING OUTPUTS ------------------ #
+# DEAL CALL MONTH
+print("\n\n")
+print("==== Deal Call Month ====")
+print(f"Month: {deal_call_mos[0]}\n")
+# WEIGHTED AVG COST OF FUNDS
+data = {'Cashflows': clo.get_total_cashflows()}
+print("==== Weighted Average Cost of Funds ====")
+print(pd.DataFrame(data))
+print()
 
-    # ------------------ CALCULATING OUTPUTS ------------------ #
-   # DEAL CALL MONTH
-    print("\n\n")
-    print("==== Deal Call Month ====")
-    print(f"Month: {deal_call_mos[0]}\n")
-    # WEIGHTED AVG COST OF FUNDS
-    data = {'Cashflows': clo.get_total_cashflows()}
-    print("==== Weighted Average Cost of Funds ====")
-    print(pd.DataFrame(data))
-    print()
+wa_cof = (npf.irr(clo.get_total_cashflows()) * 12 * 360 / 365 - SOFR) * 100  # in bps
+print(f"WA Cost of Funds: {wa_cof:.2f} bps")
 
-    wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
-    print(f"WA Cost of Funds: {wa_cof:.2f} bps")
+# WEIGHTED AVG ADVANCE RATE
+avg_clo_bal = 0
+for i in range(len(clo.get_tranches())):
+    avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
+avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0]  # deal_call_mos[trial_num]
+wa_adv_rate = avg_clo_bal / avg_collateral_bal
+print(f"WA Advance Rate: {wa_adv_rate:.2%}\n")
 
-    
-    # WEIGHTED AVG ADVANCE RATE
-    avg_clo_bal = 0
-    for i in range(len(clo.get_tranches())):
-       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
-    avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
-    wa_adv_rate = avg_clo_bal/avg_collateral_bal
-    print(f"WA Advance Rate: {wa_adv_rate:.2%}\n")
+# PROJECTED EQUITY YIELD
+# equity net spread
+collateral_income = loan_portfolio.get_initial_deal_size() * (wa_spread + SOFR)
+tranche_total_balance = 0
+clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR)  # interest we pay to tranches
+net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob  # total amount of loans - amount offered as tranches
+equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt  # excess equity available
+# origination fee add on (fee for creating the clo)
+origination_fee = loan_portfolio.get_initial_deal_size() * 0.01 / (
+        net_equity_amt * deal_call_mos[0])  # remember in simulation to put deal_call_mos[trial]
+# projected equity yield (times 100 cuz percent), represents expected return on the clo
+projected_equity_yield = (equity_net_spread + origination_fee)
 
-
-    # PROJECTED EQUITY YIELD
-    # equity net spread
-    collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
-    tranche_total_balance = 0
-    clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
-    net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
-    equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
-    # origination fee add on (fee for creating the clo)
-    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
-    # projected equity yield (times 100 cuz percent), represents expected return on the clo
-    projected_equity_yield = (equity_net_spread + origination_fee)
-
-    calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    #print(calculations_for_one_trial)
-    print("==== Projected Equity Yield ====")
-    print(f"Yield: {projected_equity_yield:.2f}%\n")
+calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
+# print(calculations_for_one_trial)
+print("==== Projected Equity Yield ====")
+print(f"Yield: {projected_equity_yield:.2f}%\n")
