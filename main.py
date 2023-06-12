@@ -169,7 +169,6 @@ if __name__ == "__main__":
             extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
             if extra_balance > 0:
                 loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp=True)
-                loan_portfolio.get_active_portfolio()[-1].loan_income(SOFR, loan_income_df)
 
         # loops through ACTIVE loans only
         while portfolio_index < len(loan_portfolio.get_active_portfolio()):
@@ -204,16 +203,9 @@ if __name__ == "__main__":
             # paying off loans
             if principal_pay != 0:
                 loan_portfolio.remove_loan(loan)
-                reinvestment_bool = (clo.get_reinv_bool()) and (
-                            months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
-                replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (
-                            months_passed <= clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (
-                                                  months_passed == loan.get_term_length())
-                replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (
-                            months_passed > clo.get_reinv_period()) and (
-                                                      replen_months < clo.get_replen_period() and replen_cumulative <
-                                                      clo.get_replen_amount()) and (
-                                                      months_passed == loan.get_term_length())
+                reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+                replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+                replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
                 if reinvestment_bool:
                     loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp=False)
@@ -224,7 +216,6 @@ if __name__ == "__main__":
                     remaining_subtract = beginning_bal - loan_value
                     if remaining_subtract > 0:
                         loan_waterfall(remaining_subtract, clo.get_tranches())
-
                 elif replen_after_reinv_bool:
                     loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
                     loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
@@ -241,7 +232,7 @@ if __name__ == "__main__":
             else:
                 portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay,
+            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay,
                                                   terminate_next, loan, loan_portfolio, portfolio_index)
 
         # add current balances to list
