@@ -5,8 +5,7 @@ class CLO(Tranche):
     def __init__(self, ramp_up, reinvestment_bool, replenishment_bool, reinvestment_period, replenishment_period, replenishment_amount, starting_date):
         # tranche objects stored here
         self.__tranches = []
-        # boolean, default no
-        self.__ramp_up = ramp_up
+        self.__ramp_up = ramp_up # boolean, default no
         self.__reinvestment_bool = reinvestment_bool
         self.__replenishment_bool = replenishment_bool
         self.__reinvestment_period = reinvestment_period
@@ -57,8 +56,6 @@ class CLO(Tranche):
     def get_tranches(self):
         return self.__tranches
 
-    # need cascade function to update tranches
-
     # get current total deal amount
     def get_tda(self):
         total_deal_amount = 0 
@@ -87,7 +84,6 @@ class CLO(Tranche):
     # tranch percentage of total 
     def get_CE(self, tranche):
         return (1 - (tranche.get_size() / self.get_tob()))
-    # rewrite it later (only right for aaa)
 
     # calculate rating agency fees (moody's + KRBA)
     def get_RA_fees(self):

@@ -25,14 +25,13 @@ class CollateralPortfolio(Loan):
         self.__active_portfolio.append(loan)
         self.__storage_portfolio.append(loan)
 
-    # only during reinvestment period
+    # only during reinvestment / ramp-up period
     def add_new_loan(self, loan_balance, margin, month,ramp):
         new_loan_terms = [18, 20, 30]
-        #term = new_loan_terms[1]
-        # ^ if you want consistent results
+        #term = new_loan_terms[1] # if you want consistent results
         term = new_loan_terms[random.randint(0,2)]
         # print("new loan balance " + str("{:,}".format(loan_balance)))
-        # make loan id higher than storage portfolio length -> so like 26
+        # make loan id higher than storage portfolio length -> i.e. 26
         loan_id = len(self.__storage_portfolio) + 1
         # index will be 20 cuz just removed another loan, where the list goes from [0, 1, ... 20]
         # same even if active portfolio shrinks
@@ -69,16 +68,12 @@ class CollateralPortfolio(Loan):
             sum+=loan.get_loan_balance()
         return sum
 
-    #run this at the beginning of main
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
         num_loans = len(self.__active_portfolio)
         prepay_amt = round(num_loans * case[0])
-        # print("prepay: " + str(prepay_amt/num_loans))
         initial_amt = round(num_loans * case[1])
-        # print("initial: " + str(initial_amt/num_loans))
         extended_amt = num_loans - prepay_amt - initial_amt
-        # print("extended: " + str(extended_amt/num_loans))
         # Create a list with the loan terms according to the scenario
         loan_terms = ['prepaid'] * prepay_amt + ['initial'] * initial_amt + ['extended'] * extended_amt
         # Shuffle the list to randomize the terms
@@ -105,6 +100,7 @@ class CollateralPortfolio(Loan):
             if loan.get_term_length() > max:
                 max = loan.get_term_length()
         return max
+    
 """
 # now unused
     def get_collateral_income(self, dataframe, sofr_value, month):

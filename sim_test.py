@@ -206,17 +206,21 @@ def run_simulation(case, output_dataframe, trial_index):
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
 
+      incremented_replen_month = False
       months_passed += 1
 
-    # TESTING PURPOSES ONLY
-    # testing loan data
-    #print(loan_df.tail(longest_duration))
-    #loan_df.to_excel('output.xlsx', index=True)
+    """
+    #TESTING PURPOSES ONLY
+    print(loan_df.tail(longest_duration))
+    loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
-    #print(tranche_df.loc['A'])
-    #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranches.xlsx', index=True)
+    print(tranche_df.loc['A'])
+    print(tranche_df.loc['A-S'])
+    print(tranche_df.head(longest_duration))
+    tranche_df.to_excel('tranches.xlsx', index=True)
+    """
 
+    # ------------------ CALCULATING OUTPUTS ------------------ #
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     #if wa_cof < 0:

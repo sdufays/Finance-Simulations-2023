@@ -255,10 +255,16 @@ if __name__ == "__main__":
 
     loan_df.to_excel('output.xlsx', index=True)
 
+    """
+    #TESTING PURPOSES ONLY
+    print(loan_df.tail(longest_duration))
+    loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
-    #print(tranche_df.loc['A'])
-    #print(tranche_df.loc['A-S'])
-    #print(tranche_df.head(longest_duration))
+    print(tranche_df.loc['A'])
+    print(tranche_df.loc['A-S'])
+    print(tranche_df.head(longest_duration))
+    tranche_df.to_excel('tranches.xlsx', index=True)
+    """
 
 
     # ------------------ CALCULATING OUTPUTS ------------------ #
