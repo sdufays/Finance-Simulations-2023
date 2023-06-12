@@ -155,7 +155,7 @@ if __name__ == "__main__":
        wa_spread += loan.get_margin()
     wa_spread /= len(loan_portfolio.get_active_portfolio())
 
-    # removing unsold tranches so they don't get in the way
+    # removing unsold tranches  
     clo.remove_unsold_tranches()
     while months_passed in range(longest_duration): # longest duration 
       # loan counter starts at 0 
