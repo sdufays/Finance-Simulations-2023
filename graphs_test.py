@@ -13,8 +13,31 @@ def get_date_array(date):
     else: 
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-def run_simulation(case):
 
+def waterfall(subtract_value, tranches):
+    """
+    Perform waterfall algorithm over tranches.
+    :param subtract_value: Value to be subtracted from tranches.
+    :param tranches: List of tranches.
+    :return: None.
+    """
+    for tranche in tranches:
+        if tranche.get_size() >= subtract_value:
+            tranche.subtract_size(subtract_value)
+            subtract_value = 0
+            break
+        else:
+            subtract_value -= tranche.get_size()
+            tranche.subtract_size(tranche.get_size())
+
+        if subtract_value == 0:
+            break
+
+    if subtract_value > 0:
+        raise ValueError("Not enough total size in all tranches to cover the subtraction.")  
+
+
+def run_simulation(case, output_dataframe, trial_index):
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
@@ -42,7 +65,7 @@ def run_simulation(case):
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengthsi think
-    loan_portfolio.initial_loan_terms(case)
+    loan_portfolio.generate_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -65,8 +88,6 @@ def run_simulation(case):
 
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
-    # storage variables
-    deal_call_mos = [] # stores month when each deal is called
 
     # initializing variables
     months_passed = 0
@@ -85,6 +106,14 @@ def run_simulation(case):
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
+    loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
+    for loan in loan_portfolio.get_active_portfolio():
+       loan.loan_income(SOFR, loan_income_df)
+    # calculate wa loan spread for day 1
+    wa_spread = 0
+    for loan in loan_portfolio.get_active_portfolio():
+       wa_spread += loan.get_margin()
+    wa_spread /= len(loan_portfolio.get_active_portfolio())
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -176,7 +205,7 @@ def run_simulation(case):
 
       # terminate in outer loop
       if terminate_next:
-         deal_call_mos.append(months_passed)
+         deal_call_month = months_passed
          break 
       
       if clo.get_tranches()[0].get_size() <= threshold:
@@ -184,44 +213,49 @@ def run_simulation(case):
 
       months_passed += 1
 
+    # TESTING PURPOSES ONLY
     # testing loan data
     #print(loan_df.tail(longest_duration))
-    # loan_df.to_excel('output.xlsx', index=True)
-
+    #loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
-    #print(tranche_df.loc['A-S'])
+    #print(tranche_df.loc['A'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
-    # ------------------ CALCULATING OUTPUTS ------------------ #
-    # DEAL CALL MONTH
-    if case == base:
-       base_last_month.append(deal_call_mos)
-    elif case == downside:
-       downside_last_month.append(deal_call_mos)
-    elif case == upside:
-       upside_last_month.append(deal_call_mos)
-       
+    # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
-    avg_AAA_bal = sum(clo.get_tranches()[0].get_bal_list()) / deal_call_mos[0]
-    avg_clo_bal = (initial_clo_tob - initial_AAA_bal) / deal_call_mos[0] + avg_AAA_bal
-    avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
+    avg_clo_bal = 0
+    for i in range(len(clo.get_tranches())):
+       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_month
+    avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_month
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_portfolio.get_collateral_income(loan_df, deal_call_mos[0], SOFR) # income we get from loans
-    clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
+    collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
+    clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
     # origination fee add on (fee for creating the clo)
-    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
+    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_month) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
     projected_equity_yield = (equity_net_spread + origination_fee) * 100
 
-    calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
+    if case == base:
+       case_name = "base"
+    elif case == upside:
+       case_name = "upside"
+    else:
+       case_name = "downside"
+
+    output_dataframe.loc[(case_name, trial_index), 'Deal Call Month'] = deal_call_month
+    output_dataframe.loc[(case_name, trial_index), 'WA COF'] = wa_cof
+    output_dataframe.loc[(case_name, trial_index), 'WA Adv Rate'] = wa_adv_rate
+    output_dataframe.loc[(case_name, trial_index), 'Projected Equity Yield'] = projected_equity_yield
+    # technically don't even need to return it
+    return output_dataframe
 
 if __name__ == "__main__":
    # ------------------------ GENERAL INFO ------------------------ #
@@ -266,71 +300,81 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    base_last_month = []
-    downside_last_month = []
-    upside_last_month = []
+    NUM_TRIALS = 5
+    cases = ['base', 'downside', 'upside']
+    trial_numbers = range(0, NUM_TRIALS)
+    index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
+    columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
+    output_df = pd.DataFrame(index=index, columns=columns)
+
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
     #run_simulation(base)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
+   
     scenarios = [base, downside, upside]
-    num_of_runs = 10
 
     for scenario in scenarios:
-      # this means that it will run each scenario 10 times
-      # so i need three batches
-      # chnage 10 to number of simulation runs per scenario 
-      for _ in range(num_of_runs):
-          run_simulation(scenario)
-          base_combined_list = [num for sublist in base_last_month for num in sublist]
-          downside_combined_list = [num for sublist in downside_last_month for num in sublist]
-          upside_combined_list = [num for sublist in upside_last_month for num in sublist]
+        for run in range(NUM_TRIALS):
+            # Run the simulation and get the data dictionary
+            output_df = run_simulation(scenario, output_df, run)
+    print(output_df)
 
-   # ------------------------ GET OUTPUTS ------------------------ #
-    print("base_last_month: ", end="")
-    print(base_combined_list, sep=", ")
+   # ---------------------------- READING DF ----------------------------- #
+    deal_call_months = output_df['Deal Call Month'].unique()
+    deal_call_months_dict ={}
+    for case in cases:
+       case_call_months =[]
+       for trial in trial_numbers:
+          call_month = output_df.loc[(case, trial), 'Deal Call Month']
+          case_call_months.append(call_month)
 
-    print("downside_last_month: ", end="")
-    print(downside_combined_list, sep=", ")
+       deal_call_months_dict[case] = case_call_months
 
-    print("upside_last_month: ", end="")
-    print(upside_combined_list, sep=", ")
-
-   # ---------------------- GRAPHING DEAL CALL MONTHS ---------------------- #
+   # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('scatter_plot.xlsx')
     worksheet_dcm = workbook.add_worksheet("Deal Call Months")
+    worksheet_swapped = workbook.add_worksheet("Deal Call Months 2.0")
     worksheet_base = workbook.add_worksheet("Base")
     worksheet_downside = workbook.add_worksheet("Downside")
     worksheet_upside = workbook.add_worksheet("Upside")
     bold = workbook.add_format({'bold': 1})
     headings_dcm = ['Sims', 'Base', 'Downside', 'Upside']
+    headings_swapped = ['Sims', 'Base', 'Downside', 'Upside']
     headings_base = ['Sims', 'Base']
     headings_downside = ['Sims', 'Downside']
     headings_upside = ['Sims', 'Upside']
 
     # deal call months
     data_dcm = [
-       list(range(1, num_of_runs + 1)), # this is my x-axis
-       base_combined_list, # this is one batch of data aka the y-axis
-       downside_combined_list,
-       upside_combined_list
+       list(range(1, NUM_TRIALS + 1)), # this is my x-axis
+       deal_call_months_dict['base'], # this is one batch of data aka the y-axis
+       deal_call_months_dict['downside'],
+       deal_call_months_dict['upside']
     ]
 
+    #data_swapped = [
+       #list(range(1, num_of_runs + 1)), 
+       #base_combined_list,
+       #downside_combined_list,
+       #upside_combined_list
+    #]
+
     data_base = [ # lol
-       list(range(1, num_of_runs + 1)),
-       base_combined_list
+       list(range(1, NUM_TRIALS + 1)),
+       deal_call_months_dict['base']
     ]
 
     data_downside = [
-       list(range(1, num_of_runs + 1)),
-       downside_combined_list
+       list(range(1, NUM_TRIALS + 1)),
+       deal_call_months_dict['downside']
     ]
 
     data_upside = [
-       list(range(1, num_of_runs + 1)),
-       upside_combined_list
+       list(range(1, NUM_TRIALS + 1)),
+       deal_call_months_dict['upside']
     ]
 
     # Weighted Average Cost of Funds
@@ -371,41 +415,41 @@ if __name__ == "__main__":
     # base, downside, upside
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 1],
-       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
-       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
+       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1], # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
     })
 
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 2],
-       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
-       'values':     ['Deal Call Months', 1, 2, num_of_runs, 2], 
+       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
+       'values':     ['Deal Call Months', 1, 2, NUM_TRIALS, 2], 
     })
 
     chart1.add_series({
        'name':       ['Deal Call Months', 0, 3],
-       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0],
-       'values':     ['Deal Call Months', 1, 3, num_of_runs, 3],
+       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0],
+       'values':     ['Deal Call Months', 1, 3, NUM_TRIALS, 3],
     })
 
     # just base
     chart2.add_series({
        'name':       ['Deal Call Months', 0, 1],
-       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
-       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], 
+       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
+       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1], 
     })
 
     # just downside
     chart3.add_series({
        'name':       ['Deal Call Months', 0, 2],
-       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0],
-       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1], 
+       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0],
+       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1], 
     })
 
     # just upside
     chart4.add_series({
        'name':       ['Deal Call Months', 0, 3],
-       'categories': ['Deal Call Months', 1, 0, num_of_runs, 0], 
-       'values':     ['Deal Call Months', 1, 1, num_of_runs, 1],
+       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
+       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1],
     })
 
     # chart title 
@@ -421,7 +465,7 @@ if __name__ == "__main__":
     chart4.set_x_axis({'name': 'Simulation Number'})
    
     # y-axis label
-    chart1.set_y_axis({'name': 'Deal Call Month'})
+    chart1.set_y_axis({'name': 'Deal Call Month', 'min': 30})
     chart2.set_y_axis({'name': 'Deal Call Month'})
     chart3.set_y_axis({'name': 'Deal Call Month'})
     chart4.set_y_axis({'name': 'Deal Call Month'})
