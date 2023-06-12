@@ -11,7 +11,7 @@ def get_date_array(date):
         return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-def waterfall(subtract_value, tranches):
+def loan_waterfall(subtract_value, tranches):
     """
     Perform waterfall algorithm over tranches.
     :param subtract_value: Value to be subtracted from tranches.
@@ -226,7 +226,7 @@ if __name__ == "__main__":
                     replen_cumulative += loan_value
                     remaining_subtract = beginning_bal - loan_value
                     if remaining_subtract > 0:
-                        waterfall(remaining_subtract, clo.get_tranches())
+                        loan_waterfall(remaining_subtract, clo.get_tranches())
 
                 elif replen_after_reinv_bool:
                     loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
@@ -238,9 +238,9 @@ if __name__ == "__main__":
                         replen_months += 1
                         incremented_replen_month = True  # set flag to True so that it won't increment again within this month
                     if remaining_subtract > 0:
-                        waterfall(remaining_subtract, clo.get_tranches())
+                        loan_waterfall(remaining_subtract, clo.get_tranches())
                 else:  # waterfall it
-                    waterfall(beginning_bal, clo.get_tranches())
+                    loan_waterfall(beginning_bal, clo.get_tranches())
             else:
                 portfolio_index += 1
 
