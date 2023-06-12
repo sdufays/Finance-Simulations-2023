@@ -41,7 +41,7 @@ def run_simulation(case, output_dataframe, trial_index):
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
+    df_cs = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Capital Stack")
 
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
@@ -54,7 +54,7 @@ def run_simulation(case, output_dataframe, trial_index):
     loan_portfolio = CollateralPortfolio()
 
     # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
+    df_cp = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Collateral Portfolio")
 
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     upside = [.40, .35, .25]
 
     # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications", header=None)
+    df_os = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
+    df_uc = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0,1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -305,7 +305,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 3
+    NUM_TRIALS = 5
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])

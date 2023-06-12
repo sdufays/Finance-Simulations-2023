@@ -39,7 +39,7 @@ if __name__ == "__main__":
     upside = [.40, .35, .25]
 
     # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input.xlsm", sheet_name="Other Specifications", header=None)
+    df_os = pd.read_excel("CLO_Input2.xlsm", sheet_name="Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name="Upfront Costs", header=None)
+    df_uc = pd.read_excel("CLO_Input2.xlsm", sheet_name="Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0, 1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -77,7 +77,7 @@ if __name__ == "__main__":
               replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name="Capital Stack")
+    df_cs = pd.read_excel("CLO_Input2.xlsm", sheet_name="Capital Stack")
 
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     loan_portfolio = CollateralPortfolio()
     # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name="Collateral Portfolio")
+    df_cp = pd.read_excel("CLO_Input2.xlsm", sheet_name="Collateral Portfolio")
 
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
@@ -256,9 +256,9 @@ if __name__ == "__main__":
     #loan_df.to_excel('output.xlsx', index=True)
 
 
-    print(tranche_df.loc[('A-S', deal_call_mos[0])])
-    print(tranche_df.loc[('B', deal_call_mos[0])])
-    print(tranche_df.loc[('C', deal_call_mos[0])])
+    #print(tranche_df.loc[('A-S', deal_call_mos[0])])
+    #print(tranche_df.loc[('B', deal_call_mos[0])])
+    #print(tranche_df.loc[('C', deal_call_mos[0])])
 """
     #TESTING PURPOSES ONLY
     print(loan_df.tail(longest_duration))
@@ -278,7 +278,7 @@ print(f"Month: {deal_call_mos[0]}\n")
 # WEIGHTED AVG COST OF FUNDS
 data = {'Cashflows': clo.get_total_cashflows()}
 print("==== Weighted Average Cost of Funds ====")
-#print(pd.DataFrame(data))
+print(pd.DataFrame(data))
 print()
 
 wa_cof = (npf.irr(clo.get_total_cashflows()) * 12 * 360 / 365 - SOFR) * 100  # in bps
