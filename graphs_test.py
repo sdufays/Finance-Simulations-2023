@@ -43,7 +43,7 @@ def run_simulation(case, output_dataframe, trial_index):
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input.xlsm", sheet_name = "Capital Stack")
+    df_cs = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Capital Stack")
 
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
@@ -56,7 +56,7 @@ def run_simulation(case, output_dataframe, trial_index):
     loan_portfolio = CollateralPortfolio()
 
     # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input.xlsm", sheet_name = "Collateral Portfolio")
+    df_cp = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Collateral Portfolio")
 
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
@@ -109,11 +109,14 @@ def run_simulation(case, output_dataframe, trial_index):
     loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
     for loan in loan_portfolio.get_active_portfolio():
        loan.loan_income(SOFR, loan_income_df)
+    loan_term_df = pd.DataFrame(columns=['Loan ID','Loan Term'])
     # calculate wa loan spread for day 1
     wa_spread = 0
     for loan in loan_portfolio.get_active_portfolio():
-       wa_spread += loan.get_margin()
+        loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
+        wa_spread += loan.get_margin()
     wa_spread /= len(loan_portfolio.get_active_portfolio())
+    
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -164,6 +167,8 @@ def run_simulation(case, output_dataframe, trial_index):
 
            if reinvestment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                loan = loan_portfolio.get_active_portfolio()[-1]
+                loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
            elif replenishment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
                 replen_cumulative += beginning_bal
@@ -224,6 +229,8 @@ def run_simulation(case, output_dataframe, trial_index):
 
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
+    #if wa_cof < 0:
+      #tranche_df.to_excel('output.xlsx', index=True)
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0
@@ -264,7 +271,7 @@ if __name__ == "__main__":
     upside = [.40, .35, .25]
 
     # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input.xlsm", sheet_name = "Other Specifications", header=None)
+    df_os = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -290,7 +297,7 @@ if __name__ == "__main__":
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel("CLO_Input.xlsm", sheet_name = "Upfront Costs", header=None)
+    df_uc = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0,1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -420,7 +427,7 @@ if __name__ == "__main__":
 
     # scatter chart object
     chart1 = workbook.add_chart({'type': 'scatter'})
-    chart5 = workbook.add_chart({'type': 'scatter'})
+    chart5 = workbook.add_chart({'type': 'scatter', 'enabled': True})
     chart2 = workbook.add_chart({'type': 'scatter'})
     chart3 = workbook.add_chart({'type': 'scatter'})
     chart4 = workbook.add_chart({'type': 'scatter'})
@@ -447,29 +454,29 @@ if __name__ == "__main__":
     # swapped *******************************************************************************************************************
     chart5.add_series({
        'name':       ['Deal Call Months 2.0', 0, 2],
-       'categories': ['Deal Call Months 2.0', 1, 0, max(dcm_unique), 0],
-       'values':     ['Deal Call Months 2.0', 1, 1, max(dcm_unique), 1]
+       'categories': ['Deal Call Months 2.0', 0, 0, len(dcm_unique) - 1, 0],
+       'values':     ['Deal Call Months 2.0', 0, 1, len(dcm_unique) - 1, 1],
     })
 
     # just base
     chart2.add_series({
-       'name':       ['Deal Call Months', 0, 1],
-       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1], 
+       'name':       ['Base', 0, 1],
+       'categories': ['Base', 1, 0, NUM_TRIALS, 0], 
+       'values':     ['Base', 1, 1, NUM_TRIALS, 1], 
     })
 
     # just downside
     chart3.add_series({
-       'name':       ['Deal Call Months', 0, 2],
-       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0],
-       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1], 
+       'name':       ['Downside', 0, 2],
+       'categories': ['Downside', 1, 0, NUM_TRIALS, 0],
+       'values':     ['Downside', 1, 1, NUM_TRIALS, 1], 
     })
 
     # just upside
     chart4.add_series({
-       'name':       ['Deal Call Months', 0, 3],
-       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1],
+       'name':       ['Upside', 0, 3],
+       'categories': ['Upside', 1, 0, NUM_TRIALS, 0], 
+       'values':     ['Upside', 1, 1, NUM_TRIALS, 1],
     })
 
     # chart title 
