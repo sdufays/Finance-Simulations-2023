@@ -38,8 +38,10 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
+    excel_file_path = "CLO_Input2.xlsm"
+
     # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input2.xlsm", sheet_name="Other Specifications", header=None)
+    df_os = pd.read_excel(excel_file_path, sheet_name="Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -61,7 +63,7 @@ if __name__ == "__main__":
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel("CLO_Input2.xlsm", sheet_name="Upfront Costs", header=None)
+    df_uc = pd.read_excel(excel_file_path, sheet_name="Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0, 1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -77,7 +79,7 @@ if __name__ == "__main__":
               replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input2.xlsm", sheet_name="Capital Stack")
+    df_cs = pd.read_excel(excel_file_path, sheet_name="Capital Stack")
 
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
@@ -314,4 +316,5 @@ projected_equity_yield = (equity_net_spread + origination_fee)
 calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
 # print(calculations_for_one_trial)
 print("==== Projected Equity Yield ====")
+projected_equity_yield = projected_equity_yield * 100 
 print(f"Yield: {projected_equity_yield:.2f}%\n")
