@@ -62,9 +62,9 @@ def run_simulation(case, output_dataframe, trial_index):
       loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
 
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengthsi think
+    # sets term lengths 
     loan_portfolio.generate_loan_terms(case)
-    longest_duration = 60 # int(loan_portfolio.get_longest_term())
+    longest_duration = 61 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # 21 loan IDs
