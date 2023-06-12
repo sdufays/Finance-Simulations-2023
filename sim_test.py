@@ -86,6 +86,11 @@ def run_simulation(case):
     loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
     for loan in loan_portfolio.get_active_portfolio():
        loan.loan_income(SOFR, loan_income_df)
+    # calculate wa loan spread for day 1
+    wa_spread = 0
+    for loan in loan_portfolio.get_active_portfolio():
+       wa_spread += loan.get_margin()
+    wa_spread /= len(loan_portfolio.get_active_portfolio())
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -210,9 +215,6 @@ def run_simulation(case):
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
-    # since all tranches have same balance except AAA, avg clo balance is total offered bonds - initial size of tranche AAA
-    #print(tranche_df.loc[tranche_df.index.get_level_values('Tranche Name') == 'A', 'Tranche Size'].sum())
-    #print(sum(clo.get_tranches()[0].get_bal_list()))
     avg_clo_bal = 0
     for i in range(len(clo.get_tranches())):
        avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
@@ -221,19 +223,16 @@ def run_simulation(case):
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_income_df['Income'].sum() * 12 / deal_call_mos[0]
-    clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
+    collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
+    clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
-    print("collateral income {:,.2f}\n clo interest cost {:,.2f}\n net equity amt {:,.2f}\n equity net spread {:,.2}\n\n".format(collateral_income, clo_interest_cost, net_equity_amt, equity_net_spread))
-    print("collateral - interest {:,.2f}\n".format(collateral_income - clo_interest_cost))
     # origination fee add on (fee for creating the clo)
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
     projected_equity_yield = (equity_net_spread + origination_fee)
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    print(calculations_for_one_trial)
     #print(calculations_for_one_trial)
     return {'Deal Month Call': deal_call_mos, 'WA COF': wa_cof, 'WA Adv Rate': wa_adv_rate, 'Projected Equity Rate': projected_equity_yield}
 

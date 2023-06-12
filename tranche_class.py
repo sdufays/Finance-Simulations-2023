@@ -56,8 +56,6 @@ class Tranche:
             else:
                 interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
             dataframe.loc[(self.get_name(), month), 'Interest Payment'] = interest
-            #if month == 36 and self.get_name() == 'A-S':
-                #print(" {:,.2f}".format(interest))
             return interest
         else:
             return 0

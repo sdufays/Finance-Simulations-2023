@@ -127,6 +127,11 @@ if __name__ == "__main__":
     loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
     for loan in loan_portfolio.get_active_portfolio():
        loan.loan_income(SOFR, loan_income_df)
+    # calculate wa loan spread for day 1
+    wa_spread = 0
+    for loan in loan_portfolio.get_active_portfolio():
+       wa_spread += loan.get_margin()
+    wa_spread /= len(loan_portfolio.get_active_portfolio())
 
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -252,7 +257,7 @@ if __name__ == "__main__":
     print(deal_call_mos) # only one so far
     # WEIGHTED AVG COST OF FUNDS
     # multiplied by 100 cuz percent
-    print(clo.get_total_cashflows())
+    #print(clo.get_total_cashflows())
     data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(data))
 
@@ -270,12 +275,12 @@ if __name__ == "__main__":
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_income_df['Income'].sum() * 12 / deal_call_mos[0]
-    clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
+    collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
+    #collateral_income = loan_income_df['Income'].sum() * 12 / deal_call_mos[0]
+    tranche_total_balance = 0
+    clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
-    print("collateral income {:,.2f}\n clo interest cost {:,.2f}\n net equity amt {:,.2f}\n equity net spread {:,.2}\n\n".format(collateral_income, clo_interest_cost, net_equity_amt, equity_net_spread))
-    print("collateral - interest {:,.2f}\n".format(collateral_income - clo_interest_cost))
     # origination fee add on (fee for creating the clo)
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
