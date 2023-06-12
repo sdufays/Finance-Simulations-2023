@@ -123,8 +123,7 @@ if __name__ == "__main__":
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
-    # initial collateral income
-    #initial_collateral_income = loan_portfolio.get_collateral_income(SOFR) # income we get from loans
+    # create df for loan income
     loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
     for loan in loan_portfolio.get_active_portfolio():
        loan.loan_income(SOFR, loan_income_df)

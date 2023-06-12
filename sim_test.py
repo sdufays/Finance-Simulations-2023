@@ -83,6 +83,9 @@ def run_simulation(case):
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
+    loan_income_df = pd.DataFrame(columns=['Loan ID','Income'])
+    for loan in loan_portfolio.get_active_portfolio():
+       loan.loan_income(SOFR, loan_income_df)
     
     # removing unsold tranches so they don't get in the way
     clo.remove_unsold_tranches()
@@ -218,17 +221,19 @@ def run_simulation(case):
 
     # PROJECTED EQUITY YIELD
     # equity net spread
-    collateral_income = loan_portfolio.get_collateral_income(loan_df, deal_call_mos[0], SOFR) # income we get from loans
+    collateral_income = loan_income_df['Income'].sum() * 12 / deal_call_mos[0]
     clo_interest_cost = initial_clo_tob * (wa_cof + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
-    #print("collateral income {:,.2f}\n clo interest cost {:,.2f}\n net equity amt {:,.2f}\n equity net spread {:,.2}\n\n".format(collateral_income, clo_interest_cost, net_equity_amt, equity_net_spread))
+    print("collateral income {:,.2f}\n clo interest cost {:,.2f}\n net equity amt {:,.2f}\n equity net spread {:,.2}\n\n".format(collateral_income, clo_interest_cost, net_equity_amt, equity_net_spread))
+    print("collateral - interest {:,.2f}\n".format(collateral_income - clo_interest_cost))
     # origination fee add on (fee for creating the clo)
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
     projected_equity_yield = (equity_net_spread + origination_fee)
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
+    print(calculations_for_one_trial)
     #print(calculations_for_one_trial)
     return {'Deal Month Call': deal_call_mos, 'WA COF': wa_cof, 'WA Adv Rate': wa_adv_rate, 'Projected Equity Rate': projected_equity_yield}
 
