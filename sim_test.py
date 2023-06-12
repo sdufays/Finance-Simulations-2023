@@ -234,7 +234,16 @@ def run_simulation(case):
 
     calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
     #print(calculations_for_one_trial)
-    return {'Deal Month Call': deal_call_mos, 'WA COF': wa_cof, 'WA Adv Rate': wa_adv_rate, 'Projected Equity Rate': projected_equity_yield}
+    #return {'Deal Month Call': deal_call_mos, 'WA COF': wa_cof, 'WA Adv Rate': wa_adv_rate, 'Projected Equity Rate': projected_equity_yield}
+
+    data = {
+        'Deal Month Call': deal_call_mos,
+        'WA COF': wa_cof,
+        'WA Adv Rate': wa_adv_rate,
+        'Projected Equity Rate': projected_equity_yield
+    }
+
+    return data
 
 if __name__ == "__main__":
    # ------------------------ GENERAL INFO ------------------------ #
@@ -279,12 +288,11 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    base_last_month = []
-    downside_last_month = []
-    upside_last_month = []
+    #base_last_month = []
+    #downside_last_month = []
+    #upside_last_month = []
 
-    results_df = pd.DataFrame(columns=['Case', 'Run', 'Deal Month Call', 'WA COF', 'WA Adv Rate', 'Projected Equity Rate'])
-
+    df = pd.DataFrame()
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
@@ -295,13 +303,17 @@ if __name__ == "__main__":
     scenarios = [base, downside, upside]
 
     for scenario in scenarios:
-      # chnage 10 to number of simulation runs per scenario 
-      for run in range(5):
-          result = run_simulation(scenario)
-          results_df['Scenario'] = scenario
-          results_df['Run'] = run
-          results_df = results_df.append(result, ignore_index=True)
+        for run in range(5):
+            # Run the simulation and get the data dictionary
+            data = run_simulation(scenario)
+            data['Scenario'] = scenario
+            data['Run'] = run
 
+            # Append the data to the data frame
+            df = df.append(data, ignore_index=True)
+
+    # Print the resulting data frame
+    print(df)
    # ------------------------ GET OUTPUTS ------------------------ #
     """print("base_last_month: ", end="")
     print(*base_last_month, sep=", ")
