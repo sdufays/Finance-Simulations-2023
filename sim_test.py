@@ -297,6 +297,7 @@ if __name__ == "__main__":
     RA_site = df_uc.iloc[5, 1]
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
+<<<<<<< Updated upstream
 
     NUM_TRIALS = 5
     cases = ['base', 'downside', 'upside']
@@ -305,8 +306,11 @@ if __name__ == "__main__":
     columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
     output_df = pd.DataFrame(index=index, columns=columns)
 
+=======
+    df = pd.DataFrame()
+>>>>>>> Stashed changes
 
-   # ------------------------ RUN SIMULATION ------------------------ #
+   # ------------------------ RUN SIMULATION ONCE ------------------------ #
 
     #run_simulation(base)
 
