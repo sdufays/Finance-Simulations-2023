@@ -241,7 +241,7 @@ if __name__ == "__main__":
             else:
                 portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay,
+            clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay,
                                                   terminate_next, loan, loan_portfolio, portfolio_index)
 
         # add current balances to list
@@ -264,7 +264,11 @@ if __name__ == "__main__":
 
     #loan_df.to_excel('output.xlsx', index=True)
 
-    """
+
+    print(tranche_df.loc[('A-S', deal_call_mos[0])])
+    print(tranche_df.loc[('B', deal_call_mos[0])])
+    print(tranche_df.loc[('C', deal_call_mos[0])])
+"""
     #TESTING PURPOSES ONLY
     print(loan_df.tail(longest_duration))
     loan_df.to_excel('output.xlsx', index=True)
@@ -283,7 +287,7 @@ print(f"Month: {deal_call_mos[0]}\n")
 # WEIGHTED AVG COST OF FUNDS
 data = {'Cashflows': clo.get_total_cashflows()}
 print("==== Weighted Average Cost of Funds ====")
-print(pd.DataFrame(data))
+#print(pd.DataFrame(data))
 print()
 
 wa_cof = (npf.irr(clo.get_total_cashflows()) * 12 * 360 / 365 - SOFR) * 100  # in bps
