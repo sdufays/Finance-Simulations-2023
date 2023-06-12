@@ -35,7 +35,7 @@ def waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")  
 
 
-def run_simulation(case):
+def run_simulation(case, output_dataframe, trial_index):
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
@@ -86,8 +86,6 @@ def run_simulation(case):
 
  # --------------------------------- MAIN FUNCTION & LOOP -------------------------------------- #
     # START LOOP: goes for the longest possible month duration
-    # storage variables
-    deal_call_mos = [] # stores month when each deal is called
 
     # initializing variables
     months_passed = 0
@@ -205,7 +203,7 @@ def run_simulation(case):
 
       # terminate in outer loop
       if terminate_next:
-         deal_call_mos.append(months_passed)
+         deal_call_month = months_passed
          break 
       
       if clo.get_tranches()[0].get_size() <= threshold:
@@ -213,35 +211,23 @@ def run_simulation(case):
 
       months_passed += 1
 
+    # TESTING PURPOSES ONLY
     # testing loan data
     #print(loan_df.tail(longest_duration))
-    # loan_df.to_excel('output.xlsx', index=True)
-
+    #loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
     #print(tranche_df.loc['A'])
-    #print(tranche_df.loc['A-S'])
-    #print(deal_call_mos)
-    #print(tranche_df.loc['A-S'])
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranches.xlsx', index=True)
 
-    # DEAL CALL MONTH
-    """
-    if case == base:
-       base_last_month.append(deal_call_mos)
-    elif case == downside:
-       downside_last_month.append(deal_call_mos)
-    elif case == upside:
-       upside_last_month.append(deal_call_mos)
-       """
-
+    # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0
     for i in range(len(clo.get_tranches())):
-       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_mos[0]
-    avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_mos[0] # deal_call_mos[trial_num]
+       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_month
+    avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_month
     wa_adv_rate = avg_clo_bal/avg_collateral_bal
 
     # PROJECTED EQUITY YIELD
@@ -251,22 +237,23 @@ def run_simulation(case):
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
     equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
     # origination fee add on (fee for creating the clo)
-    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_mos[0]) # remember in simulation to put deal_call_mos[trial]
+    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_month) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
-    projected_equity_yield = (equity_net_spread + origination_fee)
+    projected_equity_yield = (equity_net_spread + origination_fee) * 100
 
-    calculations_for_one_trial = [wa_cof, wa_adv_rate, projected_equity_yield]
-    #print(calculations_for_one_trial)
-    #return {'Deal Month Call': deal_call_mos, 'WA COF': wa_cof, 'WA Adv Rate': wa_adv_rate, 'Projected Equity Rate': projected_equity_yield}
+    if case == base:
+       case_name = "base"
+    elif case == upside:
+       case_name = "upside"
+    else:
+       case_name = "downside"
 
-    data = {
-        'Deal Month Call': deal_call_mos,
-        'WA COF': wa_cof,
-        'WA Adv Rate': wa_adv_rate,
-        'Projected Equity Rate': projected_equity_yield
-    }
-
-    return data
+    output_dataframe.loc[(case_name, trial_index), 'Deal Call Month'] = deal_call_month
+    output_dataframe.loc[(case_name, trial_index), 'WA COF'] = wa_cof
+    output_dataframe.loc[(case_name, trial_index), 'WA Adv Rate'] = wa_adv_rate
+    output_dataframe.loc[(case_name, trial_index), 'Projected Equity Yield'] = projected_equity_yield
+    # technically don't even need to return it
+    return output_dataframe
 
 if __name__ == "__main__":
    # ------------------------ GENERAL INFO ------------------------ #
@@ -311,11 +298,13 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    #base_last_month = []
-    #downside_last_month = []
-    #upside_last_month = []
+    NUM_TRIALS = 5
+    cases = ['base', 'downside', 'upside']
+    trial_numbers = range(0, NUM_TRIALS)
+    index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
+    columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
+    output_df = pd.DataFrame(index=index, columns=columns)
 
-    df = pd.DataFrame()
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
@@ -326,17 +315,11 @@ if __name__ == "__main__":
     scenarios = [base, downside, upside]
 
     for scenario in scenarios:
-        for run in range(5):
+        for run in range(NUM_TRIALS):
             # Run the simulation and get the data dictionary
-            data = run_simulation(scenario)
-            data['Scenario'] = scenario
-            data['Run'] = run
-
-            # Append the data to the data frame
-            df = df.append(data, ignore_index=True)
-
-    # Print the resulting data frame
-    print(df)
+            output_df = run_simulation(scenario, output_df, run)
+    print(output_df)
+         
    # ------------------------ GET OUTPUTS ------------------------ #
     """print("base_last_month: ", end="")
     print(*base_last_month, sep=", ")
