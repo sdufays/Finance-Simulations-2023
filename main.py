@@ -265,7 +265,7 @@ if __name__ == "__main__":
 
     #loan_df.to_excel('output.xlsx', index=True)
 
-    #print(tranche_df.loc['A'])
+    print(tranche_df.loc['A'])
     #print(tranche_df.loc['A-S'])
     print(tranche_df.loc['C'])
     #print(tranche_df.loc[('A-S', deal_call_mos[0])])
