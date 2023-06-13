@@ -1,12 +1,12 @@
+import xlsxwriter
+import os
+from collections import Counter
 from collateral_class import CollateralPortfolio
 from clo_class import CLO
 import pandas as pd
 import numpy_financial as npf
 import math
 import numpy as np
-import xlsxwriter
-import os
-from collections import Counter
 
 def get_date_array(date):
     if date[2] % 4 == 0:
@@ -15,7 +15,7 @@ def get_date_array(date):
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-def waterfall(subtract_value, tranches):
+def loan_waterfall(subtract_value, tranches):
     """
     Perform waterfall algorithm over tranches.
     :param subtract_value: Value to be subtracted from tranches.
@@ -35,8 +35,7 @@ def waterfall(subtract_value, tranches):
             break
 
     if subtract_value > 0:
-        raise ValueError("Not enough total size in all tranches to cover the subtraction.")  
-
+        raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 def run_simulation(case, output_dataframe, trial_index):
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
@@ -44,7 +43,7 @@ def run_simulation(case, output_dataframe, trial_index):
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Capital Stack")
+    df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
 
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
@@ -57,7 +56,7 @@ def run_simulation(case, output_dataframe, trial_index):
     loan_portfolio = CollateralPortfolio()
 
     # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Collateral Portfolio")
+    df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
@@ -160,54 +159,48 @@ def run_simulation(case, output_dataframe, trial_index):
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
         # paying off loans
-        if principal_pay != 0: 
-           loan_portfolio.remove_loan(loan)
-           reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
-           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
-           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+        if principal_pay != 0:
+            loan_portfolio.remove_loan(loan)
+            reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+            replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+            replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
-           if reinvestment_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                loan = loan_portfolio.get_active_portfolio()[-1]
-                loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
-           elif replenishment_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                replen_cumulative += beginning_bal
-           elif replen_after_reinv_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                replen_cumulative += beginning_bal
-                 # increment replen_months only once in a month
-                if not incremented_replen_month:
-                   replen_months += 1
-                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
-           else: #waterfall it
-                remaining_subtract = beginning_bal
-                for tranche in clo.get_tranches():
-                    if tranche.get_size() >= remaining_subtract:
-                        tranche.subtract_size(remaining_subtract)
-                        remaining_subtract = 0
-                        break
-                    else:
-                        remaining_subtract -= tranche.get_size()
-                        tranche.subtract_size(tranche.get_size())
-                    # Check if remaining_subtract is 0, if it is, break the loop
-                    if remaining_subtract == 0:
-                        break
-                # error condition if there's not enough total size in all tranches
-                if remaining_subtract > 0:
-                    raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
-                
+            if reinvestment_bool:
+               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp=False)
+            elif replenishment_bool:
+               loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
+               loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
+               replen_cumulative += loan_value
+               remaining_subtract = beginning_bal - loan_value
+               #if months_passed == 17: print("remaining subtract {:,.2f}".format(remaining_subtract))
+               if remaining_subtract > 0:
+                  loan_waterfall(remaining_subtract, clo.get_tranches())
+            elif replen_after_reinv_bool:
+               loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
+               loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
+               replen_cumulative += loan_value
+               remaining_subtract = beginning_bal - loan_value
+               # increment replen_months only once in a month
+               if not incremented_replen_month:
+                  replen_months += 1
+                  incremented_replen_month = True  # set flag to True so that it won't increment again within this month
+               if remaining_subtract > 0:
+                  loan_waterfall(remaining_subtract, clo.get_tranches())
+            else:  # waterfall it
+               #print("NO NEW LOAN " + str(months_passed))
+               #print("month {}\n principal pay {:,.2f}".format(months_passed, principal_pay))
+               loan_waterfall(beginning_bal, clo.get_tranches())
         else:
-           portfolio_index += 1
+               portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index)
+        tranche_df = tranche_df.fillna(0)
 
       # add current balances to list
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
 
       # inner loop ends 
-      clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
+      clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next)
 
       # terminate in outer loop
       if terminate_next:
@@ -219,19 +212,12 @@ def run_simulation(case, output_dataframe, trial_index):
 
       months_passed += 1
 
-    # TESTING PURPOSES ONLY
-    # testing loan data
-    #print(loan_df.tail(longest_duration))
-    #loan_df.to_excel('output.xlsx', index=True)
-    # testing tranche data
-    #print(tranche_df.loc['A'])
-    #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranches.xlsx', index=True)
+    cashflow_data = {'Cashflows': clo.get_total_cashflows()}
+
+    
 
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
-    #if wa_cof < 0:
-      #tranche_df.to_excel('output.xlsx', index=True)
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0
@@ -271,8 +257,10 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
+    excel_file_path = "CLO_Input2.xlsm"
+
     # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Other Specifications", header=None)
+    df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -287,18 +275,18 @@ if __name__ == "__main__":
     SOFR = df_os.iloc[3,1]
 
     
-    has_reinvestment = df_os.iloc[7,1]
+    has_reinvestment = df_os.iloc[4,1]
     has_replenishment = df_os.iloc[5,1]
 
     reinvestment_period = df_os.iloc[1,1]
-    replenishment_period = df_os.iloc[4,1]
+    replenishment_period = df_os.iloc[6,1]
 
-    replenishment_amount = df_os.iloc[6,1]
+    replenishment_amount = df_os.iloc[7,1]
 
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Upfront Costs", header=None)
+    df_uc = pd.read_excel(excel_file_path, sheet_name = "Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0,1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -308,7 +296,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 10
+    NUM_TRIALS = 5
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -318,12 +306,12 @@ if __name__ == "__main__":
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
-    #run_simulation(base)
+    #run_simulation(base, output_df, trial_index=0)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
    
     scenarios = [base, downside, upside]
-
+    
     for scenario in scenarios:
         for run in range(NUM_TRIALS):
             # Run the simulation and get the data dictionary
@@ -332,16 +320,13 @@ if __name__ == "__main__":
 
    # ---------------------------- READING DF ----------------------------- #
     deal_call_months = output_df['Deal Call Month'].unique()
-    wa_cof_reader = output_df['WA COF'].unique()
+    wa_cof_list = output_df['WA COF'].unique()
     deal_call_months_dict = {}
     for case in cases:
        deal_call_months_list = []
-       wa_cof_list = []
        for trial in trial_numbers:
           call_month = output_df.loc[(case, trial), 'Deal Call Month']
-          call_month1 = output_df.loc[(case, trial), 'WA COF']
           deal_call_months_list.append(call_month)
-          wa_cof_list.append(call_month1)
 
        deal_call_months_dict[case] = deal_call_months_list
 
@@ -349,28 +334,19 @@ if __name__ == "__main__":
     wa_cof_sort = sorted(wa_cof_list)
 
     dcm_unique = []
-    wacof_unique = []
     for num in deal_call_months_sort:
        if num not in dcm_unique:
           dcm_unique.append(num)
 
-    for num in wa_cof_sort:
-       if num not in wacof_unique:
-          wacof_unique.append(num)
-
     occurrences_dcm = Counter(deal_call_months_list)
-    occurrences_wacof = Counter(wa_cof_list)
     occurrences_list_dcm = list(occurrences_dcm.items())
-    occurrences_list_wacof = list(occurrences_wacof.items())
     occurrences_list_dcm.sort(key=lambda x: x[0])
-    occurrences_list_wacof.sort(key=lambda x: x[0])
 
     counts_list_dcm = [count for num, count in occurrences_list_dcm]
-    counts_list_wacof = [count for num, count in occurrences_list_wacof]
 
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
-    workbook = xlsxwriter.Workbook('scatter_plot.xlsx')
+    workbook = xlsxwriter.Workbook('graphs.xlsx')
     worksheet_dcm = workbook.add_worksheet("Deal Call Months")
     worksheet_base = workbook.add_worksheet("Base")
     worksheet_downside = workbook.add_worksheet("Downside")
@@ -490,7 +466,7 @@ if __name__ == "__main__":
     chart4.set_x_axis({'name': 'Simulation Number'})
    
     # y-axis label
-    chart1.set_y_axis({'name': 'Deal Call Month', 'min': 30})
+    chart1.set_y_axis({'name': 'Deal Call Month', 'min': 20})
     chart2.set_y_axis({'name': 'Deal Call Month'})
     chart3.set_y_axis({'name': 'Deal Call Month'})
     chart4.set_y_axis({'name': 'Deal Call Month'})
@@ -521,7 +497,7 @@ if __name__ == "__main__":
     worksheet_swapped.write_column('A2', data_swapped[0])
     worksheet_swapped.write_column('B2', data_swapped[1])
 
-    chart5 = workbook.add_chart({'type': 'scatter', 'enable': True, 'fill': {'color': 'orange', 'transparency': 50}})
+    chart5 = workbook.add_chart({'type': 'column'})
     chart5.add_series({
        'name':       ['Deal Call Months 2.0', 0, 1],
        'categories': ['Deal Call Months 2.0', 1, 0, NUM_TRIALS, 0],
@@ -540,19 +516,15 @@ if __name__ == "__main__":
     headings_wa_cof = ['WA CoF', 'Sims']
 
     data_wa_cof = [
-       list(range(0, 1)),
-       wa_cof_list
+       wa_cof_list,
+       range(len(wa_cof_sort))
     ]
-    # it's not working because the calculation is too specific
-    # i need to make multiple lists and attach the values to that range
-    # TODO: multiple lists of ranges for wa_cof
 
     worksheet_wa_cof.write_row('A1', headings_wa_cof, bold)
     worksheet_wa_cof.write_column('A2', data_wa_cof[0])
     worksheet_wa_cof.write_column('B2', data_wa_cof[1])
     chart6 = workbook.add_chart({'type': 'scatter'})
 
-    # base, downside, upside
     chart6.add_series({
        'name':       ['WA Cost of Funds', 0, 1],
        'categories': ['WA Cost of Funds', 1, 0, NUM_TRIALS, 0], 
@@ -566,6 +538,34 @@ if __name__ == "__main__":
     chart6.set_style(6)
     worksheet_wa_cof.insert_chart('E2', chart6)
 
+    #----------------------------------------------------------DONT ASK
+    worksheet = workbook.add_worksheet("sample")
+
+    # Write data to the worksheet
+    data = [10, 20, 30, 40, 50, 20, 30, 40, 10, 30, 30, 20]
+    row = 0
+    col = 0
+
+    for value in data:
+       worksheet.write(row, col, value)
+       row += 1
+
+    # Create a chart object and configure it as a histogram
+    chart = workbook.add_chart({'type': 'column'})
+    chart.set_title({'name': 'Histogram'})
+    chart.set_x_axis({'name': 'Values'})
+    chart.set_y_axis({'name': 'Frequency'})
+
+    # Add the data to the chart
+    chart.add_series({
+       'values': 'sample',
+       'categories': 'sample',
+       'name': 'Frequency',
+    })
+
+    # Insert the chart into the worksheet
+    worksheet.insert_chart('C1', chart)
+
     workbook.close()
-    excel_file_path = 'scatter_plot.xlsx'
+    excel_file_path = 'graphs.xlsx'
     os.startfile(excel_file_path)
