@@ -279,7 +279,7 @@ if __name__ == "__main__":
     #print(tranche_df.loc[('B', deal_call_mos[0])])
     #print(tranche_df.loc[('C', deal_call_mos[0])])
     #print(tranche_df.head(longest_duration))
-    #"""
+    """
 # ------------------ CALCULATING OUTPUTS ------------------ #
 # DEAL CALL MONTH
 print("\n\n")
