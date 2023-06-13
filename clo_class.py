@@ -222,7 +222,7 @@ class CLO(Tranche):
         replenishment_bool = (self.get_replen_bool() and not self.get_reinv_bool()) and (month <= self.get_replen_period() and replen_cumu <= self.get_replen_amount())
         replen_after_reinv_bool = (self.get_reinv_bool() and self.get_replen_bool()) and (month > self.get_reinv_period()) and (replen_months < self.get_replen_period() and replen_cumu < self.get_replen_amount())
         is_last_loan = False
-        if loan.get_loan_id() == portfolio.get_active_portfolio()[-1].get_loan_id():
+        if loan.get_loan_id() >= portfolio.get_active_portfolio()[-1].get_loan_id():
             is_last_loan = True
         
         if termin_next and is_last_loan:
@@ -238,11 +238,13 @@ class CLO(Tranche):
                 AAA_size = dataframe.loc[(self.get_tranches()[0].get_name(), month-1), 'Tranche Size']
                 if tranche_name == self.get_tranches()[0].get_name(): # AAA
                     tranche.append_to_principal_dict(month, loan_principal_pay)
-                    if month == 18: print("loan id {} principal pay {:,.2f}".format(loan.get_loan_id(), loan_principal_pay))
+                    if month == 35: 
+                        print("loan id {} principal pay {:,.2f}".format(loan.get_loan_id(), loan_principal_pay))
+                        print("last loan index {}".format(portfolio.get_active_portfolio()[-1].get_loan_id()))
                     if is_last_loan:
                         #print(tranche.get_name())
                         #print(month)
-                        #print(tranche.get_principal_dict()[month])
+                        if month == 35: print(tranche.get_principal_dict()[month])
                         monthly_principal_one_tranche = sum(tranche.get_principal_dict()[month])
                         # no waterfall
                         if AAA_size >= monthly_principal_one_tranche:

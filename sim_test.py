@@ -180,6 +180,7 @@ def run_simulation(case, output_dataframe, trial_index):
                    replen_months += 1
                    incremented_replen_month = True # set flag to True so that it won't increment again within this month
            else: #waterfall it
+                if months_passed == 35: print("month {} loan principay {:,.2f}".format(months_passed, principal_pay))
                 remaining_subtract = beginning_bal
                 for tranche in clo.get_tranches():
                     if tranche.get_size() >= remaining_subtract:
