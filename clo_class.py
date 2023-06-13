@@ -122,7 +122,6 @@ class CLO(Tranche):
                     principal_sum += tranche_subtraction_amount
                 else:
                     tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size'] - dataframe.loc[(tranche.get_name(), month), 'Tranche Size'] or 0
-                    print("month {} tranche subtraction {:,.2f}".format(month, tranche_subtraction_amount))
                     dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
                     principal_sum += tranche_subtraction_amount
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)

@@ -71,8 +71,8 @@ class CollateralPortfolio(Loan):
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
         num_loans = len(self.__active_portfolio)
-        prepay_amt = round(num_loans * case[0])
-        initial_amt = round(num_loans * case[1])
+        prepay_amt = round(num_loans * case[2])
+        initial_amt = round(num_loans * case[0])
         extended_amt = num_loans - prepay_amt - initial_amt
         # Create a list with the loan terms according to the scenario
         loan_terms = ['prepaid'] * prepay_amt + ['initial'] * initial_amt + ['extended'] * extended_amt
