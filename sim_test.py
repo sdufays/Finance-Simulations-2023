@@ -12,7 +12,7 @@ def get_date_array(date):
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-def waterfall(subtract_value, tranches):
+def loan_waterfall(subtract_value, tranches):
     """
     Perform waterfall algorithm over tranches.
     :param subtract_value: Value to be subtracted from tranches.
@@ -32,8 +32,7 @@ def waterfall(subtract_value, tranches):
             break
 
     if subtract_value > 0:
-        raise ValueError("Not enough total size in all tranches to cover the subtraction.")  
-
+        raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 def run_simulation(case, output_dataframe, trial_index):
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
@@ -157,47 +156,39 @@ def run_simulation(case, output_dataframe, trial_index):
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
         # paying off loans
-        if principal_pay != 0: 
-           loan_portfolio.remove_loan(loan)
-           reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
-           replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
-           replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative <= clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+        if principal_pay != 0:
+            loan_portfolio.remove_loan(loan)
+            reinvestment_bool = (clo.get_reinv_bool()) and (months_passed <= clo.get_reinv_period()) and (months_passed == loan.get_term_length())
+            replenishment_bool = (clo.get_replen_bool() and not clo.get_reinv_bool()) and (months_passed <= clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
+            replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
-           if reinvestment_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                loan = loan_portfolio.get_active_portfolio()[-1]
-                loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
-           elif replenishment_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                loan = loan_portfolio.get_active_portfolio()[-1]
-                loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
-                replen_cumulative += beginning_bal
-           elif replen_after_reinv_bool:
-                loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
-                replen_cumulative += beginning_bal
-                 # increment replen_months only once in a month
-                if not incremented_replen_month:
-                   replen_months += 1
-                   incremented_replen_month = True # set flag to True so that it won't increment again within this month
-           else: #waterfall it
-                remaining_subtract = beginning_bal
-                for tranche in clo.get_tranches():
-                    if tranche.get_size() >= remaining_subtract:
-                        tranche.subtract_size(remaining_subtract)
-                        remaining_subtract = 0
-                        break
-                    else:
-                        remaining_subtract -= tranche.get_size()
-                        tranche.subtract_size(tranche.get_size())
-                    # Check if remaining_subtract is 0, if it is, break the loop
-                    if remaining_subtract == 0:
-                        break
-                # error condition if there's not enough total size in all tranches
-                if remaining_subtract > 0:
-                    raise ValueError("Not enough total size in all tranches to cover the subtraction.")   
-                
+            if reinvestment_bool:
+               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp=False)
+            elif replenishment_bool:
+               loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
+               loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
+               replen_cumulative += loan_value
+               remaining_subtract = beginning_bal - loan_value
+               #if months_passed == 17: print("remaining subtract {:,.2f}".format(remaining_subtract))
+               if remaining_subtract > 0:
+                  loan_waterfall(remaining_subtract, clo.get_tranches())
+            elif replen_after_reinv_bool:
+               loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
+               loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
+               replen_cumulative += loan_value
+               remaining_subtract = beginning_bal - loan_value
+               # increment replen_months only once in a month
+               if not incremented_replen_month:
+                  replen_months += 1
+                  incremented_replen_month = True  # set flag to True so that it won't increment again within this month
+               if remaining_subtract > 0:
+                  loan_waterfall(remaining_subtract, clo.get_tranches())
+            else:  # waterfall it
+               #print("NO NEW LOAN " + str(months_passed))
+               #print("month {}\n principal pay {:,.2f}".format(months_passed, principal_pay))
+               loan_waterfall(beginning_bal, clo.get_tranches())
         else:
-           portfolio_index += 1
+               portfolio_index += 1
 
         tranche_df = tranche_df.fillna(0)
 
