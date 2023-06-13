@@ -42,28 +42,14 @@ class CollateralPortfolio(Loan):
 
         self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
         # sets term length in active portfolio
-        #self.__active_portfolio[index_in_portfolio].set_term_length(term)
-        lo = self.__active_portfolio[index_in_portfolio]
-        if lo != None and lo.get_loan_id() == loan_id:
-            if lo.get_loan_id() == 23.00 or lo.get_loan_id() == 26.00:
-                lo.set_term_length(30)
-            elif lo.get_loan_id() == 24.00 or lo.get_loan_id() == 25.00 or lo.get_loan_id() == 21.00:
-                lo.set_term_length(20)
-            elif lo.get_loan_id() == 27.00 or lo.get_loan_id() == 28.00:
-                lo.set_term_length(18)
+        self.__active_portfolio[index_in_portfolio].set_term_length(term)
         # sets month the loan came to birth
         self.__active_portfolio[index_in_portfolio].set_starting_month(month)
         # sets term length in storage portfolio by finding loan by its id
         # cuz storage portfolio will look like [1,2,..., None (was 21), 22]
         for lo in self.__storage_portfolio:
             if lo != None and lo.get_loan_id() == loan_id:
-                if lo.get_loan_id() == 23.00 or lo.get_loan_id() == 26.00:
-                    lo.set_term_length(30)
-                elif lo.get_loan_id() == 24.00 or lo.get_loan_id() == 25.00 or lo.get_loan_id() == 21.00:
-                    lo.set_term_length(20)
-                elif lo.get_loan_id() == 27.00 or lo.get_loan_id() == 28.00:
-                    lo.set_term_length(18)
-                #lo.set_term_length(term)
+                lo.set_term_length(term)
       
     def generate_initial_margin(self):
         sum = 0

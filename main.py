@@ -38,7 +38,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "CLO_Input.xlsm"
+    excel_file_path = "CLO_Input2.xlsm"
 
     # read excel file for Other Specifications
     df_os = pd.read_excel(excel_file_path, sheet_name="Other Specifications", header=None)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.initial_loan_terms(base)
+    loan_portfolio.generate_loan_terms(base)
     longest_duration = 61  # int(loan_portfolio.get_longest_term())
 
     # CREATE LOAN DATAFRAME
