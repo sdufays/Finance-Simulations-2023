@@ -199,7 +199,6 @@ def run_simulation(case, output_dataframe, trial_index):
         else:
            portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, tranche_df, principal_pay, loan, replen_cumulative, replen_months, terminate_next, loan_portfolio)
         tranche_df = tranche_df.fillna(0)
 
       # add current balances to list
@@ -207,7 +206,7 @@ def run_simulation(case, output_dataframe, trial_index):
         tranche.save_balance(tranche_df, months_passed)
 
       # inner loop ends 
-      clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df) 
+      clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next)
 
       # terminate in outer loop
       if terminate_next:

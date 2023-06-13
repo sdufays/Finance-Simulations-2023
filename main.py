@@ -38,7 +38,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "CLO_Input2.xlsm"
+    excel_file_path = "CLO_Input.xlsm"
 
     # read excel file for Other Specifications
     df_os = pd.read_excel(excel_file_path, sheet_name="Other Specifications", header=None)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.generate_loan_terms(base)
+    loan_portfolio.initial_loan_terms(base)
     longest_duration = 61  # int(loan_portfolio.get_longest_term())
 
     # CREATE LOAN DATAFRAME
@@ -217,10 +217,12 @@ if __name__ == "__main__":
                 if reinvestment_bool:
                     loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp=False)
                 elif replenishment_bool:
+                    if months_passed == 17: print("loan id in replen {}".format(loan.get_loan_id()))
                     loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
                     loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
                     replen_cumulative += loan_value
                     remaining_subtract = beginning_bal - loan_value
+                    #if months_passed == 17: print("remaining subtract {:,.2f}".format(remaining_subtract))
                     if remaining_subtract > 0:
                         loan_waterfall(remaining_subtract, clo.get_tranches())
                 elif replen_after_reinv_bool:
@@ -237,11 +239,12 @@ if __name__ == "__main__":
                 else:  # waterfall it
                     #print("NO NEW LOAN " + str(months_passed))
                     #print("month {}\n principal pay {:,.2f}".format(months_passed, principal_pay))
+                    if months_passed == 17:
+                        print("subtracting {:,.2f}".format(beginning_bal))
                     loan_waterfall(beginning_bal, clo.get_tranches())
             else:
                 portfolio_index += 1
 
-            clo_principal_sum = clo.clo_principal_sum(months_passed, tranche_df, principal_pay, loan, replen_cumulative, replen_months, terminate_next, loan_portfolio)
             tranche_df = tranche_df.fillna(0)
             #print("month {} principal sum {}".format(months_passed, clo_principal_sum))
 
@@ -250,7 +253,7 @@ if __name__ == "__main__":
             tranche.save_balance(tranche_df, months_passed)
 
         # inner loop ends
-        clo.append_cashflow(months_passed, upfront_costs, days, clo_principal_sum, SOFR, tranche_df)
+        clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next)
 
         # terminate in outer loop
         if terminate_next:
@@ -265,9 +268,9 @@ if __name__ == "__main__":
 
     #loan_df.to_excel('output.xlsx', index=True)
 
-    #print(tranche_df.loc['A'])
-    #print(tranche_df.loc['A-S'])
-    print(tranche_df.loc['C'])
+    print(tranche_df.loc['A'])
+    print(tranche_df.loc['A-S'])
+    #print(tranche_df.loc['C'])
     #print(tranche_df.loc[('A-S', deal_call_mos[0])])
     #print(tranche_df.loc[('B', deal_call_mos[0])])
     #print(tranche_df.loc[('C', deal_call_mos[0])])
@@ -290,7 +293,7 @@ print("==== Deal Call Month ====")
 print(f"Month: {deal_call_mos[0]}\n")
 # WEIGHTED AVG COST OF FUNDS
 cashflow_data = {'Cashflows': clo.get_total_cashflows()}
-print("==== Weighted Average Cost of Funds ====")
+#print("==== Weighted Average Cost of Funds ====")
 print(pd.DataFrame(cashflow_data))
 print("IRR " + str(npf.irr(clo.get_total_cashflows())))
 
