@@ -38,7 +38,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "CLO_Input2.xlsm"
+    excel_file_path = "CLO_Input.xlsm"
 
     # read excel file for Other Specifications
     df_os = pd.read_excel(excel_file_path, sheet_name="Other Specifications", header=None)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     loan_portfolio = CollateralPortfolio()
     # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input2.xlsm", sheet_name="Collateral Portfolio")
+    df_cp = pd.read_excel(excel_file_path, sheet_name="Collateral Portfolio")
 
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.generate_loan_terms(base)
+    loan_portfolio.initial_loan_terms(base)
     longest_duration = 61  # int(loan_portfolio.get_longest_term())
 
     # CREATE LOAN DATAFRAME
@@ -235,13 +235,15 @@ if __name__ == "__main__":
                     if remaining_subtract > 0:
                         loan_waterfall(remaining_subtract, clo.get_tranches())
                 else:  # waterfall it
+                    #print("NO NEW LOAN " + str(months_passed))
+                    #print("month {}\n principal pay {:,.2f}".format(months_passed, principal_pay))
                     loan_waterfall(beginning_bal, clo.get_tranches())
             else:
                 portfolio_index += 1
 
             clo_principal_sum = clo.clo_principal_sum(months_passed, tranche_df, principal_pay, loan, replen_cumulative, replen_months, terminate_next, loan_portfolio)
             tranche_df = tranche_df.fillna(0)
-            print("month {} principal sum {}".format(months_passed, clo_principal_sum))
+            #print("month {} principal sum {}".format(months_passed, clo_principal_sum))
 
         # add current balances to list
         for tranche in clo.get_tranches():
@@ -263,9 +265,9 @@ if __name__ == "__main__":
 
     #loan_df.to_excel('output.xlsx', index=True)
 
-    print(tranche_df.loc['A'])
-    print(tranche_df.loc['A-S'])
-    print(tranche_df.loc['B'])
+    #print(tranche_df.loc['A'])
+    #print(tranche_df.loc['A-S'])
+    print(tranche_df.loc['C'])
     #print(tranche_df.loc[('A-S', deal_call_mos[0])])
     #print(tranche_df.loc[('B', deal_call_mos[0])])
     #print(tranche_df.loc[('C', deal_call_mos[0])])
@@ -279,6 +281,7 @@ if __name__ == "__main__":
     #print(tranche_df.loc[('B', deal_call_mos[0])])
     #print(tranche_df.loc[('C', deal_call_mos[0])])
     #print(tranche_df.head(longest_duration))
+    #tranche_df.to_excel('tranches.xlsx', index=True)
     #"""
 # ------------------ CALCULATING OUTPUTS ------------------ #
 # DEAL CALL MONTH
@@ -286,10 +289,10 @@ print("\n\n")
 print("==== Deal Call Month ====")
 print(f"Month: {deal_call_mos[0]}\n")
 # WEIGHTED AVG COST OF FUNDS
-data = {'Cashflows': clo.get_total_cashflows()}
+cashflow_data = {'Cashflows': clo.get_total_cashflows()}
 print("==== Weighted Average Cost of Funds ====")
-#print(pd.DataFrame(data))
-print()
+print(pd.DataFrame(cashflow_data))
+print("IRR " + str(npf.irr(clo.get_total_cashflows())))
 
 wa_cof = (npf.irr(clo.get_total_cashflows()) * 12 * 360 / 365 - SOFR) * 100  # in bps
 print(f"WA Cost of Funds: {wa_cof:.2f}%")

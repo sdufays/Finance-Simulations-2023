@@ -41,7 +41,7 @@ def run_simulation(case, output_dataframe, trial_index):
     clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
-    df_cs = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Capital Stack")
+    df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
 
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
@@ -54,7 +54,7 @@ def run_simulation(case, output_dataframe, trial_index):
     loan_portfolio = CollateralPortfolio()
 
     # read excel file for loans
-    df_cp = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Collateral Portfolio")
+    df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
@@ -63,7 +63,7 @@ def run_simulation(case, output_dataframe, trial_index):
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengthsi think
-    loan_portfolio.generate_loan_terms(case)
+    loan_portfolio.initial_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -169,6 +169,8 @@ def run_simulation(case, output_dataframe, trial_index):
                 loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
            elif replenishment_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
+                loan = loan_portfolio.get_active_portfolio()[-1]
+                loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
                 replen_cumulative += beginning_bal
            elif replen_after_reinv_bool:
                 loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp = False)
@@ -197,7 +199,8 @@ def run_simulation(case, output_dataframe, trial_index):
         else:
            portfolio_index += 1
 
-        clo_principal_sum = clo.clo_principal_sum(months_passed, reinvestment_period, tranche_df, principal_pay, terminate_next, loan, loan_portfolio, portfolio_index, replen_cumulative, replen_months)
+        clo_principal_sum = clo.clo_principal_sum(months_passed, tranche_df, principal_pay, loan, replen_cumulative, replen_months, terminate_next, loan_portfolio)
+        tranche_df = tranche_df.fillna(0)
 
       # add current balances to list
       for tranche in clo.get_tranches():
@@ -221,14 +224,21 @@ def run_simulation(case, output_dataframe, trial_index):
     #print(loan_df.tail(longest_duration))
     #loan_df.to_excel('output.xlsx', index=True)
     # testing tranche data
-    #print(tranche_df.loc['A'])
+    print(tranche_df.loc['A'])
+    print(tranche_df.loc['A-S'])
+    print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranches.xlsx', index=True)
+    #tranche_df.to_excel('one_trial.xlsx', index=True)
+    cashflow_data = {'Cashflows': clo.get_total_cashflows()}
+    print(pd.DataFrame(cashflow_data))
+    
 
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
-    if wa_cof < 0:
-      tranche_df.to_excel('output.xlsx', index=True)
+    #if wa_cof < 0:
+      #tranche_df.to_excel('neg_cof_replen.xlsx', index=True)
+      #print(loan_term_df)
+    print("WACOF {}".format(wa_cof))
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0
@@ -268,8 +278,10 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
+    excel_file_path = "CLO_Input.xlsm"
+
     # read excel file for Other Specifications
-    df_os = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Other Specifications", header=None)
+    df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -295,7 +307,7 @@ if __name__ == "__main__":
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel("CLO_Input2.xlsm", sheet_name = "Upfront Costs", header=None)
+    df_uc = pd.read_excel(excel_file_path, sheet_name = "Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0,1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -315,17 +327,18 @@ if __name__ == "__main__":
 
    # ------------------------ RUN SIMULATION ------------------------ #
 
-    #run_simulation(base)
+    run_simulation(base, output_df, trial_index=0)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
    
     scenarios = [base, downside, upside]
-
+    """
     for scenario in scenarios:
         for run in range(NUM_TRIALS):
             # Run the simulation and get the data dictionary
             output_df = run_simulation(scenario, output_df, run)
     print(output_df)
+    """
          
    # ------------------------ GET OUTPUTS ------------------------ #
     """print("base_last_month: ", end="")
