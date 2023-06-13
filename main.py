@@ -281,12 +281,8 @@ if __name__ == "__main__":
     #print(tranche_df.loc[('B', deal_call_mos[0])])
     #print(tranche_df.loc[('C', deal_call_mos[0])])
     #print(tranche_df.head(longest_duration))
-<<<<<<< Updated upstream
     #tranche_df.to_excel('tranches.xlsx', index=True)
     #"""
-=======
-    
->>>>>>> Stashed changes
 # ------------------ CALCULATING OUTPUTS ------------------ #
 # DEAL CALL MONTH
 print("\n\n")
