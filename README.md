@@ -66,12 +66,15 @@
 * `loan.principal_paydown(month, loan_data)` returns principal paydown of the loan for this month (no partial paydowns in this model)
 * `loan.ending_balance(beginning_balance, principal_paydown)` returns ending balance of the loan for this month
 * `loan.interest_income(beginning_balance, INDEX_VALUE, num_days)` returns interest income of the loan for this month, requires SOFR and number of days in the month as parameters in addition to the beginning balance
-
 ### 02. *CollateralPortfolio Class*
 **Accessing CollateralPortfolio Attributes:**
-* `portfolio.get_portfolio()` returns list of Loan objects
+* `portfolio.get_active_portfolio()` returns list of Loan objects that currently have a nonzero balance
+* `portfolio.get_storage_portfolio()` returns list that is the length of all Loans that have been created, with those that have been paid off set as None
+* `portfolio.get_initial_deal_size()` returns initial size of the portfolio
 **CollateralPortfolio Methods:**
 * `portfolio.add_loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)` adds a Loan object to the portfolio list
+* `portfolio.add_new_loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)` adds a Loan object to the portfolio list
 * `portfolio.remove_loan()` removes loans with balances of 0 from the portfolio
 * `portfolio.get_collateral_sum()` calculates and returns the sum of the balances of all loans in the portfolio
 * `portfolio.general_loan_terms(case)` calculates term lengths according to the desired case and uses loan.set_term_length() to assign these term lengths to loans in the portfolio
+
