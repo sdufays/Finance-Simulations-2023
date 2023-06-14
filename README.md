@@ -12,6 +12,7 @@
 * `tranche.get_price()` returns price of tranche, ex: 99.75
 * `tranche.get_bal_list()` returns list of tranche's balance over time (also stored in tranche_df)
 * `tranche.get_principal_dict()` returns dictionary with {month: [principal payment values, ...]} for this particular tranche
+* `print(tranche)` the __str__ method allows you to print all information about a tranche by just printing the object
 
 **Tranche Methods:**
 * `tranche.subtract_size(value)` subtracts `value` from tranche size
@@ -54,11 +55,14 @@
 * `loan.get_extension_period()` returns extension period of loan
 * `loan.get_open_prepayment_period()` returns open prepayment period of loan
 * `loan.get_term_length()` returns calculated and randomized term length of loan (in months)
+* `print(loan)` the __str__ method allows you to print all information about a loan by just printing the object
+* `loan.get_starting_month()` returns starting month of the loan
 **Setting Loan Attributes:**
 * `loan.set_term_length(term_length)` sets term length attribute to `term_length`
 * `loan.set_starting_month(month)` sets the month the loan was created at (used to keep track of term lengths for newly created loans)
 **Loan Methods:**
 * `loan.update_loan_balance(self, month, etc etc etc)` *UNFINISHED* updates loan balance as it gets smaller and smaller each month
+* `loan.print_loan_info()`
 ### 02. *CollateralPortfolio Class*
 **Accessing CollateralPortfolio Attributes:**
 * `portfolio.get_portfolio()` returns list of Loan objects

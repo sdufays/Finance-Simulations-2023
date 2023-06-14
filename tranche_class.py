@@ -59,7 +59,6 @@ class Tranche:
             return interest
         else:
             return 0
-            
-
-
-            
+        
+    def __str__(self):
+        return "Name: {}\nRating: {}\nSize: {:,.2f}\nSpread: {}\nOffered: {}\nPrice: {:.2f}\nBalance List: {}\nPrincipal Dictionary: {}".format(self.get_name(), self.get_rating(), self.get_size(), self.get_spread(), self.get_offered(),self.get_price(), self.get_bal_list(), self.get_principal_dict())

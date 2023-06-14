@@ -54,16 +54,8 @@ class Loan:
     def get_starting_month(self):
         return self.__starting_month
 
-    def print_loan_info(self):
-        print("Loan ID: ", "{:,}".format(self.get_loan_id()))
-        print("Loan Balance: ", "{:,}".format(self.get_loan_balance()))
-        print("Margin: ", "{:,}".format(self.get_margin()))
-        print("Index Floor: ", "{:,}".format(self.get_index_floor()))
-        print("Remaining Loan Term: ", "{:,}".format(self.get_remaining_loan_term()))
-        print("Extension Period: ", "{:,}".format(self.get_extension_period()))
-        print("Open Prepayment Period: ", "{:,}".format(self.get_open_prepayment_period()))
-        print("Term Length: ", "{:,}".format(self.get_term_length()))
-
+    def __str__(self):
+        return "Loan ID: {:,}\nLoan Balance: {:,}\nMargin: {:,}\nIndex Floor: {:,}\nRemaining Loan Term: {:,}\nExtension Period: {:,}\nOpen Prepayment Period: {:,}\nTerm Length: {:,}\n\n".format(self.get_loan_id(), self.get_loan_balance(), self.get_margin(), self.get_index_floor(), self.get_remaining_loan_term(), self.get_extension_period(), self.get_open_prepayment_period(), self.get_term_length())
 
     # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
     # month = months passed
