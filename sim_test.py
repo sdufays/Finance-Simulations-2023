@@ -326,23 +326,10 @@ if __name__ == "__main__":
     scenarios = [base, downside, upside]
     
     for scenario in scenarios:
-        for run in range(100):
+        for run in range(NUM_TRIALS):
             output_df = run_simulation(scenario, output_df, run)
     print(output_df)
 
-
-
-    
-         
-   # ------------------------ GET OUTPUTS ------------------------ #
-    """print("base_last_month: ", end="")
-    print(*base_last_month, sep=", ")
-
-    print("downside_last_month: ", end="")
-    print(*downside_last_month, sep=", ")
-
-    print("upside_last_month: ", end="")
-    print(*upside_last_month, sep=", ")"""
 
 # ---------------------------- READING DF ----------------------------- #
     deal_call_months = output_df['Deal Call Month'].unique()
