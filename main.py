@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # ------------------------ START BASE SCENARIO ------------------------ #
     # sets term lengths
-    loan_portfolio.initial_loan_terms(base)
+    loan_portfolio.generate_loan_terms(base)
     longest_duration = 61  # int(loan_portfolio.get_longest_term())
 
     # CREATE LOAN DATAFRAME
@@ -172,11 +172,11 @@ if __name__ == "__main__":
         portfolio_index = 0
         current_month = (starting_month + months_passed) % 12 or 12
         # ramp-up calculations
-        if months_passed == 1:
-            extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
-            if extra_balance > 0:
-                loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp=True)
-
+        if clo.get_ramp_up():
+            if months_passed == 1:
+                extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
+                if extra_balance > 0:
+                    loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp=True)
         # loops through ACTIVE loans only
         while portfolio_index < len(loan_portfolio.get_active_portfolio()):
             # initialize loan object
@@ -217,7 +217,6 @@ if __name__ == "__main__":
                 if reinvestment_bool:
                     loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp=False)
                 elif replenishment_bool:
-                    if months_passed == 17: print("loan id in replen {}".format(loan.get_loan_id()))
                     loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
                     loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
                     replen_cumulative += loan_value
