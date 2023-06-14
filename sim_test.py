@@ -309,7 +309,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 5
+    NUM_TRIALS = 100
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -326,10 +326,12 @@ if __name__ == "__main__":
     scenarios = [base, downside, upside]
     
     for scenario in scenarios:
-        for run in range(NUM_TRIALS):
-            # Run the simulation and get the data dictionary
+        for run in range(100):
             output_df = run_simulation(scenario, output_df, run)
     print(output_df)
+
+
+
     
          
    # ------------------------ GET OUTPUTS ------------------------ #
