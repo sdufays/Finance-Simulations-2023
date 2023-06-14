@@ -1,5 +1,6 @@
 from loan_class import Loan
 import random
+import numpy as np
 
 class CollateralPortfolio(Loan):
     def __init__(self):

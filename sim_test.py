@@ -36,6 +36,7 @@ def loan_waterfall(subtract_value, tranches):
     if subtract_value > 0:
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
+
 def run_simulation(case, output_dataframe, trial_index):
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
@@ -264,73 +265,8 @@ def run_simulation(case, output_dataframe, trial_index):
     # technically don't even need to return it
     return output_dataframe
 
-if __name__ == "__main__":
-   # ------------------------ GENERAL INFO ------------------------ #
-    base = [.33, .33, .34]
-    downside = [.30, .25, .45]
-    upside = [.40, .35, .25]
 
-    excel_file_path = "CLO_Input2.xlsm"
-
-    # read excel file for Other Specifications
-    df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
-
-    # assume they're giving us a date at the end of the month
-    first_payment_date = df_os.iloc[2, 1]
-    date_str = first_payment_date.strftime("%m-%d-%Y")
-    date = date_str.split("-") # ["MM", "DD", "YYYY"]
-    date = list(map(int, date)) # [MM, DD, YYYY]
-    # starting payment month
-    starting_month = date[0]
-    days_in_month = get_date_array(date)
-
-    reinvestment_period = df_os.iloc[1,1]
-    SOFR = df_os.iloc[3,1]
-
-    
-    has_reinvestment = df_os.iloc[4,1]
-    has_replenishment = df_os.iloc[5,1]
-
-    reinvestment_period = df_os.iloc[1,1]
-    replenishment_period = df_os.iloc[6,1]
-
-    replenishment_amount = df_os.iloc[7,1]
-
-
-    # --------------------------- UPFRONT COSTS --------------------------- #
-
-    df_uc = pd.read_excel(excel_file_path, sheet_name = "Upfront Costs", header=None)
-    placement_percent = df_uc.iloc[0,1]
-    legal = df_uc.iloc[1, 1]
-    accounting = df_uc.iloc[2, 1]
-    trustee = df_uc.iloc[3, 1]
-    printing = df_uc.iloc[4, 1]
-    RA_site = df_uc.iloc[5, 1]
-    modeling = df_uc.iloc[6, 1]
-    misc = df_uc.iloc[7, 1]
-
-    NUM_TRIALS = 100
-    cases = ['base', 'downside', 'upside']
-    trial_numbers = range(0, NUM_TRIALS)
-    index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
-    columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
-    output_df = pd.DataFrame(index=index, columns=columns)
-
-
-   # ------------------------ RUN SIMULATION ------------------------ #
-
-    #run_simulation(base, output_df, trial_index=0)
-
-   # ------------------------ RUN SIMULATION LOOPS ------------------------ #
-   
-    scenarios = [base, downside, upside]
-    
-    for scenario in scenarios:
-        for run in range(NUM_TRIALS):
-            output_df = run_simulation(scenario, output_df, run)
-    print(output_df)
-
-
+def graphs(output_df):
 # ---------------------------- READING DF ----------------------------- #
     deal_call_months = output_df['Deal Call Month'].unique()
     wa_cof_list = output_df['WA COF'].unique()
@@ -623,6 +559,70 @@ if __name__ == "__main__":
 
 
 
+if __name__ == "__main__":
+   # ------------------------ GENERAL INFO ------------------------ #
+    base = [.33, .33, .34]
+    downside = [.30, .25, .45]
+    upside = [.40, .35, .25]
 
+    excel_file_path = "CLO_Input2.xlsm"
+
+    # read excel file for Other Specifications
+    df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
+
+    # assume they're giving us a date at the end of the month
+    first_payment_date = df_os.iloc[2, 1]
+    date_str = first_payment_date.strftime("%m-%d-%Y")
+    date = date_str.split("-") # ["MM", "DD", "YYYY"]
+    date = list(map(int, date)) # [MM, DD, YYYY]
+    # starting payment month
+    starting_month = date[0]
+    days_in_month = get_date_array(date)
+
+    reinvestment_period = df_os.iloc[1,1]
+    SOFR = df_os.iloc[3,1]
 
     
+    has_reinvestment = df_os.iloc[4,1]
+    has_replenishment = df_os.iloc[5,1]
+
+    reinvestment_period = df_os.iloc[1,1]
+    replenishment_period = df_os.iloc[6,1]
+
+    replenishment_amount = df_os.iloc[7,1]
+
+
+    # --------------------------- UPFRONT COSTS --------------------------- #
+
+    df_uc = pd.read_excel(excel_file_path, sheet_name = "Upfront Costs", header=None)
+    placement_percent = df_uc.iloc[0,1]
+    legal = df_uc.iloc[1, 1]
+    accounting = df_uc.iloc[2, 1]
+    trustee = df_uc.iloc[3, 1]
+    printing = df_uc.iloc[4, 1]
+    RA_site = df_uc.iloc[5, 1]
+    modeling = df_uc.iloc[6, 1]
+    misc = df_uc.iloc[7, 1]
+
+    NUM_TRIALS = 100
+    cases = ['base', 'downside', 'upside']
+    trial_numbers = range(0, NUM_TRIALS)
+    index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
+    columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
+    output_df = pd.DataFrame(index=index, columns=columns)
+
+
+   # ------------------------ RUN SIMULATION ------------------------ #
+
+    #run_simulation(base, output_df, trial_index=0)
+
+   # ------------------------ RUN SIMULATION LOOPS ------------------------ #
+   
+    scenarios = [base, downside, upside]
+    
+    for scenario in scenarios:
+        for run in range(NUM_TRIALS):
+            output_df = run_simulation(scenario, output_df, run)
+    print(output_df)
+    graphs(output_df)
+
