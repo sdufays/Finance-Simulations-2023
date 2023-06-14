@@ -595,7 +595,7 @@ if __name__ == "__main__":
     worksheet_ar = workbook.add_worksheet("WA Adv Rate")
     headings_ar = ['WA Adv Rate']
 
-    bin_ranges_ar = [round(x, 1) for x in np.linspace(0.8, 0.9, 10)]
+    bin_ranges_ar = np.linspace(0.81, 0.85, 10)
     hist_ar, bins_ar = np.histogram(output_df['WA Adv Rate'].unique(), bins=bin_ranges_ar)
 
     worksheet_ar.write_column('A1', [f"[{bins_ar[i]}-{bins_ar[i+1]}]" for i in range(len(bins_ar)-1)], bold)
