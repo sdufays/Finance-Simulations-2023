@@ -62,7 +62,11 @@
 * `loan.set_starting_month(month)` sets the month the loan was created at (used to keep track of term lengths for newly created loans)
 **Loan Methods:**
 * `loan.update_loan_balance(self, month, etc etc etc)` *UNFINISHED* updates loan balance as it gets smaller and smaller each month
-* `loan.print_loan_info()`
+* `loan.beginning_balance(month, loan_data)` returns beginning balance of the loan for this month, loan_data parameter is dataframe of loan calculations
+* `loan.principal_paydown(month, loan_data)` returns principal paydown of the loan for this month (no partial paydowns in this model)
+* `loan.ending_balance(beginning_balance, principal_paydown)` returns ending balance of the loan for this month
+* `loan.interest_income(beginning_balance, INDEX_VALUE, num_days)` returns interest income of the loan for this month, requires SOFR and number of days in the month as parameters in addition to the beginning balance
+
 ### 02. *CollateralPortfolio Class*
 **Accessing CollateralPortfolio Attributes:**
 * `portfolio.get_portfolio()` returns list of Loan objects
