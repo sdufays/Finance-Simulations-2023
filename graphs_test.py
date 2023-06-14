@@ -212,12 +212,26 @@ def run_simulation(case, output_dataframe, trial_index):
 
       months_passed += 1
 
+    # TESTING PURPOSES ONLY
+    # testing loan data
+    #print(loan_df.tail(longest_duration))
+    #loan_df.to_excel('output.xlsx', index=True)
+    # testing tranche data
+    #print(tranche_df.loc['A'])
+    #print(tranche_df.loc['A-S'])
+    #print(tranche_df.loc['B'])
+    #print(tranche_df.head(longest_duration))
+    #tranche_df.to_excel('one_trial.xlsx', index=True)
     cashflow_data = {'Cashflows': clo.get_total_cashflows()}
-
+    #print(pd.DataFrame(cashflow_data))
     
 
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
+    #if wa_cof < 0:
+      #tranche_df.to_excel('neg_cof_replen.xlsx', index=True)
+      #print(loan_term_df)
+    #print("WACOF {}".format(wa_cof))
     
     # WEIGHTED AVG ADVANCE RATE
     avg_clo_bal = 0
@@ -296,7 +310,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 5
+    NUM_TRIALS = 100
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -317,10 +331,12 @@ if __name__ == "__main__":
             # Run the simulation and get the data dictionary
             output_df = run_simulation(scenario, output_df, run)
     print(output_df)
+    
 
    # ---------------------------- READING DF ----------------------------- #
     deal_call_months = output_df['Deal Call Month'].unique()
     wa_cof_list = output_df['WA COF'].unique()
+    equity_yield_list = output_df['Projected Equity Yield'].unique()
     deal_call_months_dict = {}
     for case in cases:
        deal_call_months_list = []
@@ -380,9 +396,6 @@ if __name__ == "__main__":
        list(range(1, NUM_TRIALS + 1)),
        deal_call_months_dict['upside']
     ]
-
-    # Equity Yield
-    # TODO: equity yield
 
     worksheet_dcm.write_row('A1', headings_dcm, bold)
     worksheet_base.write_row('A1', headings_base, bold)
@@ -454,10 +467,10 @@ if __name__ == "__main__":
     })
 
     # chart title 
-    chart1.set_title ({'name': 'Results of CLO Simulation'})
-    chart2.set_title ({'name': 'Results of CLO Simulation'})
-    chart3.set_title ({'name': 'Results of CLO Simulation'})
-    chart4.set_title ({'name': 'Results of CLO Simulation'})
+    chart1.set_title ({'name': 'Deal Call Months for All Scenarios'})
+    chart2.set_title ({'name': 'Deal Call Months for Base Scenario'})
+    chart3.set_title ({'name': 'Deal Call Months for Downside Scenario'})
+    chart4.set_title ({'name': 'Deal Call Months for Upside Scenario'})
    
     # x-axis label
     chart1.set_x_axis({'name': 'Simulation Number'})
@@ -467,9 +480,9 @@ if __name__ == "__main__":
    
     # y-axis label
     chart1.set_y_axis({'name': 'Deal Call Month', 'min': 20})
-    chart2.set_y_axis({'name': 'Deal Call Month'})
-    chart3.set_y_axis({'name': 'Deal Call Month'})
-    chart4.set_y_axis({'name': 'Deal Call Month'})
+    chart2.set_y_axis({'name': 'Deal Call Month', 'min': 20})
+    chart3.set_y_axis({'name': 'Deal Call Month', 'min': 20})
+    chart4.set_y_axis({'name': 'Deal Call Month', 'min': 20})
    
     # Set an Excel chart style.
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
@@ -478,6 +491,10 @@ if __name__ == "__main__":
     chart2.set_style(3)
     chart3.set_style(4)
     chart4.set_style(5)
+    chart1.set_size({'width': 600, 'height': 400})
+    chart2.set_size({'width': 600, 'height': 400})
+    chart3.set_size({'width': 600, 'height': 400})
+    chart4.set_size({'width': 600, 'height': 400})
 
     worksheet_dcm.insert_chart('F2', chart1)
     worksheet_base.insert_chart('E2', chart2)
@@ -486,11 +503,11 @@ if __name__ == "__main__":
 
     # ------------------------------- SWAPPED --------------------------------- #
     bold = workbook.add_format({'bold': 1})
-    headings_swapped = ['Deal Call Months', 'Sims']
+    headings_swapped = ['Deal Call Months']
 
     data_swapped = [
-        dcm_unique, 
-        counts_list_dcm
+       dcm_unique,
+       counts_list_dcm
     ]
     
     worksheet_swapped.write_row('A1', headings_swapped, bold)
@@ -500,71 +517,109 @@ if __name__ == "__main__":
     chart5 = workbook.add_chart({'type': 'column'})
     chart5.add_series({
        'name':       ['Deal Call Months 2.0', 0, 1],
-       'categories': ['Deal Call Months 2.0', 1, 0, NUM_TRIALS, 0],
-       'values':     ['Deal Call Months 2.0', 1, 1, NUM_TRIALS, 1]
+       'categories': ['Deal Call Months 2.0', 1, 0, max(dcm_unique), 0],
+       'values':     ['Deal Call Months 2.0', 1, 1, max(dcm_unique), 1]
     })
 
-    chart5.set_title ({'name': 'Results of CLO Simulation'})
-    chart5.set_x_axis({'name': 'Deal Call Month', 'min': 25})
-    chart5.set_y_axis({'name': 'Sim Number'})
+    chart5.set_title ({'name': 'Deal Call Month Frequency'})
+    chart5.set_x_axis({'name': 'Deal Call Month'})
+    chart5.set_y_axis({'name': 'Frequency'})
+    chart5.set_size({'width': 1700, 'height': 400})
 
     chart5.set_style(8)
     worksheet_swapped.insert_chart('F2', chart5)
 
     # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS ------------------------------------ #
     worksheet_wa_cof = workbook.add_worksheet("WA Cost of Funds")
-    headings_wa_cof = ['WA CoF', 'Sims']
+    headings_wa_cof = ['WA CoF']
 
-    data_wa_cof = [
-       wa_cof_list,
-       range(len(wa_cof_sort))
-    ]
+    bin_ranges = [round(x, 1) for x in np.linspace(3.7, 4.4, 11)]
 
-    worksheet_wa_cof.write_row('A1', headings_wa_cof, bold)
-    worksheet_wa_cof.write_column('A2', data_wa_cof[0])
-    worksheet_wa_cof.write_column('B2', data_wa_cof[1])
-    chart6 = workbook.add_chart({'type': 'scatter'})
+    hist, bins = np.histogram(wa_cof_list, bins=bin_ranges)
+
+    worksheet_wa_cof.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
+    worksheet_wa_cof.write_column('B1', hist)
+    chart6 = workbook.add_chart({'type': 'column'})
 
     chart6.add_series({
-       'name':       ['WA Cost of Funds', 0, 1],
-       'categories': ['WA Cost of Funds', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['WA Cost of Funds', 1, 1, NUM_TRIALS, 1], 
+       'name':       'Frequency',
+       'categories': ['WA Cost of Funds', 0, 0, len(hist)-2, 0],
+       'values':     ['WA Cost of Funds', 0, 1, len(hist)-1, 1]
     })
 
-    chart6.set_title ({'name': 'Results of CLO Simulation'})
+    chart6.set_title ({'name': 'Weighted Average Cost of Funds Frequency'})
     chart6.set_x_axis({'name': 'Weighted Average Cost of Fund'})
-    chart6.set_y_axis({'name': 'Sim Number'})
+    chart6.set_y_axis({'name': 'Frequency'})
+    chart6.set_x_axis({
+       'name': 'Weighted Average Cost of Fund',
+       'categories': ['WA Cost of Funds', 1, 0, len(hist)-1, 0],
+       'num_format': '0.00'
+    })
    
     chart6.set_style(6)
+    chart6.set_size({'width': 600, 'height': 400})
     worksheet_wa_cof.insert_chart('E2', chart6)
 
-    #----------------------------------------------------------DONT ASK
-    worksheet = workbook.add_worksheet("sample")
+    # -------------------------------- EQUITY YIELD ------------------------------ #
 
-    # Write data to the worksheet
-    data = [10, 20, 30, 40, 50, 20, 30, 40, 10, 30, 30, 20]
-    row = 0
-    col = 0
+    worksheet_ey = workbook.add_worksheet("Equity Yield")
+    headings_ey = ['Equity Yield']
 
-    for value in data:
-       worksheet.write(row, col, value)
-       row += 1
+    bin_ranges_eq = [round(x, 1) for x in np.linspace(8.5, 13, 9)]
+    hist_eq, bins_eq = np.histogram(equity_yield_list, bins=bin_ranges_eq)
 
-    # Create a chart object and configure it as a histogram
-    chart = workbook.add_chart({'type': 'column'})
-    chart.set_title({'name': 'Histogram'})
-    chart.set_x_axis({'name': 'Values'})
-    chart.set_y_axis({'name': 'Frequency'})
+    worksheet_ey.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
+    worksheet_ey.write_column('B1', hist_eq)
+    chart7 = workbook.add_chart({'type': 'column'})
 
-    # Add the data to the chart
-    chart.add_series({
-       'values': 'sample',
-       'categories': 'sample',
-       'name': 'Frequency',
+    chart7.add_series({
+       'name':       'Frequency',
+       'categories': ['Equity Yield', 0, 0, len(hist_eq)-2, 0],
+       'values':     ['Equity Yield', 0, 1, len(hist_eq)-1, 1]
     })
 
-    # Insert the chart into the worksheet
-    worksheet.insert_chart('C1', chart)
+    chart7.set_title ({'name': 'Equity Yield Frequency'})
+    chart7.set_x_axis({'name': 'Equity Yield'})
+    chart7.set_y_axis({'name': 'Frequency'})
+    chart7.set_x_axis({
+       'name': 'Equity Yield',
+       'categories': ['Equity Yield', 1, 0, len(hist_eq)-2, 0],
+       'num_format': '0.00'
+    })
+   
+    chart7.set_style(1)
+    chart7.set_size({'width': 600, 'height': 400})
+    worksheet_ey.insert_chart('E2', chart7)
+
+    # -------------------------------- WA Adv Rate ------------------------------ #
+    worksheet_ar = workbook.add_worksheet("WA Adv Rate")
+    headings_ar = ['WA Adv Rate']
+
+    bin_ranges_ar = [round(x, 1) for x in np.linspace(0.8, 0.9, 10)]
+    hist_ar, bins_ar = np.histogram(output_df['WA Adv Rate'].unique(), bins=bin_ranges_ar)
+
+    worksheet_ar.write_column('A1', [f"[{bins_ar[i]}-{bins_ar[i+1]}]" for i in range(len(bins_ar)-1)], bold)
+    worksheet_ar.write_column('B1', hist_ar)
+    chart8 = workbook.add_chart({'type': 'column'})
+
+    chart8.add_series({
+       'name':       'Frequency',
+       'categories': ['WA Adv Rate', 0, 0, len(hist_ar)-2, 0],
+       'values':     ['WA Adv Rate', 0, 1, len(hist_ar)-1, 1]
+    })
+
+    chart8.set_title ({'name': 'WA Adv Rate Frequency'})
+    chart8.set_x_axis({'name': 'WA Adv Rate'})
+    chart8.set_y_axis({'name': 'Frequency'})
+    chart8.set_x_axis({
+       'name': 'WA Adv Rate',
+       'categories': ['WA Adv Rate', 1, 0, len(hist_ar)-2, 0],
+       'num_format': '0.00'
+    })
+   
+    chart8.set_style(7)
+    chart8.set_size({'width': 600, 'height': 400})
+    worksheet_ar.insert_chart('E2', chart8)
 
     workbook.close()
     excel_file_path = 'graphs.xlsx'
