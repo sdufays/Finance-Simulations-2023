@@ -64,142 +64,11 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('graphs.xlsx')
-    worksheet_dcm = workbook.add_worksheet("Deal Call Months")
-    worksheet_base = workbook.add_worksheet("Base")
-    worksheet_downside = workbook.add_worksheet("Downside")
-    worksheet_upside = workbook.add_worksheet("Upside")
     bold = workbook.add_format({'bold': 1})
-    headings_dcm = ['Sims', 'Base', 'Downside', 'Upside']
-    headings_base = ['Sims', 'Base']
-    headings_downside = ['Sims', 'Downside']
-    headings_upside = ['Sims', 'Upside']
-
-    # deal call months
-    data_dcm = [
-       list(range(1, NUM_TRIALS + 1)), # this is my x-axis
-       deal_call_months_dict['base'], # this is one batch of data aka the y-axis
-       deal_call_months_dict['downside'],
-       deal_call_months_dict['upside']
-    ]
-
-    data_base = [ # lol
-       list(range(1, NUM_TRIALS + 1)),
-       deal_call_months_dict['base']
-    ]
-
-    data_downside = [
-       list(range(1, NUM_TRIALS + 1)),
-       deal_call_months_dict['downside']
-    ]
-
-    data_upside = [
-       list(range(1, NUM_TRIALS + 1)),
-       deal_call_months_dict['upside']
-    ]
-
-    worksheet_dcm.write_row('A1', headings_dcm, bold)
-    worksheet_base.write_row('A1', headings_base, bold)
-    worksheet_downside.write_row('A1', headings_downside, bold)
-    worksheet_upside.write_row('A1', headings_upside, bold)
-   
-    # writing columns for dcm
-    worksheet_dcm.write_column('A2', data_dcm[0])
-    worksheet_dcm.write_column('B2', data_dcm[1])
-    worksheet_dcm.write_column('C2', data_dcm[2])
-    worksheet_dcm.write_column('D2', data_dcm[3])
-
-    # writing columns for base
-    worksheet_base.write_column('A2', data_base[0])
-    worksheet_base.write_column('B2', data_base[1])
-
-    # writing columns for downside
-    worksheet_downside.write_column('A2', data_downside[0])
-    worksheet_downside.write_column('B2', data_downside[1])
-
-    # writing columns for upside
-    worksheet_upside.write_column('A2', data_upside[0])
-    worksheet_upside.write_column('B2', data_upside[1])
-
-    # scatter chart object
-    chart1 = workbook.add_chart({'type': 'scatter'})
-    chart2 = workbook.add_chart({'type': 'scatter'})
-    chart3 = workbook.add_chart({'type': 'scatter'})
-    chart4 = workbook.add_chart({'type': 'scatter'})
-
-    # base, downside, upside
-    chart1.add_series({
-       'name':       ['Deal Call Months', 0, 1],
-       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], # x axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
-       'values':     ['Deal Call Months', 1, 1, NUM_TRIALS, 1] # y axis values placement ['Sheet name', first_row, first_column, last_row, last_column]
-    })
-
-    chart1.add_series({
-       'name':       ['Deal Call Months', 0, 2],
-       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Deal Call Months', 1, 2, NUM_TRIALS, 2]
-    })
-
-    chart1.add_series({
-       'name':       ['Deal Call Months', 0, 3],
-       'categories': ['Deal Call Months', 1, 0, NUM_TRIALS, 0],
-       'values':     ['Deal Call Months', 1, 3, NUM_TRIALS, 3]
-    })
-
-    # just base
-    chart2.add_series({
-       'name':       ['Base', 0, 1],
-       'categories': ['Base', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Base', 1, 1, NUM_TRIALS, 1]
-    })
-
-    # just downside
-    chart3.add_series({
-       'name':       ['Downside', 0, 2],
-       'categories': ['Downside', 1, 0, NUM_TRIALS, 0],
-       'values':     ['Downside', 1, 1, NUM_TRIALS, 1]
-    })
-
-    # just upside
-    chart4.add_series({
-       'name':       ['Upside', 0, 3],
-       'categories': ['Upside', 1, 0, NUM_TRIALS, 0], 
-       'values':     ['Upside', 1, 1, NUM_TRIALS, 1]
-    })
-
-    # chart title 
-    chart1.set_title ({'name': 'Deal Call Months for All Scenarios'})
-    chart2.set_title ({'name': 'Deal Call Months for Base Scenario'})
-    chart3.set_title ({'name': 'Deal Call Months for Downside Scenario'})
-    chart4.set_title ({'name': 'Deal Call Months for Upside Scenario'})
-   
-    # x-axis label
-    chart1.set_x_axis({'name': 'Simulation Number'})
-    chart2.set_x_axis({'name': 'Simulation Number'})
-    chart3.set_x_axis({'name': 'Simulation Number'})
-    chart4.set_x_axis({'name': 'Simulation Number'})
-   
-    # y-axis label
-    chart1.set_y_axis({'name': 'Deal Call Month', 'min': 20})
-    chart2.set_y_axis({'name': 'Deal Call Month', 'min': 20})
-    chart3.set_y_axis({'name': 'Deal Call Month', 'min': 20})
-    chart4.set_y_axis({'name': 'Deal Call Month', 'min': 20})
    
     # Set an Excel chart style.
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
     # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
-    chart1.set_style(2)
-    chart2.set_style(3)
-    chart3.set_style(4)
-    chart4.set_style(5)
-    chart1.set_size({'width': 600, 'height': 400})
-    chart2.set_size({'width': 600, 'height': 400})
-    chart3.set_size({'width': 600, 'height': 400})
-    chart4.set_size({'width': 600, 'height': 400})
-
-    worksheet_dcm.insert_chart('F2', chart1)
-    worksheet_base.insert_chart('E2', chart2)
-    worksheet_downside.insert_chart('E2', chart3)
-    worksheet_upside.insert_chart('E2', chart4)
 
     # ------------------------------- SWAPPED --------------------------------- #
     worksheet_swapped = workbook.add_worksheet("Deal Call Months Frequency")
@@ -225,7 +94,7 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
     chart5.set_title ({'name': 'ALL Deal Call Month Frequency'})
     chart5.set_x_axis({'name': 'Deal Call Month'})
     chart5.set_y_axis({'name': 'Frequency'})
-    chart5.set_size({'width': 1700, 'height': 400})
+    chart5.set_size({'width': 600, 'height': 400})
 
     chart5.set_style(8)
     worksheet_swapped.insert_chart('F2', chart5)
@@ -234,6 +103,10 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
     worksheet_sb = workbook.add_worksheet("Deal Call Months Base Frequency")
     bold = workbook.add_format({'bold': 1})
     headings_swapped = ['Deal Call Months']
+
+    bin_ranges = [round(x, 0) for x in np.linspace(20, 35, 11)]
+
+    hist, bins = np.histogram(output_df['WA COF'].unique(), bins=bin_ranges)
 
     data_sb = [
        dcm_unique,
@@ -254,7 +127,7 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
     chart6.set_title ({'name': 'Deal Call Month Frequency'})
     chart6.set_x_axis({'name': 'Deal Call Month'})
     chart6.set_y_axis({'name': 'Frequency'})
-    chart6.set_size({'width': 1700, 'height': 400})
+    chart6.set_size({'width': 600, 'height': 400})
 
     chart6.set_style(3)
     worksheet_sb.insert_chart('F2', chart6)
@@ -281,7 +154,7 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
     chart7.set_title ({'name': 'Deal Call Month Frequency'})
     chart7.set_x_axis({'name': 'Deal Call Month'})
     chart7.set_y_axis({'name': 'Frequency'})
-    chart7.set_size({'width': 1700, 'height': 400})
+    chart7.set_size({'width': 600, 'height': 400})
 
     chart7.set_style(4)
     worksheet_sd.insert_chart('F2', chart7)
@@ -308,7 +181,7 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
     chart8.set_title ({'name': 'Deal Call Month Frequency'})
     chart8.set_x_axis({'name': 'Deal Call Month'})
     chart8.set_y_axis({'name': 'Frequency'})
-    chart8.set_size({'width': 1700, 'height': 400})
+    chart8.set_size({'width': 600, 'height': 400})
 
     chart8.set_style(5)
     worksheet_su.insert_chart('F2', chart8)
