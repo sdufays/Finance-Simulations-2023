@@ -131,7 +131,7 @@ def create_waar_graph(workbook, sheet_name, data, chart_title, chart_style):
    chart.set_size({'width': 600, 'height': 400})
    worksheet.insert_chart('E2', chart)
 
-def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
+def graphs(output_df, cases, trial_numbers):
 # ---------------------------- READING DF ----------------------------- #
     deal_call_months_dict = {}
     wa_cof_dict = {}
@@ -156,35 +156,6 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
        wa_cof_dict[case] = wa_cof_list
        equity_yield_dict[case] = equity_yield_list
        adv_rate_dict[case] = adv_rate_list
-
-    deal_call_months_sort = sorted(deal_call_months_list)
-
-    dcm_unique = []
-    for num in deal_call_months_sort:
-       if num not in dcm_unique:
-          dcm_unique.append(num)
-
-    dcm_base_list = deal_call_months_dict['base']
-    dcm_down_list = deal_call_months_dict['downside']
-    dcm_up_list = deal_call_months_dict['upside']
-
-    occ_dcm = Counter(deal_call_months_list)
-    occ_dcm_base = Counter(dcm_base_list)
-    occ_dcm_down = Counter(dcm_down_list)
-    occ_dcm_up = Counter(dcm_up_list)
-    occ_list_dcm_b = list(occ_dcm_base.items())
-    occ_list_dcm_d = list(occ_dcm_down.items())
-    occ_list_dcm_u = list(occ_dcm_up.items())
-    occ_list_dcm = list(occ_dcm.items())
-    occ_list_dcm.sort(key=lambda x: x[0])
-    occ_list_dcm_b.sort(key=lambda x: x[0])
-    occ_list_dcm_d.sort(key=lambda x: x[0])
-    occ_list_dcm_u.sort(key=lambda x: x[0])
-
-    counts_dcm = [count for num, count in occ_list_dcm]
-    counts_dcm_base = [count for num, count in occ_list_dcm_b]
-    counts_dcm_downside = [count for num, count in occ_list_dcm_d]
-    counts_dcm_upside = [count for num, count in occ_list_dcm_u]
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('graphs.xlsx')
