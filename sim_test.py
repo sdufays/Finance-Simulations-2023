@@ -331,5 +331,5 @@ if __name__ == "__main__":
             output_df = run_simulation(scenario, output_df, run)
     print(output_df)
 
-    graphs(output_df, cases, trial_numbers, NUM_TRIALS)
+    graphs(output_df, cases, trial_numbers)
 
