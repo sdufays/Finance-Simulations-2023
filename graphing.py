@@ -60,7 +60,8 @@ def create_wa_cof_chart(workbook, worksheet_name, data, title, chart_style):
    chart.set_x_axis({
       'name': 'Weighted Average Cost of Fund',
       'categories': [worksheet_name, 1, 0, len(hist)-1, 0],
-      'num_format': '0.00'
+      'num_format': '0.00',
+      'num_font': {'rotation': -45}
    })
    
    chart.set_style(chart_style)
@@ -91,7 +92,8 @@ def create_equity_yield_graph(workbook, worksheet_name, data, chart_title, chart
    chart.set_x_axis({
       'name': 'Equity Yield',
       'categories': [worksheet_name, 1, 0, len(hist_eq)-2, 0],
-      'num_format': '0.00'
+      'num_format': '0.00',
+      'num_font': {'rotation': -45}
    })
 
    chart.set_style(chart_style)
@@ -121,7 +123,8 @@ def create_waar_graph(workbook, sheet_name, data, chart_title, chart_style):
    chart.set_x_axis({
       'name': 'WA Adv Rate',
       'categories': [sheet_name, 1, 0, len(hist)-2, 0],
-      'num_format': '0.00'
+      'num_format': '0.00',
+      'num_font': {'rotation': -45}
    })
 
    chart.set_style(chart_style)
@@ -185,7 +188,7 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('graphs.xlsx')
-    
+
     # Set an Excel chart style.
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
     # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
@@ -212,4 +215,3 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
     create_waar_graph(workbook, "WA Adv Rate Upside", adv_rate_dict['upside'], "UPSIDE WA Adv Rate Frequency", 5)
     # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
     workbook.close()
-
