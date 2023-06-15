@@ -310,7 +310,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
-    NUM_TRIALS = 100
+    NUM_TRIALS = 1
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -330,5 +330,6 @@ if __name__ == "__main__":
         for run in range(NUM_TRIALS):
             output_df = run_simulation(scenario, output_df, run)
     print(output_df)
+
     graphs(output_df, cases, trial_numbers, NUM_TRIALS)
 

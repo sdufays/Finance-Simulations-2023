@@ -5,6 +5,119 @@ import numpy as np
 import xlsxwriter
 from collections import Counter
 
+def create_dcm_chart(workbook, worksheet_name, data, chart_title):
+   worksheet = workbook.add_worksheet(worksheet_name)
+   bold = workbook.add_format({'bold': 1})
+   headings = ['Deal Call Months']
+
+   worksheet.write_row('A1', headings, bold)
+   worksheet.write_column('A2', data[0])
+   worksheet.write_column('B2', data[1])
+
+   chart = workbook.add_chart({'type': 'column'})
+   chart.add_series({
+      'name':       [worksheet_name, 0, 1],
+      'categories': [worksheet_name, 1, 0, max(data[0]), 0],
+      'values':     [worksheet_name, 1, 1, max(data[0]), 1]
+   })
+
+   chart.set_title({'name': chart_title})
+   chart.set_x_axis({'name': 'Deal Call Month'})
+   chart.set_y_axis({'name': 'Frequency'})
+   chart.set_size({'width': 600, 'height': 400})
+
+   worksheet.insert_chart('F2', chart)
+
+def create_wa_cof_chart(workbook, worksheet_name, data, title):
+   worksheet = workbook.add_worksheet(worksheet_name)
+   bold = workbook.add_format({'bold': 1})
+   
+   bin_ranges = [round(x, 1) for x in np.linspace(3.7, 4.4, 11)]
+   hist, bins = np.histogram(data, bins=bin_ranges)
+   
+   worksheet.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
+   worksheet.write_column('B1', hist)
+   
+   chart = workbook.add_chart({'type': 'column'})
+   chart.add_series({
+      'name': 'Frequency',
+      'categories': [worksheet_name, 0, 0, len(hist)-2, 0],
+      'values': [worksheet_name, 0, 1, len(hist)-1, 1]
+   })
+   
+   chart.set_title({'name': title})
+   chart.set_x_axis({'name': 'Weighted Average Cost of Fund'})
+   chart.set_y_axis({'name': 'Frequency'})
+   chart.set_x_axis({
+      'name': 'Weighted Average Cost of Fund',
+      'categories': [worksheet_name, 1, 0, len(hist)-1, 0],
+      'num_format': '0.00'
+   })
+   
+   chart.set_style(6)
+   chart.set_size({'width': 600, 'height': 400})
+   worksheet.insert_chart('E2', chart)
+
+def create_equity_yield_graph(workbook, worksheet_name, data, chart_title):
+   bold = workbook.add_format({'bold': True})
+   worksheet = workbook.add_worksheet(worksheet_name)
+
+   bin_ranges_eq = [round(x, 1) for x in np.linspace(8.5, 13, 9)]
+   hist_eq, bins_eq = np.histogram(data, bins=bin_ranges_eq)
+
+   worksheet.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
+   worksheet.write_column('B1', hist_eq)
+
+   chart = workbook.add_chart({'type': 'column'})
+
+   chart.add_series({
+      'name':       'Frequency',
+      'categories': [worksheet_name, 0, 0, len(hist_eq)-2, 0],
+      'values':     [worksheet_name, 0, 1, len(hist_eq)-1, 1]
+   })
+
+   chart.set_title({'name': chart_title})
+   chart.set_x_axis({'name': 'Equity Yield'})
+   chart.set_y_axis({'name': 'Frequency'})
+   chart.set_x_axis({
+      'name': 'Equity Yield',
+      'categories': [worksheet_name, 1, 0, len(hist_eq)-2, 0],
+      'num_format': '0.00'
+   })
+
+   chart.set_size({'width': 600, 'height': 400})
+   worksheet.insert_chart('E2', chart)
+
+def create_waar_graph(workbook, sheet_name, data, chart_title, chart_style):
+   bold = workbook.add_format({'bold': True})
+   worksheet = workbook.add_worksheet(sheet_name)
+
+   bin_ranges = np.linspace(0.83, 0.90, 10)
+   hist, bins = np.histogram(data, bins=bin_ranges)
+
+   worksheet.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
+   worksheet.write_column('B1', hist)
+   chart = workbook.add_chart({'type': 'column'})
+
+   chart.add_series({
+      'name': 'Frequency',
+      'categories': [sheet_name, 0, 0, len(hist)-2, 0],
+      'values': [sheet_name, 0, 1, len(hist)-1, 1]
+   })
+
+   chart.set_title({'name': chart_title})
+   chart.set_x_axis({'name': 'WA Adv Rate'})
+   chart.set_y_axis({'name': 'Frequency'})
+   chart.set_x_axis({
+      'name': 'WA Adv Rate',
+      'categories': [sheet_name, 1, 0, len(hist)-2, 0],
+      'num_format': '0.00'
+   })
+
+   chart.set_style(chart_style)
+   chart.set_size({'width': 600, 'height': 400})
+   worksheet.insert_chart('E2', chart)
+
 def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
 # ---------------------------- READING DF ----------------------------- #
     deal_call_months_dict = {}
@@ -64,479 +177,31 @@ def graphs(output_df, cases, trial_numbers, NUM_TRIALS):
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
     workbook = xlsxwriter.Workbook('graphs.xlsx')
-    bold = workbook.add_format({'bold': 1})
-   
+    
     # Set an Excel chart style.
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
     # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
 
     # ------------------------------- SWAPPED --------------------------------- #
-    worksheet_swapped = workbook.add_worksheet("Deal Call Months Frequency")
-    bold = workbook.add_format({'bold': 1})
-    headings_swapped = ['Deal Call Months']
-
-    data_swapped = [
-       dcm_unique,
-       counts_dcm
-    ]
-    
-    worksheet_swapped.write_row('A1', headings_swapped, bold)
-    worksheet_swapped.write_column('A2', data_swapped[0])
-    worksheet_swapped.write_column('B2', data_swapped[1])
-
-    chart5 = workbook.add_chart({'type': 'column'})
-    chart5.add_series({
-       'name':       ['Deal Call Months Frequency', 0, 1],
-       'categories': ['Deal Call Months Frequency', 1, 0, max(dcm_unique), 0],
-       'values':     ['Deal Call Months Frequency', 1, 1, max(dcm_unique), 1]
-    })
-
-    chart5.set_title ({'name': 'ALL Deal Call Month Frequency'})
-    chart5.set_x_axis({'name': 'Deal Call Month'})
-    chart5.set_y_axis({'name': 'Frequency'})
-    chart5.set_size({'width': 600, 'height': 400})
-
-    chart5.set_style(8)
-    worksheet_swapped.insert_chart('F2', chart5)
-
-    # ------------------------------- SWAPPED BASE --------------------------------- #
-    worksheet_sb = workbook.add_worksheet("Deal Call Months Base Frequency")
-    bold = workbook.add_format({'bold': 1})
-    headings_swapped = ['Deal Call Months']
-
-    bin_ranges = [round(x, 0) for x in np.linspace(20, 35, 11)]
-
-    hist, bins = np.histogram(output_df['WA COF'].unique(), bins=bin_ranges)
-
-    data_sb = [
-       dcm_unique,
-       counts_dcm_base
-    ]
-    
-    worksheet_sb.write_row('A1', headings_swapped, bold)
-    worksheet_sb.write_column('A2', data_sb[0])
-    worksheet_sb.write_column('B2', data_sb[1])
-
-    chart6 = workbook.add_chart({'type': 'column'})
-    chart6.add_series({
-       'name':       ['Deal Call Months Base Frequency', 0, 1],
-       'categories': ['Deal Call Months Base Frequency', 1, 0, max(dcm_unique), 0],
-       'values':     ['Deal Call Months Base Frequency', 1, 1, max(dcm_unique), 1]
-    })
-
-    chart6.set_title ({'name': 'Deal Call Month Frequency'})
-    chart6.set_x_axis({'name': 'Deal Call Month'})
-    chart6.set_y_axis({'name': 'Frequency'})
-    chart6.set_size({'width': 600, 'height': 400})
-
-    chart6.set_style(3)
-    worksheet_sb.insert_chart('F2', chart6)
-
-    # ------------------------------- SWAPPED DOWNSIDE --------------------------------- #
-    worksheet_sd = workbook.add_worksheet("Deal Call Months Downside Freq")
-
-    data_sd = [
-       dcm_unique,
-       counts_dcm_downside
-    ]
-    
-    worksheet_sd.write_row('A1', headings_swapped, bold)
-    worksheet_sd.write_column('A2', data_sd[0])
-    worksheet_sd.write_column('B2', data_sd[1])
-
-    chart7 = workbook.add_chart({'type': 'column'})
-    chart7.add_series({
-       'name':       ['Deal Call Months Downside Freq', 0, 1],
-       'categories': ['Deal Call Months Downside Freq', 1, 0, max(dcm_unique), 0],
-       'values':     ['Deal Call Months Downside Freq', 1, 1, max(dcm_unique), 1]
-    })
-
-    chart7.set_title ({'name': 'Deal Call Month Frequency'})
-    chart7.set_x_axis({'name': 'Deal Call Month'})
-    chart7.set_y_axis({'name': 'Frequency'})
-    chart7.set_size({'width': 600, 'height': 400})
-
-    chart7.set_style(4)
-    worksheet_sd.insert_chart('F2', chart7)
-
-    # ------------------------------- SWAPPED UPSIDE --------------------------------- #
-    worksheet_su = workbook.add_worksheet("Deal Call Months Upside Freq")
-
-    data_su = [
-       dcm_unique,
-       counts_dcm_upside
-    ]
-    
-    worksheet_su.write_row('A1', headings_swapped, bold)
-    worksheet_su.write_column('A2', data_su[0])
-    worksheet_su.write_column('B2', data_su[1])
-
-    chart8 = workbook.add_chart({'type': 'column'})
-    chart8.add_series({
-       'name':       ['Deal Call Months Upside Freq', 0, 1],
-       'categories': ['Deal Call Months Upside Freq', 1, 0, max(dcm_unique), 0],
-       'values':     ['Deal Call Months Upside Freq', 1, 1, max(dcm_unique), 1]
-    })
-
-    chart8.set_title ({'name': 'Deal Call Month Frequency'})
-    chart8.set_x_axis({'name': 'Deal Call Month'})
-    chart8.set_y_axis({'name': 'Frequency'})
-    chart8.set_size({'width': 600, 'height': 400})
-
-    chart8.set_style(5)
-    worksheet_su.insert_chart('F2', chart8)
-
+    create_dcm_chart(workbook, "Deal Call Months", [dcm_unique, counts_dcm], "ALL Deal Call Months Frequency")
+    create_dcm_chart(workbook, "Deal Call Months Base", [dcm_unique, counts_dcm_base], "BASE Deal Call Months Frequency")
+    create_dcm_chart(workbook, "Deal Call Months Downside", [dcm_unique, counts_dcm_downside], "DOWNSIDE Deal Call Months Frequency")
+    create_dcm_chart(workbook, "Deal Call Months Upside", [dcm_unique, counts_dcm_upside], "UPSIDE Deal Call Months Frequency")
     # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS ------------------------------------ #
-    worksheet_wa_cof = workbook.add_worksheet("WA Cost of Funds")
-
-    bin_ranges = [round(x, 1) for x in np.linspace(3.7, 4.4, 11)]
-
-    hist, bins = np.histogram(output_df['WA COF'].unique(), bins=bin_ranges)
-
-    worksheet_wa_cof.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
-    worksheet_wa_cof.write_column('B1', hist)
-    chart9 = workbook.add_chart({'type': 'column'})
-
-    chart9.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Cost of Funds', 0, 0, len(hist)-2, 0],
-       'values':     ['WA Cost of Funds', 0, 1, len(hist)-1, 1]
-    })
-
-    chart9.set_title ({'name': 'ALL WA Cost of Funds Frequency'})
-    chart9.set_x_axis({'name': 'Weighted Average Cost of Fund'})
-    chart9.set_y_axis({'name': 'Frequency'})
-    chart9.set_x_axis({
-       'name': 'Weighted Average Cost of Fund',
-       'categories': ['WA Cost of Funds', 1, 0, len(hist)-1, 0],
-       'num_format': '0.00'
-    })
-   
-    chart9.set_style(6)
-    chart9.set_size({'width': 600, 'height': 400})
-    worksheet_wa_cof.insert_chart('E2', chart9)
-
-    # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS BASE ------------------------------------ #
-    worksheet_wa_cofb = workbook.add_worksheet("WA Cost of Funds Base")
-
-    bin_ranges = [round(x, 1) for x in np.linspace(3.7, 4.4, 11)]
-
-    hist, bins = np.histogram(wa_cof_dict['base'], bins=bin_ranges)
-
-    worksheet_wa_cofb.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
-    worksheet_wa_cofb.write_column('B1', hist)
-    chart10 = workbook.add_chart({'type': 'column'})
-
-    chart10.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Cost of Funds Base', 0, 0, len(hist)-2, 0],
-       'values':     ['WA Cost of Funds Base', 0, 1, len(hist)-1, 1]
-    })
-
-    chart10.set_title ({'name': 'BASE  WA Cost of Funds Frequency'})
-    chart10.set_x_axis({'name': 'Weighted Average Cost of Fund'})
-    chart10.set_y_axis({'name': 'Frequency'})
-    chart10.set_x_axis({
-       'name': 'Weighted Average Cost of Fund',
-       'categories': ['WA Cost of Funds', 1, 0, len(hist)-1, 0],
-       'num_format': '0.00'
-    })
-   
-    chart10.set_style(3)
-    chart10.set_size({'width': 600, 'height': 400})
-    worksheet_wa_cofb.insert_chart('E2', chart10)
-
-    # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS DOWNSIDE ------------------------------------ #
-    worksheet_wa_cofd = workbook.add_worksheet("WA Cost of Funds Downside")
-
-    bin_ranges = [round(x, 1) for x in np.linspace(3.7, 4.4, 11)]
-
-    hist, bins = np.histogram(wa_cof_dict['downside'], bins=bin_ranges)
-
-    worksheet_wa_cofd.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
-    worksheet_wa_cofd.write_column('B1', hist)
-    chart11 = workbook.add_chart({'type': 'column'})
-
-    chart11.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Cost of Funds Downside', 0, 0, len(hist)-2, 0],
-       'values':     ['WA Cost of Funds Downside', 0, 1, len(hist)-1, 1]
-    })
-
-    chart11.set_title ({'name': 'DOWNSIDE WA Cost of Funds Frequency'})
-    chart11.set_x_axis({'name': 'Weighted Average Cost of Fund'})
-    chart11.set_y_axis({'name': 'Frequency'})
-    chart11.set_x_axis({
-       'name': 'Weighted Average Cost of Fund',
-       'categories': ['WA Cost of Funds', 1, 0, len(hist)-1, 0],
-       'num_format': '0.00'
-    })
-   
-    chart11.set_style(4)
-    chart11.set_size({'width': 600, 'height': 400})
-    worksheet_wa_cofd.insert_chart('E2', chart11)
-
-    # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS UPSIDE ------------------------------------ #
-    worksheet_wa_cofu = workbook.add_worksheet("WA Cost of Funds Upside")
-
-    bin_ranges = [round(x, 1) for x in np.linspace(3.7, 4.4, 11)]
-
-    hist, bins = np.histogram(wa_cof_dict['upside'], bins=bin_ranges)
-
-    worksheet_wa_cofu.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
-    worksheet_wa_cofu.write_column('B1', hist)
-    chart12 = workbook.add_chart({'type': 'column'})
-
-    chart12.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Cost of Funds Upside', 0, 0, len(hist)-2, 0],
-       'values':     ['WA Cost of Funds Upside', 0, 1, len(hist)-1, 1]
-    })
-
-    chart12.set_title ({'name': 'UPSIDE WA Cost of Funds Frequency'})
-    chart12.set_x_axis({'name': 'Weighted Average Cost of Fund'})
-    chart12.set_y_axis({'name': 'Frequency'})
-    chart12.set_x_axis({
-       'name': 'Weighted Average Cost of Fund',
-       'categories': ['WA Cost of Funds', 1, 0, len(hist)-1, 0],
-       'num_format': '0.00'
-    })
-   
-    chart12.set_style(5)
-    chart12.set_size({'width': 600, 'height': 400})
-    worksheet_wa_cofu.insert_chart('E2', chart12)
-
-    # -------------------------------- EQUITY YIELD ALL ------------------------------ #
-    worksheet_ey = workbook.add_worksheet("Equity Yield")
-
-    bin_ranges_eq = [round(x, 1) for x in np.linspace(8.5, 13, 9)]
-    hist_eq, bins_eq = np.histogram(output_df['Projected Equity Yield'].unique(), bins=bin_ranges_eq)
-
-    worksheet_ey.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
-    worksheet_ey.write_column('B1', hist_eq)
-    chart13 = workbook.add_chart({'type': 'column'})
-
-    chart13.add_series({
-       'name':       'Frequency',
-       'categories': ['Equity Yield', 0, 0, len(hist_eq)-2, 0],
-       'values':     ['Equity Yield', 0, 1, len(hist_eq)-1, 1]
-    })
-
-    chart13.set_title ({'name': 'Equity Yield Frequency'})
-    chart13.set_x_axis({'name': 'Equity Yield'})
-    chart13.set_y_axis({'name': 'Frequency'})
-    chart13.set_x_axis({
-       'name': 'Equity Yield',
-       'categories': ['Equity Yield', 1, 0, len(hist_eq)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart13.set_style(1)
-    chart13.set_size({'width': 600, 'height': 400})
-    worksheet_ey.insert_chart('E2', chart13)
-
-    # -------------------------------- EQUITY YIELD BASE------------------------------ #
-    worksheet_eyb = workbook.add_worksheet("Equity Yield Base")
-
-    bin_ranges_eq = [round(x, 1) for x in np.linspace(8.5, 13, 9)]
-    hist_eq, bins_eq = np.histogram(equity_yield_dict['base'], bins=bin_ranges_eq)
-
-    worksheet_eyb.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
-    worksheet_eyb.write_column('B1', hist_eq)
-    chart14 = workbook.add_chart({'type': 'column'})
-
-    chart14.add_series({
-       'name':       'Frequency',
-       'categories': ['Equity Yield Base', 0, 0, len(hist_eq)-2, 0],
-       'values':     ['Equity Yield Base', 0, 1, len(hist_eq)-1, 1]
-    })
-
-    chart14.set_title ({'name': 'BASE Equity Yield Frequency'})
-    chart14.set_x_axis({'name': 'Equity Yield'})
-    chart14.set_y_axis({'name': 'Frequency'})
-    chart14.set_x_axis({
-       'name': 'Equity Yield',
-       'categories': ['Equity Yield', 1, 0, len(hist_eq)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart14.set_style(3)
-    chart14.set_size({'width': 600, 'height': 400})
-    worksheet_eyb.insert_chart('E2', chart14)
-
-    # -------------------------------- EQUITY YIELD DOWNSIDE------------------------------ #
-    worksheet_eyd = workbook.add_worksheet("Equity Yield Downside")
-
-    bin_ranges_eq = [round(x, 1) for x in np.linspace(8.5, 13, 9)]
-    hist_eq, bins_eq = np.histogram(equity_yield_dict['downside'], bins=bin_ranges_eq)
-
-    worksheet_eyd.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
-    worksheet_eyd.write_column('B1', hist_eq)
-    chart15 = workbook.add_chart({'type': 'column'})
-
-    chart15.add_series({
-       'name':       'Frequency',
-       'categories': ['Equity Yield Downside', 0, 0, len(hist_eq)-2, 0],
-       'values':     ['Equity Yield Downside', 0, 1, len(hist_eq)-1, 1]
-    })
-
-    chart15.set_title ({'name': 'DOWNSIDE Equity Yield Frequency'})
-    chart15.set_x_axis({'name': 'Equity Yield'})
-    chart15.set_y_axis({'name': 'Frequency'})
-    chart15.set_x_axis({
-       'name': 'Equity Yield',
-       'categories': ['Equity Yield', 1, 0, len(hist_eq)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart15.set_style(4)
-    chart15.set_size({'width': 600, 'height': 400})
-    worksheet_eyd.insert_chart('E2', chart15)
-
-    # -------------------------------- EQUITY YIELD UPSIDE ------------------------------ #
-    worksheet_eyu = workbook.add_worksheet("Equity Yield Upside")
-
-    bin_ranges_eq = [round(x, 1) for x in np.linspace(8.5, 13, 9)]
-    hist_eq, bins_eq = np.histogram(equity_yield_dict['upside'], bins=bin_ranges_eq)
-
-    worksheet_eyu.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
-    worksheet_eyu.write_column('B1', hist_eq)
-    chart16 = workbook.add_chart({'type': 'column'})
-
-    chart16.add_series({
-       'name':       'Frequency',
-       'categories': ['Equity Yield Upside', 0, 0, len(hist_eq)-2, 0],
-       'values':     ['Equity Yield Upside', 0, 1, len(hist_eq)-1, 1]
-    })
-
-    chart16.set_title ({'name': 'UPSIDE Equity Yield Frequency'})
-    chart16.set_x_axis({'name': 'Equity Yield'})
-    chart16.set_y_axis({'name': 'Frequency'})
-    chart16.set_x_axis({
-       'name': 'Equity Yield',
-       'categories': ['Equity Yield', 1, 0, len(hist_eq)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart16.set_style(5)
-    chart16.set_size({'width': 600, 'height': 400})
-    worksheet_eyu.insert_chart('E2', chart16)
-
-    # -------------------------------- WA Adv Rate ALL ------------------------------ #
-    worksheet_ar = workbook.add_worksheet("WA Adv Rate")
-
-    bin_ranges_ar = np.linspace(0.83, 0.90, 10)
-    hist_ar, bins_ar = np.histogram(output_df['WA Adv Rate'].unique(), bins=bin_ranges_ar)
-
-    worksheet_ar.write_column('A1', [f"[{bins_ar[i]}-{bins_ar[i+1]}]" for i in range(len(bins_ar)-1)], bold)
-    worksheet_ar.write_column('B1', hist_ar)
-    chart17 = workbook.add_chart({'type': 'column'})
-
-    chart17.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Adv Rate', 0, 0, len(hist_ar)-2, 0],
-       'values':     ['WA Adv Rate', 0, 1, len(hist_ar)-1, 1]
-    })
-
-    chart17.set_title ({'name': 'ALL WA Adv Rate Frequency'})
-    chart17.set_x_axis({'name': 'WA Adv Rate'})
-    chart17.set_y_axis({'name': 'Frequency'})
-    chart17.set_x_axis({
-       'name': 'WA Adv Rate',
-       'categories': ['WA Adv Rate', 1, 0, len(hist_ar)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart17.set_style(7)
-    chart17.set_size({'width': 600, 'height': 400})
-    worksheet_ar.insert_chart('E2', chart17)
-
-    # -------------------------------- WA Adv Rate BASE ------------------------------ #
-    worksheet_arb = workbook.add_worksheet("WA Adv Rate Base")
-
-    bin_ranges_ar = np.linspace(0.83, 0.90, 10)
-    hist_ar, bins_ar = np.histogram(adv_rate_dict['base'], bins=bin_ranges_ar)
-
-    worksheet_arb.write_column('A1', [f"[{bins_ar[i]}-{bins_ar[i+1]}]" for i in range(len(bins_ar)-1)], bold)
-    worksheet_arb.write_column('B1', hist_ar)
-    chart18 = workbook.add_chart({'type': 'column'})
-
-    chart18.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Adv Rate Base', 0, 0, len(hist_ar)-2, 0],
-       'values':     ['WA Adv Rate Base', 0, 1, len(hist_ar)-1, 1]
-    })
-
-    chart18.set_title ({'name': 'BASE WA Adv Rate Frequency'})
-    chart18.set_x_axis({'name': 'WA Adv Rate'})
-    chart18.set_y_axis({'name': 'Frequency'})
-    chart18.set_x_axis({
-       'name': 'WA Adv Rate',
-       'categories': ['WA Adv Rate', 1, 0, len(hist_ar)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart18.set_style(3)
-    chart18.set_size({'width': 600, 'height': 400})
-    worksheet_arb.insert_chart('E2', chart18)
-
-    # -------------------------------- WA Adv Rate DOWNSIDE ------------------------------ #
-    worksheet_ard = workbook.add_worksheet("WA Adv Rate Downside")
-
-    bin_ranges_ar = np.linspace(0.83, 0.90, 10)
-    hist_ar, bins_ar = np.histogram(adv_rate_dict['downside'], bins=bin_ranges_ar)
-
-    worksheet_ard.write_column('A1', [f"[{bins_ar[i]}-{bins_ar[i+1]}]" for i in range(len(bins_ar)-1)], bold)
-    worksheet_ard.write_column('B1', hist_ar)
-    chart19 = workbook.add_chart({'type': 'column'})
-
-    chart19.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Adv Rate Downside', 0, 0, len(hist_ar)-2, 0],
-       'values':     ['WA Adv Rate Downside', 0, 1, len(hist_ar)-1, 1]
-    })
-
-    chart19.set_title ({'name': 'DOWNSIDE WA Adv Rate Frequency'})
-    chart19.set_x_axis({'name': 'WA Adv Rate'})
-    chart19.set_y_axis({'name': 'Frequency'})
-    chart19.set_x_axis({
-       'name': 'WA Adv Rate',
-       'categories': ['WA Adv Rate', 1, 0, len(hist_ar)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart19.set_style(4)
-    chart19.set_size({'width': 600, 'height': 400})
-    worksheet_ard.insert_chart('E2', chart19)
-
-    # -------------------------------- WA Adv Rate UPSIDE ------------------------------ #
-    worksheet_aru = workbook.add_worksheet("WA Adv Rate Upside")
-
-    bin_ranges_ar = np.linspace(0.83, 0.90, 10)
-    hist_ar, bins_ar = np.histogram(adv_rate_dict['upside'], bins=bin_ranges_ar)
-
-    worksheet_aru.write_column('A1', [f"[{bins_ar[i]}-{bins_ar[i+1]}]" for i in range(len(bins_ar)-1)], bold)
-    worksheet_aru.write_column('B1', hist_ar)
-    chart20 = workbook.add_chart({'type': 'column'})
-
-    chart20.add_series({
-       'name':       'Frequency',
-       'categories': ['WA Adv Rate Upside', 0, 0, len(hist_ar)-2, 0],
-       'values':     ['WA Adv Rate Upside', 0, 1, len(hist_ar)-1, 1]
-    })
-
-    chart20.set_title ({'name': 'UPSIDE WA Adv Rate Frequency'})
-    chart20.set_x_axis({'name': 'WA Adv Rate'})
-    chart20.set_y_axis({'name': 'Frequency'})
-    chart20.set_x_axis({
-       'name': 'WA Adv Rate',
-       'categories': ['WA Adv Rate', 1, 0, len(hist_ar)-2, 0],
-       'num_format': '0.00'
-    })
-   
-    chart20.set_style(5)
-    chart20.set_size({'width': 600, 'height': 400})
-    worksheet_aru.insert_chart('E2', chart20)
-
+    create_wa_cof_chart(workbook, "WA Cost of Funds", output_df['WA COF'].unique(), "ALL WA Cost of Funds Frequency")
+    create_wa_cof_chart(workbook, "WA Cost of Funds Base", wa_cof_dict['base'], "BASE WA Cost of Funds Frequency")
+    create_wa_cof_chart(workbook, "WA Cost of Funds Downside", wa_cof_dict['downside'], "DOWNSIDE WA Cost of Funds Frequency")
+    create_wa_cof_chart(workbook, "WA Cost of Funds Upside", wa_cof_dict['upside'], "UPSIDE WA Cost of Funds Frequency")
+    # --------------------------------- PROJECTED EQUITY YIELD ------------------------------------ #
+    create_equity_yield_graph(workbook, "Proj Equity Yield", output_df['Projected Equity Yield'].unique(), "ALL Hypothetical Equity Yield Frequency")
+    create_equity_yield_graph(workbook, "Proj Equity Yield Base", equity_yield_dict['base'], "BASE Hypothetical Equity Yield Frequency")
+    create_equity_yield_graph(workbook, "Proj Equity Yield Downside", equity_yield_dict['downside'], "DOWNSIDE Hypothetical Equity Yield Frequency")
+    create_equity_yield_graph(workbook, "Proj Equity Yield Upside", equity_yield_dict['upside'], "UPSIDE Hypothetical Equity Yield Frequency")
+    # -------------------------------- WA ADVANCE RATE  ------------------------------ #
+    create_waar_graph(workbook, "WA Adv Rate", output_df['WA Adv Rate'].unique(), "ALL WA Adv Rate Frequency", 7)
+    create_waar_graph(workbook, "WA Adv Rate Base", adv_rate_dict['base'], "BASE WA Adv Rate Frequency", 3)
+    create_waar_graph(workbook, "WA Adv Rate Downside", adv_rate_dict['downside'], "DOWNSIDE WA Adv Rate Frequency", 4)
+    create_waar_graph(workbook, "WA Adv Rate Upside", adv_rate_dict['upside'], "UPSIDE WA Adv Rate Frequency", 5)
+    # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
     workbook.close()
 
