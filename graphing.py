@@ -18,6 +18,7 @@ def create_dcm_chart(workbook, worksheet_name, data, chart_title, chart_style):
 
    chart = workbook.add_chart({'type': 'column'})
    chart.add_series({
+      'name': 'Frequency',
       'categories': [worksheet_name, 0, 0, len(hist), 0],
       'values': [worksheet_name, 0, 1, len(hist), 1]
    })
@@ -47,6 +48,7 @@ def create_wa_cof_chart(workbook, worksheet_name, data, title, chart_style):
    
    chart = workbook.add_chart({'type': 'column'})
    chart.add_series({
+      'name': 'Frequency',
       'categories': [worksheet_name, 0, 0, len(hist), 0],
       'values': [worksheet_name, 0, 1, len(hist), 1]
    })
@@ -78,6 +80,7 @@ def create_equity_yield_graph(workbook, worksheet_name, data, chart_title, chart
    chart = workbook.add_chart({'type': 'column'})
 
    chart.add_series({
+      'name': 'Frequency',
       'categories': [worksheet_name, 0, 0, len(hist_eq), 0],
       'values':     [worksheet_name, 0, 1, len(hist_eq), 1]
    })
@@ -108,6 +111,7 @@ def create_waar_graph(workbook, worksheet_name, data, chart_title, chart_style):
    chart = workbook.add_chart({'type': 'column'})
 
    chart.add_series({
+      'name': 'Frequency',
       'categories': [worksheet_name, 0, 0, len(hist), 0],
       'values': [worksheet_name, 0, 1, len(hist), 1]
    })
