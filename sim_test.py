@@ -258,10 +258,10 @@ if __name__ == "__main__":
     date = date_str.split("-") # ["MM", "DD", "YYYY"]
     date = list(map(int, date)) # [MM, DD, YYYY]
     # starting payment month
-    starting_month = date[0]
-    days_in_month = get_date_array(date)
+    starting_mos = date[0]
+    days_in_mos = get_date_array(date)
 
-    SOFR = df_os.iloc[3,1]
+    SOFR_value = df_os.iloc[3,1]
 
     
     has_reinvestment = df_os.iloc[4,1]
@@ -288,7 +288,7 @@ if __name__ == "__main__":
 
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
-    clo = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+    clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
     df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
@@ -296,12 +296,12 @@ if __name__ == "__main__":
     # add tranches in a loop
     for index_t, row_t in df_cs.iterrows():
       tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-      clo.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
-    threshold = clo.get_threshold()
+      clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
+    aaa_threshold = clo_obj.get_threshold()
 
-    upfront_costs = clo.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
+    total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
   
-    loan_portfolio = CollateralPortfolio()
+    loan_portfolio_obj = CollateralPortfolio()
 
     # read excel file for loans
     df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     # add loans in a loop
     for index_l, row_l in df_cp.iterrows():
       loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      loan_portfolio.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+      loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
 
    # ------------------------ SIMULATION VARIABLES ------------------------ #
 
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     
     for scenario in scenarios:
         for run in range(NUM_TRIALS):
-            output_df = run_simulation(scenario, output_df, run, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold)
+            output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
     print(output_df)
 
     graphs(output_df, cases, trial_numbers)
