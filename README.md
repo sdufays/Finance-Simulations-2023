@@ -61,7 +61,7 @@
 * `loan.set_term_length(term_length)` sets term length attribute to `term_length`
 * `loan.set_starting_month(month)` sets the month the loan was created at (used to keep track of term lengths for newly created loans)
 **Loan Methods:**
-* `loan.update_loan_balance(self, month, etc etc etc)` *UNFINISHED* updates loan balance as it gets smaller and smaller each month
+* `loan.update_loan_balance(self, month, etc etc etc)` updates loan balance as it gets smaller and smaller each month
 * `loan.beginning_balance(month, loan_data)` returns beginning balance of the loan for this month, loan_data parameter is dataframe of loan calculations
 * `loan.principal_paydown(month, loan_data)` returns principal paydown of the loan for this month (no partial paydowns in this model)
 * `loan.ending_balance(beginning_balance, principal_paydown)` returns ending balance of the loan for this month
@@ -72,9 +72,11 @@
 * `portfolio.get_storage_portfolio()` returns list that is the length of all Loans that have been created, with those that have been paid off set as None
 * `portfolio.get_initial_deal_size()` returns initial size of the portfolio
 **CollateralPortfolio Methods:**
-* `portfolio.add_loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)` adds a Loan object to the portfolio list
-* `portfolio.add_new_loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)` adds a Loan object to the portfolio list
+* `portfolio.add_initial_loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)` adds a Loan object to the portfolio list
+* `portfolio.add_new_loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)` adds a new Loan object to the portfolio list during ramp-up/reinvestment/replenishment, randomly selects loan term of 18, 20, or 30
+* `portfolio.generate_initial_margin()` calculates and returns initial margin value to pass in as a parameter when creating new loans
 * `portfolio.remove_loan()` removes loans with balances of 0 from the portfolio
 * `portfolio.get_collateral_sum()` calculates and returns the sum of the balances of all loans in the portfolio
-* `portfolio.general_loan_terms(case)` calculates term lengths according to the desired case and uses loan.set_term_length() to assign these term lengths to loans in the portfolio
-
+* `portfolio.generate_loan_terms(case)` calculates term lengths according to the desired case and uses loan.set_term_length() to assign these term lengths to loans in the portfolio
+* `portfolio.initial_loan_terms(case)` *USED ONLY FOR TESTING* assigns a list of exact term lengths to the loans in the portfolio
+* `portfolio.get_longest_term()` returns loan with longest term in the portfolio

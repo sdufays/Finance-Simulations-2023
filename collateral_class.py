@@ -88,9 +88,8 @@ class CollateralPortfolio(Loan):
                 loan.set_term_length(loan.get_open_prepayment_period())
     
     def initial_loan_terms(self, case):
-        #term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
+        term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
 
-        term_lengths = [15.00, 15.00, 43.00, 36.00, 36.00, 35.00, 43.00, 55.00, 17.00, 43.00, 43.00, 43.00, 33.00, 58.00, 45.00, 42.00, 16.00, 11.00, 42.00, 13.00, 8.00]
         for i, loan in enumerate(self.__active_portfolio):
             term_length = term_lengths[i % len(term_lengths)]
             loan.set_term_length(term_length)
@@ -101,13 +100,3 @@ class CollateralPortfolio(Loan):
             if loan.get_term_length() > max:
                 max = loan.get_term_length()
         return max
-    
-"""
-# now unused
-    def get_collateral_income(self, dataframe, sofr_value, month):
-        margin_balance_sum = 0
-        for loan in self.__active_portfolio:
-          print(loan.get_initial_balance())
-          margin_balance_sum += (loan.get_margin() + sofr_value) * loan.get_initial_balance()
-        return 12 * margin_balance_sum / month # CLO interest cost is number per year, but all income is over duration of deal -> need to conv to annual num
-    """
