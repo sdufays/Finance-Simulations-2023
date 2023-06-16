@@ -247,7 +247,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "CLO_Input2.xlsm"
+    excel_file_path = "CLO_Input.xlsm"
 
     # read excel file for Other Specifications
     df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
@@ -288,32 +288,16 @@ if __name__ == "__main__":
 
  # ------------------------ INITIALIZE OBJECTS ------------------------ #
     ramp_up = df_os.iloc[0, 1]
-    clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
     # read excel file for capital stack
     df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
 
-    # add tranches in a loop
-    for index_t, row_t in df_cs.iterrows():
-      tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-      clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
-    aaa_threshold = clo_obj.get_threshold()
-
-    total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
-  
-    loan_portfolio_obj = CollateralPortfolio()
-
     # read excel file for loans
     df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
-    # add loans in a loop
-    for index_l, row_l in df_cp.iterrows():
-      loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-      loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
-
    # ------------------------ SIMULATION VARIABLES ------------------------ #
 
-    NUM_TRIALS = 10
+    NUM_TRIALS = 100
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -330,6 +314,21 @@ if __name__ == "__main__":
     
     for scenario in scenarios:
         for run in range(NUM_TRIALS):
+            clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+            loan_portfolio_obj = CollateralPortfolio()
+            # add tranches in a loop
+            for index_t, row_t in df_cs.iterrows():
+               tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+               clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
+            aaa_threshold = clo_obj.get_threshold()
+            # add loans in a loop
+            for index_l, row_l in df_cp.iterrows():
+               loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+               loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+
+            total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
+            
+            
             output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
     print(output_df)
 
