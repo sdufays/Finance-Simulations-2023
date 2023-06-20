@@ -130,7 +130,7 @@ def create_waar_graph(workbook, worksheet_name, data, chart_title, chart_style):
    chart.set_size({'width': 600, 'height': 400})
    worksheet.insert_chart('E2', chart)
 
-def graphs(output_df, cases, trial_numbers):
+def graphs_by_scenario(output_df, cases, trial_numbers):
 # ---------------------------- READING DF ----------------------------- #
     deal_call_months_dict = {}
     wa_cof_dict = {}
@@ -185,3 +185,22 @@ def graphs(output_df, cases, trial_numbers):
     create_waar_graph(workbook, "WA Adv Rate Upside", adv_rate_dict['upside'], "UPSIDE WA Adv Rate Frequency", 5)
     # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
     workbook.close()
+
+def market_aware_graphs(dataframe):
+   # ------------------------- GRAPHING OUTPUTS -------------------------- #
+   workbook = xlsxwriter.Workbook('graphs_market_aware.xlsx')
+
+   # Set an Excel chart style.
+   # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
+   # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
+
+   # ------------------------------- SWAPPED --------------------------------- #
+   create_dcm_chart(workbook, "Deal Call Months", dataframe['Deal Call Month'], "MARKET AWARE Deal Call Months Frequency", 7)
+   # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS ------------------------------------ #
+   create_wa_cof_chart(workbook, "WA Cost of Funds", dataframe['WA COF'], "MARKET AWARE WA Cost of Funds Frequency", 7)
+   # --------------------------------- PROJECTED EQUITY YIELD ------------------------------------ #
+   create_equity_yield_graph(workbook, "Proj Equity Yield", dataframe['Projected Equity Yield'], "MARKET AWARE Hypothetical Equity Yield Frequency", 7)
+   # -------------------------------- WA ADVANCE RATE  ------------------------------ #
+   create_waar_graph(workbook, "WA Adv Rate", dataframe['WA Adv Rate'], "MARKET AWARE WA Adv Rate Frequency", 7)
+   # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
+   workbook.close()

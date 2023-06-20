@@ -3,10 +3,14 @@ import random
 import numpy as np
 
 class CollateralPortfolio(Loan):
-    def __init__(self):
+    def __init__(self, market_spread):
         self.__active_portfolio = []
         self.__storage_portfolio = []
         self.__initial_deal_size = 0
+        self.__market_spread = market_spread
+    
+    def get_market_spread(self):
+        return self.__market_spread
 
     def set_initial_deal_size(self, deal_size):
         self.__initial_deal_size = deal_size
@@ -67,6 +71,15 @@ class CollateralPortfolio(Loan):
         for loan in self.__active_portfolio:
             sum+=loan.get_loan_balance()
         return sum
+    
+    def calculate_term_lengths(self, portfolio, loan_term_types):
+        for loan, term_type in zip(portfolio, loan_term_types):
+            if term_type == "initial":
+                loan.set_term_length(loan.get_remaining_loan_term())
+            elif term_type == "extended":
+                loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
+            else:
+                loan.set_term_length(loan.get_open_prepayment_period())
 
     def generate_loan_terms(self, case):
         # Calculate the number of loans to assign to each term
@@ -79,13 +92,38 @@ class CollateralPortfolio(Loan):
         # Shuffle the list to randomize the terms
         np.random.shuffle(loan_terms)
         # Assign each loan a term from the list
-        for loan, term_type in zip(self.__active_portfolio, loan_terms):
-            if term_type == "initial":
-                loan.set_term_length(loan.get_remaining_loan_term())
-            elif term_type == "extended":
-                loan.set_term_length(loan.get_remaining_loan_term() + loan.get_extension_period())
+        self.calculate_term_lengths(self.__active_portfolio, loan_terms)
+    
+    def market_aware_loan_terms(self):
+        regular_loan_distribution = {'prepay': .20, 'initial': .50, 'extended': .30}
+        big_spread_loan_distribution = {'prepay': .40, 'initial': .60}
+        regular_loan_list = []
+        big_spread_loan_list = []
+        for loan in self.get_active_portfolio():
+            # should it just be >?
+            if loan.get_margin() >= 1.1 * self.get_market_spread():
+                big_spread_loan_list.append(loan)
             else:
-                loan.set_term_length(loan.get_open_prepayment_period())
+                regular_loan_list.append(loan)
+        reg_prepay_amt = round(len(regular_loan_list) * regular_loan_distribution['prepay'])
+        reg_initial_amt = round(len(regular_loan_list) * regular_loan_distribution['initial'])
+        reg_extend_amt = len(regular_loan_list) - reg_prepay_amt - reg_initial_amt
+        reg_loan_terms = ['prepaid'] * reg_prepay_amt + ['initial'] * reg_initial_amt + ['extended'] * reg_extend_amt
+        np.random.shuffle(reg_loan_terms)
+        self.calculate_term_lengths(regular_loan_list, reg_loan_terms)
+        
+        big_prepay_amt = round(len(big_spread_loan_list) * big_spread_loan_distribution['prepay'])
+        big_initial_amt = len(big_spread_loan_list) - big_prepay_amt
+        big_loan_terms = ['prepaid'] * big_prepay_amt + ['initial'] * big_initial_amt
+        np.random.shuffle(big_loan_terms)
+        self.calculate_term_lengths(big_spread_loan_list, big_loan_terms)
+
+
+
+
+                
+        
+
     
     def initial_loan_terms(self, case):
         term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]

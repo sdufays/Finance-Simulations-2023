@@ -1,6 +1,6 @@
 from collateral_class import CollateralPortfolio
 from clo_class import CLO
-from graphing import graphs
+from graphing import *
 import pandas as pd
 import numpy_financial as npf
 import numpy as np
@@ -37,10 +37,12 @@ def loan_waterfall(subtract_value, tranches):
 
 
 def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold):
-
     # ------------------------ START BASE SCENARIO ------------------------ #
-    # sets term lengthsi think
-    loan_portfolio.generate_loan_terms(case)
+    # sets term lengths
+    if case == "market aware":
+       loan_portfolio.market_aware_loan_terms()
+    else:
+      loan_portfolio.generate_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
     
     # CREATE LOAN DATAFRAME
@@ -225,18 +227,23 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_month) # remember in simulation to put deal_call_mos[trial]
     # projected equity yield (times 100 cuz percent), represents expected return on the clo
     projected_equity_yield = (equity_net_spread + origination_fee) * 100
-
-    if case == base:
-       case_name = "base"
-    elif case == upside:
-       case_name = "upside"
+ 
+    if case != "market aware":
+      if case == base:
+         case_name = "base"
+      elif case == upside:
+         case_name = "upside"
+      elif case == downside:
+         case_name = "downside"
+      output_dataframe.loc[(case_name, trial_index), 'Deal Call Month'] = deal_call_month
+      output_dataframe.loc[(case_name, trial_index), 'WA COF'] = wa_cof
+      output_dataframe.loc[(case_name, trial_index), 'WA Adv Rate'] = wa_adv_rate
+      output_dataframe.loc[(case_name, trial_index), 'Projected Equity Yield'] = projected_equity_yield
     else:
-       case_name = "downside"
-
-    output_dataframe.loc[(case_name, trial_index), 'Deal Call Month'] = deal_call_month
-    output_dataframe.loc[(case_name, trial_index), 'WA COF'] = wa_cof
-    output_dataframe.loc[(case_name, trial_index), 'WA Adv Rate'] = wa_adv_rate
-    output_dataframe.loc[(case_name, trial_index), 'Projected Equity Yield'] = projected_equity_yield
+      output_dataframe.loc[trial_index, 'Deal Call Month'] = deal_call_month
+      output_dataframe.loc[trial_index, 'WA COF'] = wa_cof
+      output_dataframe.loc[trial_index, 'WA Adv Rate'] = wa_adv_rate
+      output_dataframe.loc[trial_index, 'Projected Equity Yield'] = projected_equity_yield
     # technically don't even need to return it
     return output_dataframe
 
@@ -272,6 +279,13 @@ if __name__ == "__main__":
 
     replenishment_amount = df_os.iloc[7,1]
 
+    has_market_aware = df_os.iloc[8,1]
+    
+    market_spread_amt = 0 # if no market spread amount
+    if has_market_aware:
+       market_spread_amt = df_os.iloc[9,1]
+       
+
 
     # --------------------------- UPFRONT COSTS --------------------------- #
 
@@ -297,39 +311,59 @@ if __name__ == "__main__":
 
    # ------------------------ SIMULATION VARIABLES ------------------------ #
 
-    NUM_TRIALS = 100
+    NUM_TRIALS = 10
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
     columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
     output_df = pd.DataFrame(index=index, columns=columns)
 
+    ma_output_df = pd.DataFrame(index=trial_numbers, columns=columns)
+
    # ------------------------ RUN SIMULATION ------------------------ #
 
     #run_simulation(base, output_df, trial_index=0)
 
    # ------------------------ RUN SIMULATION LOOPS ------------------------ #
-   
-    scenarios = [base, downside, upside]
-    
-    for scenario in scenarios:
-        for run in range(NUM_TRIALS):
-            clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
-            loan_portfolio_obj = CollateralPortfolio()
-            # add tranches in a loop
-            for index_t, row_t in df_cs.iterrows():
-               tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-               clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
-            aaa_threshold = clo_obj.get_threshold()
-            # add loans in a loop
-            for index_l, row_l in df_cp.iterrows():
-               loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-               loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
 
-            total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
-            
-            
-            output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
+    if has_market_aware:
+       for run in range(NUM_TRIALS):
+         clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+         loan_portfolio_obj = CollateralPortfolio(market_spread_amt)
+         # add tranches in a loop
+         for index_t, row_t in df_cs.iterrows():
+            tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+            clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
+         aaa_threshold = clo_obj.get_threshold()
+         # add loans in a loop
+         for index_l, row_l in df_cp.iterrows():
+            loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+            loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+
+         total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
+         
+         output_df = run_simulation("market aware", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
+       market_aware_graphs(output_df)
+    else:
+      for scenario in [base, downside, upside]:
+         for run in range(NUM_TRIALS):
+               clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+               loan_portfolio_obj = CollateralPortfolio(market_spread_amt)
+               # add tranches in a loop
+               for index_t, row_t in df_cs.iterrows():
+                  tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
+                  clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
+               aaa_threshold = clo_obj.get_threshold()
+               # add loans in a loop
+               for index_l, row_l in df_cp.iterrows():
+                  loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
+                  loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+
+               total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
+               
+               
+               output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
+      graphs_by_scenario(output_df, cases, trial_numbers)
     print(output_df)
 
-    graphs(output_df, cases, trial_numbers)
+    
