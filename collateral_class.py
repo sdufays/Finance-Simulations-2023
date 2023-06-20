@@ -73,6 +73,7 @@ class CollateralPortfolio(Loan):
         return sum
     
     def calculate_term_lengths(self, portfolio, loan_term_types):
+        np.random.shuffle(loan_term_types)
         for loan, term_type in zip(portfolio, loan_term_types):
             if term_type == "initial":
                 loan.set_term_length(loan.get_remaining_loan_term())
@@ -90,7 +91,6 @@ class CollateralPortfolio(Loan):
         # Create a list with the loan terms according to the scenario
         loan_terms = ['prepaid'] * prepay_amt + ['initial'] * initial_amt + ['extended'] * extended_amt
         # Shuffle the list to randomize the terms
-        np.random.shuffle(loan_terms)
         # Assign each loan a term from the list
         self.calculate_term_lengths(self.__active_portfolio, loan_terms)
     
@@ -109,22 +109,13 @@ class CollateralPortfolio(Loan):
         reg_initial_amt = round(len(regular_loan_list) * regular_loan_distribution['initial'])
         reg_extend_amt = len(regular_loan_list) - reg_prepay_amt - reg_initial_amt
         reg_loan_terms = ['prepaid'] * reg_prepay_amt + ['initial'] * reg_initial_amt + ['extended'] * reg_extend_amt
-        np.random.shuffle(reg_loan_terms)
         self.calculate_term_lengths(regular_loan_list, reg_loan_terms)
         
         big_prepay_amt = round(len(big_spread_loan_list) * big_spread_loan_distribution['prepay'])
         big_initial_amt = len(big_spread_loan_list) - big_prepay_amt
         big_loan_terms = ['prepaid'] * big_prepay_amt + ['initial'] * big_initial_amt
-        np.random.shuffle(big_loan_terms)
         self.calculate_term_lengths(big_spread_loan_list, big_loan_terms)
 
-
-
-
-                
-        
-
-    
     def initial_loan_terms(self, case):
         term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
 

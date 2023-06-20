@@ -77,6 +77,8 @@
 * `portfolio.generate_initial_margin()` calculates and returns initial margin value to pass in as a parameter when creating new loans
 * `portfolio.remove_loan()` removes loans with balances of 0 from the portfolio
 * `portfolio.get_collateral_sum()` calculates and returns the sum of the balances of all loans in the portfolio
+* `portfolio.calculate_term_lengths(portfolio, loan_term_types)` *HELPER FUNCTION* calculates and sets term lengths based on term type (initial, extended, prepay)
 * `portfolio.generate_loan_terms(case)` calculates term lengths according to the desired case and uses loan.set_term_length() to assign these term lengths to loans in the portfolio
+* `portfolio.market_aware_loan_terms()` calculates term lengths for market aware scenario, assigning loans with large spread a distribution that favors prepay
 * `portfolio.initial_loan_terms(case)` *USED ONLY FOR TESTING* assigns a list of exact term lengths to the loans in the portfolio
 * `portfolio.get_longest_term()` returns loan with longest term in the portfolio
