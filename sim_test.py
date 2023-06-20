@@ -213,7 +213,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     for i in range(len(clo.get_tranches())):
        avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_month
     avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_month
-    wa_adv_rate = avg_clo_bal/avg_collateral_bal
+    wa_adv_rate = (avg_clo_bal/avg_collateral_bal) * 100
 
     # PROJECTED EQUITY YIELD
     # equity net spread
