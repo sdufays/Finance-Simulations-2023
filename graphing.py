@@ -40,7 +40,7 @@ def create_wa_cof_chart(workbook, worksheet_name, data, title, chart_style):
    worksheet = workbook.add_worksheet(worksheet_name)
    bold = workbook.add_format({'bold': 1})
    
-   bin_ranges = [round(x, 4) for x in np.linspace(min(data)-0.01, max(data)+0.01, 15)]
+   bin_ranges = [round(x, 2) for x in np.linspace(min(data)-0.01, max(data)+0.01, 15)]
    hist, bins = np.histogram(data, bins=bin_ranges)
    
    worksheet.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
@@ -71,7 +71,7 @@ def create_equity_yield_graph(workbook, worksheet_name, data, chart_title, chart
    bold = workbook.add_format({'bold': True})
    worksheet = workbook.add_worksheet(worksheet_name)
 
-   bin_ranges_eq = [round(x, 3) for x in np.linspace(min(data)-0.05, max(data)+0.05, 15)]
+   bin_ranges_eq = [round(x, 2) for x in np.linspace(min(data)-0.05, max(data)+0.05, 15)]
    hist_eq, bins_eq = np.histogram(data, bins=bin_ranges_eq)
 
    worksheet.write_column('A1', [f"[{bins_eq[i]}-{bins_eq[i+1]}]" for i in range(len(bins_eq)-1)], bold)
