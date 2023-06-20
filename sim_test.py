@@ -247,7 +247,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "CLO_Input.xlsm"
+    excel_file_path = "CLO_Input2.xlsm"
 
     # read excel file for Other Specifications
     df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
@@ -297,7 +297,7 @@ if __name__ == "__main__":
 
    # ------------------------ SIMULATION VARIABLES ------------------------ #
 
-    NUM_TRIALS = 100
+    NUM_TRIALS = 10
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])

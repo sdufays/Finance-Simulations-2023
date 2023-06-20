@@ -56,7 +56,7 @@ def create_wa_cof_chart(workbook, worksheet_name, data, title, chart_style):
    chart.set_title({'name': title})
    chart.set_y_axis({'name': 'Frequency'})
    chart.set_x_axis({
-      'name': 'Weighted Average Cost of Fund',
+      'name': 'Weighted Average Cost of Fund (%)',
       'num_format': '0.00',
       'num_font': {'rotation': -45},
       'min_value': min(data) - 1.5,
@@ -88,7 +88,7 @@ def create_equity_yield_graph(workbook, worksheet_name, data, chart_title, chart
    chart.set_title({'name': chart_title})
    chart.set_y_axis({'name': 'Frequency'})
    chart.set_x_axis({
-      'name': 'Equity Yield',
+      'name': 'Equity Yield (%)',
       'num_format': '0.00',
       'num_font': {'rotation': -45},
       'min_value': min(data) - 2,
@@ -119,7 +119,7 @@ def create_waar_graph(workbook, worksheet_name, data, chart_title, chart_style):
    chart.set_title({'name': chart_title})
    chart.set_y_axis({'name': 'Frequency'})
    chart.set_x_axis({
-      'name': 'WA Adv Rate',
+      'name': 'WA Adv Rate (%)',
       'num_format': '0.00',
       'num_font': {'rotation': -45},
       'min_value': min(data) - 0.2,
