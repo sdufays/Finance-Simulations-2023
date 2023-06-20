@@ -40,7 +40,7 @@ def create_wa_cof_chart(workbook, worksheet_name, data, title, chart_style):
    worksheet = workbook.add_worksheet(worksheet_name)
    bold = workbook.add_format({'bold': 1})
    
-   bin_ranges = [round(x, 2) for x in np.linspace(min(data)-0.01, max(data)+0.01, 15)]
+   bin_ranges = [round(x, 3) for x in np.linspace(min(data)-0.01, max(data)+0.01, 15)]
    hist, bins = np.histogram(data, bins=bin_ranges)
    
    worksheet.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
@@ -163,7 +163,7 @@ def graphs_by_scenario(output_df, cases, trial_numbers):
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
     # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
 
-    # ------------------------------- SWAPPED --------------------------------- #
+    # ------------------------------- DEAL CALL MONTHS --------------------------------- #
     create_dcm_chart(workbook, "Deal Call Months", output_df['Deal Call Month'], "ALL Deal Call Months Frequency", 7)
     create_dcm_chart(workbook, "Deal Call Months Base", deal_call_months_dict['base'], "BASE Deal Call Months Frequency", 3)
     create_dcm_chart(workbook, "Deal Call Months Downside", deal_call_months_dict['downside'], "DOWNSIDE Deal Call Months Frequency", 4)
@@ -194,7 +194,7 @@ def market_aware_graphs(dataframe):
    # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
    # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
 
-   # ------------------------------- SWAPPED --------------------------------- #
+   # ------------------------------- DEAL CALL MONTHS --------------------------------- #
    create_dcm_chart(workbook, "Deal Call Months", dataframe['Deal Call Month'], "MARKET AWARE Deal Call Months Frequency", 7)
    # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS ------------------------------------ #
    create_wa_cof_chart(workbook, "WA Cost of Funds", dataframe['WA COF'], "MARKET AWARE WA Cost of Funds Frequency", 7)

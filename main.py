@@ -311,7 +311,7 @@ if __name__ == "__main__":
 
    # ------------------------ SIMULATION VARIABLES ------------------------ #
 
-    NUM_TRIALS = 100
+    NUM_TRIALS = 10
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
