@@ -7,20 +7,20 @@ import xlsxwriter
 def create_dcm_chart(workbook, worksheet_name, data, chart_title, chart_style):
    worksheet = workbook.add_worksheet(worksheet_name)
    bold = workbook.add_format({'bold': 1})
-   headings = ['Deal Call Months']
 
-   bin_ranges = [round(x, 0) for x in np.linspace(min(data)-1, max(data)+1, 15)]
+   bin_ranges = [round(x, 0) for x in np.linspace(min(data)-1, max(data)+1, 10)]
    hist, bins = np.histogram(data, bins=bin_ranges)
 
-   worksheet.write_row('A1', headings, bold)
-   worksheet.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
+   bin_labels = [int(round(bin_value, 0)) for bin_value in bins]
+
+   worksheet.write_column('A1', bin_labels, bold)
    worksheet.write_column('B1', hist)
 
    chart = workbook.add_chart({'type': 'column'})
    chart.add_series({
       'name': 'Frequency',
-      'categories': [worksheet_name, 0, 0, len(hist), 0],
-      'values': [worksheet_name, 0, 1, len(hist), 1]
+      'categories': [worksheet_name, 0, 0, len(hist)-1, 0],
+      'values': [worksheet_name, 0, 1, len(hist)-1, 1]
    })
 
    chart.set_title({'name': chart_title})
@@ -56,7 +56,7 @@ def create_wa_cof_chart(workbook, worksheet_name, data, title, chart_style):
    chart.set_title({'name': title})
    chart.set_y_axis({'name': 'Frequency'})
    chart.set_x_axis({
-      'name': 'Weighted Average Cost of Funds (%)',
+      'name': 'Weighted Average Cost of Fund (%)',
       'num_format': '0.00',
       'num_font': {'rotation': -45},
       'min_value': min(data) - 1.5,
@@ -103,7 +103,7 @@ def create_waar_graph(workbook, worksheet_name, data, chart_title, chart_style):
    bold = workbook.add_format({'bold': True})
    worksheet = workbook.add_worksheet(worksheet_name)
 
-   bin_ranges = [round(x, 4) for x in np.linspace(min(data)-0.0001, max(data)+0.0001, 15)]
+   bin_ranges = [round(x, 2) for x in np.linspace(min(data)-0.01, max(data)+0.01, 15)]
    hist, bins = np.histogram(data, bins=bin_ranges)
 
    worksheet.write_column('A1', [f"[{bins[i]}-{bins[i+1]}]" for i in range(len(bins)-1)], bold)
@@ -120,7 +120,7 @@ def create_waar_graph(workbook, worksheet_name, data, chart_title, chart_style):
    chart.set_y_axis({'name': 'Frequency'})
    chart.set_x_axis({
       'name': 'WA Adv Rate (%)',
-      'num_format': '0.0',
+      'num_format': '0.00',
       'num_font': {'rotation': -45},
       'min_value': min(data) - 0.2,
       'max_value': max(data) + 0.2
