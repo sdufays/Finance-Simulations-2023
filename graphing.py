@@ -5,9 +5,11 @@ import numpy as np
 import xlsxwriter
 
 def create_dcm_chart(workbook, worksheet_name, data, chart_title, chart_style):
+   # add sheet
    worksheet = workbook.add_worksheet(worksheet_name)
    bold = workbook.add_format({'bold': 1})
 
+   # get dataframe data
    bin_ranges = [round(x, 0) for x in np.linspace(min(data)-1, max(data)+1, 10)]
    hist, bins = np.histogram(data, bins=bin_ranges)
 
