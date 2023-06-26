@@ -1,6 +1,6 @@
 # ------------------------ LOAN CLASS SETUP ------------------------ #
 class Loan:
-    def __init__(self, loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period):
+    def __init__(self, loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period, manual_term):
         self.__loan_id = loan_id
         self.__loan_balance = loan_balance
         self.__margin = margin
@@ -8,7 +8,7 @@ class Loan:
         self.__remaining_loan_term = remaining_loan_term
         self.__extension_period = extension_period
         self.__open_prepayment_period = open_prepayment_period
-        self.__term_length = 0
+        self.__term_length = manual_term
         self.__starting_month = 0
         self.__initial_balance = loan_balance
         self.__income = 0

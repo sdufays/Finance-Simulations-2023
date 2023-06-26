@@ -1,6 +1,8 @@
 from loan_class import Loan
 import random
 import numpy as np
+import pandas as pd
+
 
 class CollateralPortfolio(Loan):
     def __init__(self, market_spread):
@@ -24,8 +26,8 @@ class CollateralPortfolio(Loan):
     def get_storage_portfolio(self):
         return self.__storage_portfolio
 
-    def add_initial_loan(self, loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period):
-        loan = Loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period)
+    def add_initial_loan(self, loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period, manual_term):
+        loan = Loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period, manual_term)
         self.__active_portfolio.append(loan)
         self.__storage_portfolio.append(loan)
 
@@ -44,7 +46,7 @@ class CollateralPortfolio(Loan):
         else:
             index_in_portfolio = len(self.__active_portfolio) + 1
 
-        self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=19)
+        self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=1, manual_term=0)
         # sets term length in active portfolio
         self.__active_portfolio[index_in_portfolio].set_term_length(term)
         # sets month the loan came to birth
@@ -116,7 +118,7 @@ class CollateralPortfolio(Loan):
         big_loan_terms = ['prepaid'] * big_prepay_amt + ['initial'] * big_initial_amt
         self.calculate_term_lengths(big_spread_loan_list, big_loan_terms)
 
-    def initial_loan_terms(self, case):
+    def initial_loan_terms(self):
         term_lengths = [34, 15, 24, 18, 15, 35, 31, 14, 36, 31, 18, 16, 23, 15, 45, 23, 8, 54, 30, 13, 15]
 
         for i, loan in enumerate(self.__active_portfolio):
