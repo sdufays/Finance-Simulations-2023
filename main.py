@@ -41,6 +41,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     # ------------------------ SET TERM LENGTHS BY SCENARIO ------------------------ #
     if case == "market aware":
        loan_portfolio.market_aware_loan_terms()
+    # code does have have manual loan term abilites, update is in the sim_edits.py file 
     else:
       loan_portfolio.generate_loan_terms(case)
     longest_duration = 60 # int(loan_portfolio.get_longest_term())
@@ -323,7 +324,7 @@ if __name__ == "__main__":
          # add loan data in a loop
          for index_l, row_l in df_cp.iterrows():
             loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-            loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+            loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6], 0)
 
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
@@ -344,7 +345,7 @@ if __name__ == "__main__":
             # add loan data a loop
             for index_l, row_l in df_cp.iterrows():
                loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period']] 
-               loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6])
+               loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6], 0)
 
             total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
             

@@ -8,6 +8,7 @@ class CollateralPortfolio(Loan):
     def __init__(self, market_spread):
         self.__active_portfolio = []
         self.__storage_portfolio = []
+        self.__collateral_list = []
         self.__initial_deal_size = 0
         self.__market_spread = market_spread
     
@@ -25,6 +26,9 @@ class CollateralPortfolio(Loan):
 
     def get_storage_portfolio(self):
         return self.__storage_portfolio
+    
+    def get_collateral_list(self):
+        return self.__collateral_list
 
     def add_initial_loan(self, loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period, manual_term):
         loan = Loan(loan_id, loan_balance, margin, index_floor, remaining_loan_term, extension_period, open_prepayment_period, manual_term)
@@ -72,6 +76,7 @@ class CollateralPortfolio(Loan):
         sum = 0
         for loan in self.__active_portfolio:
             sum+=loan.get_loan_balance()
+        self.__collateral_list.append(sum)
         return sum
     
     def calculate_term_lengths(self, portfolio, loan_term_types):

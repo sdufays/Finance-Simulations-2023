@@ -126,3 +126,7 @@ class CLO(Tranche):
                     principal_sum += tranche_subtraction_amount
                 interest_sum += tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             self.__total_cashflows.append(interest_sum + principal_sum)
+
+ # cash flow for loans 
+ # principal sum of all loans + interest sum 
+ # store all of it in a list 
