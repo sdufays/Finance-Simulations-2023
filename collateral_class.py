@@ -9,6 +9,7 @@ class CollateralPortfolio(Loan):
         self.__active_portfolio = []
         self.__storage_portfolio = []
         self.__collateral_list = []
+        self.__loan_cashflow = []
         self.__initial_deal_size = 0
         self.__market_spread = market_spread
     
@@ -24,6 +25,9 @@ class CollateralPortfolio(Loan):
     def get_active_portfolio(self):
         return self.__active_portfolio
 
+    def get_loan_cashflow(self):
+        return self.__loan_cashflow
+    
     def get_storage_portfolio(self):
         return self.__storage_portfolio
     
@@ -60,6 +64,9 @@ class CollateralPortfolio(Loan):
         for lo in self.__storage_portfolio:
             if lo != None and lo.get_loan_id() == loan_id:
                 lo.set_term_length(term)
+
+    def update_loan_cashflow(self, monthly_amount):
+        self.__loan_cashflow.append(monthly_amount)
       
     def generate_initial_margin(self):
         sum = 0

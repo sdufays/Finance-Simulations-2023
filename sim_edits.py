@@ -164,10 +164,16 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
 
-      # calculate and append this month's cashflow
-      clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next)
-      
-      # calculate and append each month's loan cashflow to collateral list 
+      # calculate and append this month's clo cashflow
+      clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next) 
+
+      #calculate and appednd this month's loan cashflow 
+      total_principal_paydown = loan_df.loc[(slice(None), months_passed), 'Principal Paydown'].sum()
+      total_interest_income = loan_df.loc[(slice(None), months_passed), 'Interest Income'].sum()
+      month_cashflow = total_interest_income + total_principal_paydown
+      loan_portfolio.update_loan_cashflow(month_cashflow)
+
+      # calculate and append each month's total collateral balance to the collateral list 
       loan_portfolio.get_collateral_sum()
 
       # terminate outer (months) loop, if AAA was below threshold in prev month
@@ -260,12 +266,10 @@ if __name__ == "__main__":
 
     replenishment_amount = df_os.iloc[7,1]
 
-    has_market_aware = df_os.iloc[8,1]
     has_set_terms = df_os.iloc[10,1]
     
     market_spread_amt = 0 # if no market spread amount
-    if has_market_aware:
-       market_spread_amt = df_os.iloc[9,1]
+
        
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
