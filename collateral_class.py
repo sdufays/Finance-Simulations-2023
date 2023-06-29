@@ -6,10 +6,8 @@ import pandas as pd
 
 class CollateralPortfolio(Loan):
     def __init__(self, market_spread):
-        self.__active_portfolio = []
-        self.__storage_portfolio = []
-        self.__collateral_list = []
-        self.__loan_cashflow = []
+        self.__active_portfolio = [] # [loan1,loan2,loan4... loan31...]
+        self.__storage_portfolio = [] # [loan1, loan2, None, loan4, ... loan31...]
         self.__initial_deal_size = 0
         self.__market_spread = market_spread
     

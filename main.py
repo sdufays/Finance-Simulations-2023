@@ -244,6 +244,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
 
 if __name__ == "__main__":
    # ------------------------ PRESET INFO ------------------------ #
+    # initial, extended, prepaid
     base = [.33, .33, .34]
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]

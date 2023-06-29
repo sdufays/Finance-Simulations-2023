@@ -1,9 +1,10 @@
+-- SET BOUNDARIES FOR ACTUALPAYMENTDATE VALUES
 DECLARE @start DATE = '2023-06-30';
 DECLARE @end DATE = '2024-06-30';
 
- 
-
+-- CREATE + OPEN LOANDATA CTE THAT JOINS THE THREE TABLES BY LOAN ID
 WITH LoanData AS (
+    -- select relevant columns
     SELECT 
         l.FamilyDealName, 
         l.LoanID, 
@@ -13,17 +14,20 @@ WITH LoanData AS (
         p.FinancingInterestExpense,
         cf.CFNetInterest,
         cf.CFMonth
+    -- from the joined three tables
     FROM [BSM].dbo.Loan l
     INNER JOIN [BSM].dbo.FinancingPaymentData p
-        ON l.LoanID = p.LoanID
-        AND p.RepoLineNameforthePeriod IS NOT NULL
+        ON l.LoanID = p.LoanID -- join by loan id
+        AND p.RepoLineNameforthePeriod IS NOT NULL -- make sure repo line name isn't null
     INNER JOIN [BSM].dbo.Cashflow cf
-        ON l.LoanID = cf.LoanID
-        AND cf.CFMonth = p.Month
-    WHERE l.LoanStatus = 'Active'
+        ON l.LoanID = cf.LoanID -- join by loan id
+        AND cf.CFMonth = p.Month -- make sure months are the same in cashflow and financing payment
+    -- where loan is active and payment date is within the boundaries
+    WHERE l.LoanStatus = 'Active' AND (p.ActualPaymentDate <= @end AND p.ActualPaymentDate >= @start)
 ),
- 
 
+-- CREATE + OPEN RANKEDDATA CTE, WHICH GETS LOANDATA CTE TABLE AND ADDS ROWNUM COLUMN
+-- rownum column generates unique row number for each row
 RankedData AS (
     SELECT 
         FamilyDealName, 
@@ -34,15 +38,14 @@ RankedData AS (
         FinancingInterestExpense, 
         CFNetInterest, 
         CFMonth,
-        ROW_NUMBER() OVER (
+        ROW_NUMBER() OVER ( -- OVER partitions both loanID and repolinename, then orders by the month/paymentdate
             PARTITION BY LoanID, RepoLineNameforthePeriod 
             ORDER BY CFMonth, ActualPaymentDate
         ) AS RowNum
     FROM LoanData
 )
 
- 
-
+-- OUTPUTS COMPLETED TABLE
 SELECT 
     FamilyDealName, 
     LoanID, 
@@ -52,7 +55,6 @@ SELECT
     FinancingInterestExpense, 
     CFNetInterest, 
     CFMonth,
-    CFNetInterest - FinancingInterestExpense AS NetInterestMargin,
-    DATEADD(DAY, RowNum - 1, @start) AS PaymentDate
-FROM RankedData
-WHERE DATEADD(DAY, RowNum - 1, @start) <= @end;
+    -- calculates net interest margin value
+    CFNetInterest - FinancingInterestExpense AS NetInterestMargin
+FROM RankedData;
