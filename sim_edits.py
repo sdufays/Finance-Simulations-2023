@@ -292,6 +292,23 @@ if __name__ == "__main__":
     # read excel file for loans
     df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
+# ------------------------ READ EXCEL: EXISTING DATA ------------------------ #
+
+# pseudocode 
+
+# read sheet with existing tranche data 
+# calculate months_passed / current_month 
+# store all data to dataframe (tranche balance, tranche principal / interest)
+# populate loan dataframe
+   # get month 0 data from portfolio
+   # run regular loan calculations 
+   # calculate which loans have paid off and delete them from the active portfolio 
+   # calculate loan interest 
+   # check if any new loans have been added 
+# store existing clo cashflows 
+
+# run the simulation starting with x months_passed 
+
     # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
     if has_set_terms:
        for run in range(NUM_TRIALS):
@@ -314,7 +331,6 @@ if __name__ == "__main__":
        # exit loop and display dataframe data in excel graphs
        manual_loan_graphs(output_df)
 
-    # print output dataframe (just to look at it)
     print(output_df)
 
     

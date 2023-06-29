@@ -188,13 +188,13 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     # ------------------ TESTING PURPOSES ONLY ------------------- #
     # VIEW LOAN DATAFRAME
     #print(loan_df.tail(longest_duration))
-    #loan_df.to_excel('loandata.xlsx', index=True)
+    loan_df.to_excel('loandata.xlsx', index=True)
     # VIEW TRANCHE DATAFRAME
     #print(tranche_df.loc['A'])
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranchedata.xlsx', index=True)
+    tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
@@ -250,7 +250,7 @@ if __name__ == "__main__":
 
     excel_file_path = "CLO_Input2.xlsm"
    
-    NUM_TRIALS = 10
+    NUM_TRIALS = 1
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
