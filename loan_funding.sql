@@ -1,7 +1,14 @@
+use bsm
+go
+
 DECLARE @asofdate datetime = '6-15-2023'
 DECLARE @end datetime = '6-30-2024';
 
+--SELECT * FROM [BSM].dbo.Loan WHERE LoanStatus = 'Active' 
+--and LoanSubStauts3 = 'Pre-development'
+
 WITH LoanData AS (
+    -- select relevant columns from joined table
     SELECT 
         l.LoanID,
         l.FamilyDealName, 
@@ -19,19 +26,25 @@ WITH LoanData AS (
             ELSE 0
         END AS RepoFinancingDrawAmount,
         t.LineName
+    -- from the joined two tables (join on PID/LoanID)
     FROM [BSM].dbo.Loan l
         INNER JOIN [BSM].dbo.TransactionEntryArchive t
         ON l.LoanID = t.PeopleSoftID
+    -- loan must be active
     WHERE l.LoanStatus = 'Active' 
+        -- audit date must be as of
         AND t.AuditDate = @asofdate 
+        -- asset must be lending
         AND t.AssetStatus = 'Lending'
+        -- transaction date must be between start and end
         AND t.TransDate >= @asofdate AND t.TransDate <= @end
 )
+
+
 
 SELECT 
     sub.DealName,
     sub.TransactionDate,
-    ld.LoanID, 
     ld.LoanSubStauts3 AS [ConstructionTag],
     ld.PropertyType, 
     ld.AuditDate,
