@@ -11,6 +11,7 @@ SET @threshold = 5000000
 declare @Body NVARCHAR(MAX),
 @LiquiditySummaryTableBody NVARCHAR(MAX),
 @LiquiditySummaryTableHead VARCHAR(1000),
+@LiquiditySummaryTableTail VARCHAR(1000),
 @CRELoanFFTableBody NVARCHAR(MAX),
 @CRELoanFFTableHead VARCHAR(1000),
 @CRELoanFFTableTail VARCHAR(1000),
