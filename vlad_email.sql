@@ -212,51 +212,8 @@ SET @Body = '
 
     SET @LiquiditySummaryTableTail = '</table><br><br></div>';
 
-    SELECT @Body = @Body + @LiquiditySummaryTableHead + ISNULL(@LiquiditySummaryTableBody, '') + @LiquiditySummaryTableTail;
+    SELECT @LiquiditySummaryTableBody = @Body + @LiquiditySummaryTableHead + ISNULL(@LiquiditySummaryTableBody, '') + @LiquiditySummaryTableTail;
 
-        
-     --- Table showing top 10 CRE loans with Pdwn changes:
-    SET @CRELoanPdwnTableHead = ''
-		+ ' <br> <table cellpadding=0 cellspacing=0 border=0>' 
-		+ '<tr><b>Top 10 CRE loans with changes in paydown projections vs prior liquidity report</b></tr>'
-		+ '<td bgcolor=#E6E6FA><b>Deal Name</b></td>'
-		+ '<td bgcolor=#E6E6FA><b>Most recent liquidity report</b></td>'
-		+ '<td bgcolor=#E6E6FA><b>Current data set</b></td>'
-		+ '<td bgcolor=#E6E6FA><b>Liquidity Impact</b></td>'
-		+ '<tr>'
-
-	SET @CRELoanPdwnTableBody = (select top 10 
-                                    td = lr.FamilyDealName, 
-                                    td = FORMAT(lr.TrAmt, '#,###'), 
-                                    td = FORMAT(cr.TrAmt, '#,###'),
-                                    td = FORMAT(cr.TrAmt - lr.TrAmt, '#,###')
-                                from
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntryArchive ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where AuditDate = @auditdate and AssetStatus = 'Lending' and TransDate >= @sdate and TransDate <= @pend
-                                        and (ta.TransactionType = 'Loan Curtailment' or ta.TransactionType = 'Loan Balloon Payment' or ta.TransactionType = 'CMBS Curtailment')
-                                    group by FamilyDealName
-                                    ) lr
-                                left join
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntry ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where TransDate >= @sdate and TransDate <= @pend
-                                        and (ta.TransactionType = 'Loan Curtailment' or ta.TransactionType = 'Loan Balloon Payment' or ta.TransactionType = 'CMBS Curtailment')
-                                    group by FamilyDealName
-                                    ) cr on lr.familydealname = cr.familydealname
-                                where cr.TrAmt - lr.TrAmt <> 0
-                                order by abs(cr.TrAmt - lr.TrAmt) desc 
-
-					 FOR   XML RAW('tr'),
-					  ELEMENTS
-
-					)
-	SET @CRELoanPdwnTableTail = '</table><br><br>' ;
-    SELECT  @CRELoanPdwnTableBody = @CRELoanPdwnTableHead + ISNULL(@CRELoanPdwnTableBody, '') + @CRELoanPdwnTableTail
 
     --- Table showing top 10 CRE loans with FF funding changes:
     SET @CRELoanFFTableHead = ''
