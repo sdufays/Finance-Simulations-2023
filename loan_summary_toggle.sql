@@ -1,24 +1,15 @@
--- https://www.sqlshack.com/dynamic-sql-in-sql-server/
+--********** USER SETS MODE VARIABLE HERE ************--
+DECLARE @mode varchar(50) = 'Funding' -- either Paydown or Funding
 
---select * from [BSM].dbo.TransactionEntryArchive 
---where TransactionType IN('Loan Curtailment', 'Loan Balloon Payment', 'CMBS Curtailment','Loan Financing Curtailment', 'CMBS Financing Curtailment')
---AND TransDate >='6-15-2023' AND TransDate <='6-30-2024'
---AND AuditDate = '6-15-2023'
---AND AssetStatus = 'Lending'
---ORDER BY TransDate
 
+--------------------------------------
 DECLARE @sql varchar(max)
-DECLARE @mode varchar(50) = 'Paydown' -- either paydown or funding
 SET @sql = '
-
- 
-
     DECLARE @asofdate datetime = ''6-15-2023''
     DECLARE @end datetime = ''6-30-2024'';
-    DECLARE @mode varchar(50) = ''' + @mode + '''; -- either paydown or funding
+    DECLARE @mode varchar(50) = ''' + @mode + ''';
 
- 
-
+    -- CREATE LOANDATA CTE JOINING LOAN AND TRANSACTIONENTRYARCHIVE TABLES
     WITH LoanData AS (
         SELECT 
             l.LoanID,
@@ -29,23 +20,20 @@ SET @sql = '
             t.AssetStatus,
             t.TransDate, 
             t.TransactionType,'
-
- 
-
+    -- CALCUALTE LOAN/REPO FUNDING AMOUNTS
     IF @mode = 'Funding'
     BEGIN
         SET @sql = @sql + '
             CASE WHEN t.TransactionType = ''Loan Future Funding'' THEN -1 * t.Amount ELSE 0 END AS Loan' + @mode + 'Amount,
             CASE WHEN t.TransactionType IN (''Loan Financing Draw'', ''CMBS Financing Draw'') THEN t.Amount ELSE 0 END AS Repo' + @mode + 'Amount, '
     END
+    -- CALCULATE LOAN/REPO PAYDOWN AMOUNTS
     ELSE IF @mode = 'Paydown'
     BEGIN
         SET @sql = @sql + '
             CASE WHEN t.TransactionType IN(''Loan Curtailment'', ''Loan Balloon Payment'', ''CMBS Curtailment'') THEN t.Amount ELSE 0 END AS Loan' + @mode + 'Amount,
             CASE WHEN t.TransactionType IN (''Loan Financing Curtailment'', ''CMBS Financing curtailment'') THEN t.Amount ELSE 0 END AS Repo' + @mode + 'Amount, '
     END
-
- 
 
     SET @sql = @sql + '
             t.LineName
@@ -57,10 +45,12 @@ SET @sql = '
             AND t.TransDate >= @asofdate AND t.TransDate <= @end
             AND ' 
     
+    -- ONLY SHOW FUNDING TRANSACTIONS IN FUNDING TABLE
     IF @mode = 'Funding'
     BEGIN
         SET @sql = @sql + 't.TransactionType IN (''Loan Future Funding'',''Loan Financing Draw'', ''CMBS Financing Draw'')'
     END
+    -- ONLY SHOW PAYDOWN TRANSACTIONS IN PAYDOWN TABLE
     ELSE IF @mode = 'Paydown'
     BEGIN
         SET @sql = @sql + 't.TransactionType IN (''Loan Curtailment'', ''Loan Balloon Payment'', ''CMBS Curtailment'',''Loan Financing Curtailment'', ''CMBS Financing curtailment'')'
@@ -69,34 +59,21 @@ SET @sql = '
     SET @sql = @sql + '
     
     )
-
- 
-
+    -- OUTPUT FINAL TABLE
     SELECT 
-        sub.DealName,
-        sub.TransactionDate,
-        ld.LoanSubStauts3 AS [ConstructionTag],
-        ld.PropertyType, 
-        ld.AuditDate,
-        ld.AssetStatus,
-        ld.Loan' + @mode + 'Amount,
-        ld.Repo' + @mode + 'Amount,
-        ld.Loan' + @mode + 'Amount - ld.Repo' + @mode + 'Amount AS [Net' + @mode + '],
-        ld.LineName,
-        ld.TransactionType
-    FROM (
-        SELECT 
-            FamilyDealName AS [DealName], 
-            TransDate AS [TransactionDate], 
-            SUM(Loan' + @mode + 'Amount) AS TotalLoan' + @mode + 'Amount,
-            SUM(Repo' + @mode + 'Amount) AS TotalRepo' + @mode + 'Amount
-        FROM LoanData
-        GROUP BY FamilyDealName, TransDate
-    ) sub
-    INNER JOIN LoanData ld ON sub.DealName = ld.FamilyDealName AND sub.TransactionDate = ld.TransDate 
-        AND sub.TotalLoan' + @mode + 'Amount = ld.Loan' + @mode + 'Amount 
-        AND sub.TotalRepo' + @mode + 'Amount = ld.Repo' + @mode + 'Amount;'
- 
+        FamilyDealName AS [DealName],
+        TransDate AS [TransactionDate],
+        LoanSubStauts3 AS [ConstructionTag],
+        PropertyType,
+        AuditDate,
+        AssetStatus, 
+        SUM(Loan' + @mode + 'Amount) AS TotalLoan' + @mode + 'Amount,
+        SUM(Repo' + @mode + 'Amount) AS TotalRepo' + @mode + 'Amount,
+        SUM(Loan' + @mode + 'Amount) - SUM(Repo' + @mode + 'Amount) AS Net' + @mode + ',
+        LineName
+    FROM LoanData
+    GROUP BY FamilyDealName, TransDate, LoanSubStauts3, PropertyType, AuditDate, AssetStatus, LineName
+    ORDER BY TransDate'
 
--- Execute the dynamic SQL statement
+-- EXECUTE DYNAMIC SQL
 EXEC(@sql);
