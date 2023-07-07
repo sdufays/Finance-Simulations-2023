@@ -140,81 +140,55 @@ BEGIN
     set @moend = EOMONTH(@moend, 1)
 END
 
-SET @Body = '
-    <html>
-        <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    color: #333;
-                    margin: 0;
-                    padding: 0;
-                }
-                .email-intro {
-                    margin-bottom: 20px;
-                }
-                .content {
-                    width: 100%;
-                    max-width: 600px;
-                    margin: 0 auto;
-                }
-                table {
-                    border-collapse: collapse;
-                    width: 100%;
-                    border: 1px solid #ddd;
-                }
-                th, td {
-                    border: 1px solid #ddd;
-                    text-align: left;
-                    padding: 8px;
-                }
-                th {
-                    background-color: #E6E6FA;
-                    font-weight: bold;
-                }
-                tr:nth-child(even) {
-                    background-color: #f2f2f2;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="content">
-                <p class="email-intro">Projected liquidity month end cash + approved undrawn balance using the most recent liquidity report as of ' + CAST(FORMAT(@auditdate, 'd', 'us') as nvarchar) + ' as a starting point and adding changing in cash flows projections from Lending Segment.</p>
-    ';
+SET @Body = '<html><head>Projected liquidity month end cash + approved undrawn balance using most recent liquidity report as of ' + CAST(FORMAT(@auditdate, 'd', 'us') as nvarchar) + 
+                ' as a starting point and adding changing in cash flows projections from Lending Segment<br>' + '<style>' +
+                'table {border-collapse: collapse; width: 90%; margin: auto;}' +
+                'td, th {border: 1px solid black; padding: 8px; text-align: center; font-size: 12px; width: 50px;}' +
+                'th {background-color: #000080; color: #D3D3D3;}' +
+                '</style>' + '</head>' + '<body>'
 
-    SET @LiquiditySummaryTableHead = '
-        <table>
-            <tr>
-                <th>Month End</th>
-                <th>Mo End Cash + AUD Balance from Liquidity Report</th>
-                <th>Lending - Change in Loan Funding projections</th>
-                <th>Lending - Change in Loan Pdwn projections</th>
-                <th>Lending - Change in Repo Draw projections</th>
-                <th>Lending - Change in Repo Pdwn projections</th>
-                <th>Projected Mo End Cash + AUD Balance</th>
-                <th>Cumulative Liquidity Impact from changes in projections for Lending segment</th>
-            </tr>
-    ';
 
-    SET @LiquiditySummaryTableBody = (
-        SELECT 
-            td = FORMAT(PeriodEndDate, 'd', 'us'), 
-            td = FORMAT(MoEndBalance, '#,###'), 
-            td = FORMAT(Lending_FFChange, '#,###'), 
-            td = FORMAT(Lending_LoanPdwnChange, '#,###'),
-            td = FORMAT(Lending_RepoDrawChange, '#,###'), 
-            td = FORMAT(Lending_RepoPdwnChange, '#,###'), 
-            td = FORMAT(Updated_MoEndBalance, '#,###'),
-            td = FORMAT(Updated_MoEndBalance - MoEndBalance, '#,###')
-        FROM #LiquiditySummary
-        FOR XML RAW('tr'), ELEMENTS
-    );
+SET @LiquiditySummaryTableHead = ''
 
-    SET @LiquiditySummaryTableTail = '</table><br><br></div>';
++ ' <br> <table>' 
 
-    SELECT @Body = @Body + @LiquiditySummaryTableHead + ISNULL(@LiquiditySummaryTableBody, '') + @LiquiditySummaryTableTail;
++ '<tr>'
 
-        
++ '<th>Month End</th>'
+
++ '<th>Mo End Cash + AUD Balance from Liquidity Report</th>'
+
++ '<th>Lending - Change in Loan Funding projections</th>'
+
++ '<th>Lending - Change in Loan Pdwn projections</th>'
+
+        + '<th>Lending - Change in Repo Draw projections</th>'
+
+        + '<th>Lending - Change in Repo Pdwn projections</th>'
+
+        + '<th>Projected Mo End Cash + AUD Balance</th>'
+
+        + '<th>Cumulative Liquidity Impact from changes in projections for Lending segment</th>'
+
++ '</tr>'
+
+	SET @LiquiditySummaryTableBody = (select td = FORMAT(PeriodEndDate, 'd', 'us'), 
+                                td = FORMAT(MoEndBalance, '#,###'), 
+                                td = FORMAT(Lending_FFChange, '#,###'), 
+                                td = FORMAT(Lending_LoanPdwnChange, '#,###'),
+                                td = FORMAT(Lending_RepoDrawChange, '#,###'), 
+                                td = FORMAT(Lending_RepoPdwnChange, '#,###'), 
+                                td = FORMAT(Updated_MoEndBalance, '#,###'),
+                                td = FORMAT(Updated_MoEndBalance - MoEndBalance, '#,###')
+                        from #LiquiditySummary
+
+					 FOR   XML RAW('tr'),
+					  ELEMENTS
+
+					)
+	SET @LiquiditySummaryTableTail = '</table><br><br>' ;
+    SELECT  @LiquiditySummaryTableBody = @LiquiditySummaryTableHead + ISNULL(@LiquiditySummaryTableBody, '') + @LiquiditySummaryTableTail
+	
      --- Table showing top 10 CRE loans with Pdwn changes:
     SET @CRELoanPdwnTableHead = ''
 		+ ' <br> <table cellpadding=0 cellspacing=0 border=0>' 
@@ -402,14 +376,13 @@ SET @Body = '
     --Select @copy_recipients = Value from AM..EmailConfiguration where Env = @envName and [Key] = 'ExpMaturityVarianceCCRecipient'
     --Select @blind_copy_recipients = Value from AM..EmailConfiguration where Env = @envName and [Key] = 'ExpMaturityVarianceBCCRecipient'
 
-
     --EXEC msdb.dbo.sp_addrolemember @rolename = 'DatabaseMailUserRole'
-    --,@membername = 'LNR\sdufays';
+    --,@membername = 'LNR\jchiou';
 
     EXEC msdb.dbo.sp_send_dbmail
     @profile_name = 'Sandbox', --'LNR'
     @subject = @subject,
-    @recipients = 'sdufays@lnrproperty.com', --@ToRecipients,
+    @recipients = 'jchiou@lnrproperty.com', --@ToRecipients,
     --@copy_recipients = @copy_recipients,
     --@blind_copy_recipients = @blind_copy_recipients,
     @body = @Body ,
