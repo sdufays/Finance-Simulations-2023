@@ -140,80 +140,83 @@ BEGIN
     set @moend = EOMONTH(@moend, 1)
 END
 
-SET @Body = '
-    <html>
-        <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    color: #333;
-                    margin: 0;
-                    padding: 0;
-                }
-                .email-intro {
-                    margin-bottom: 20px;
-                }
-                .content {
-                    width: 100%;
-                    max-width: 600px;
-                    margin: 0 auto;
-                }
-                table {
-                    border-collapse: collapse;
-                    width: 100%;
-                    border: 1px solid #ddd;
-                }
-                th, td {
-                    border: 1px solid #ddd;
-                    text-align: left;
-                    padding: 8px;
-                }
-                th {
-                    background-color: #E6E6FA;
-                    font-weight: bold;
-                }
-                tr:nth-child(even) {
-                    background-color: #f2f2f2;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="content">
-                <p class="email-intro">Projected liquidity month end cash + approved undrawn balance using the most recent liquidity report as of ' + CAST(FORMAT(@auditdate, 'd', 'us') as nvarchar) + ' as a starting point and adding changing in cash flows projections from Lending Segment.</p>
-    ';
+SET @Body= '<html><head>Projected liquidity month end cash + approved undrawn balance using most recent liquidity report as of ' + CAST(FORMAT(@auditdate, 'd', 'us') as nvarchar) + 
+                ' as a starting point and adding changing in cash flows projections from Lending Segment' + '<style>'
+		+ 'td {border: solid black;border-width: 1px;padding-left:5px;padding-right:5px;padding-top:1px;padding-bottom:1px;font: 11px arial} '
+		+ '</style>' + '</head>' + '<body>'
 
-    SET @LiquiditySummaryTableHead = '
-        <table>
-            <tr>
-                <th>Month End</th>
-                <th>Mo End Cash + AUD Balance from Liquidity Report</th>
-                <th>Lending - Change in Loan Funding projections</th>
-                <th>Lending - Change in Loan Pdwn projections</th>
-                <th>Lending - Change in Repo Draw projections</th>
-                <th>Lending - Change in Repo Pdwn projections</th>
-                <th>Projected Mo End Cash + AUD Balance</th>
-                <th>Cumulative Liquidity Impact from changes in projections for Lending segment</th>
-            </tr>
-    ';
+	SET @LiquiditySummaryTableHead = ''
+		+ ' <br> <table cellpadding=0 cellspacing=0 border=0>' 
+		+ '<tr>'
+		+ '<td bgcolor=#E6E6FA><b>Month End</b></td>'
+		+ '<td bgcolor=#E6E6FA><b>Mo End Cash + AUD Balance from Liquidity Report</b></td>'
+		+ '<td bgcolor=#E6E6FA><b>Lending - Change in Loan Funding projections</b></td>'
+		+ '<td bgcolor=#E6E6FA><b>Lending - Change in Loan Pdwn projections</b></td>'
+        + '<td bgcolor=#E6E6FA><b>Lending - Change in Repo Draw projections</b></td>'
+        + '<td bgcolor=#E6E6FA><b>Lending - Change in Repo Pdwn projections</b></td>'
+        + '<td bgcolor=#E6E6FA><b>Projected Mo End Cash + AUD Balance</b></td>'
+        + '<td bgcolor=#E6E6FA><b>Cumulative Liquidity Impact from changes in projections for Lending segment</b></td>'
+		+ '<tr>'
 
-    SET @LiquiditySummaryTableBody = (
-        SELECT 
-            td = FORMAT(PeriodEndDate, 'd', 'us'), 
-            td = FORMAT(MoEndBalance, '#,###'), 
-            td = FORMAT(Lending_FFChange, '#,###'), 
-            td = FORMAT(Lending_LoanPdwnChange, '#,###'),
-            td = FORMAT(Lending_RepoDrawChange, '#,###'), 
-            td = FORMAT(Lending_RepoPdwnChange, '#,###'), 
-            td = FORMAT(Updated_MoEndBalance, '#,###'),
-            td = FORMAT(Updated_MoEndBalance - MoEndBalance, '#,###')
-        FROM #LiquiditySummary
-        FOR XML RAW('tr'), ELEMENTS
-    );
+	SET @LiquiditySummaryTableBody = (select td = FORMAT(PeriodEndDate, 'd', 'us'), 
+                                td = FORMAT(MoEndBalance, '#,###'), 
+                                td = FORMAT(Lending_FFChange, '#,###'), 
+                                td = FORMAT(Lending_LoanPdwnChange, '#,###'),
+                                td = FORMAT(Lending_RepoDrawChange, '#,###'), 
+                                td = FORMAT(Lending_RepoPdwnChange, '#,###'), 
+                                td = FORMAT(Updated_MoEndBalance, '#,###'),
+                                td = FORMAT(Updated_MoEndBalance - MoEndBalance, '#,###')
+                        from #LiquiditySummary
 
-    SET @LiquiditySummaryTableTail = '</table><br><br></div>';
+					 FOR   XML RAW('tr'),
+					  ELEMENTS
 
-    SELECT @LiquiditySummaryTableBody = @Body + @LiquiditySummaryTableHead + ISNULL(@LiquiditySummaryTableBody, '') + @LiquiditySummaryTableTail;
+					)
+	SET @LiquiditySummaryTableTail = '</table><br><br>' ;
+    SELECT  @LiquiditySummaryTableBody = @LiquiditySummaryTableHead + ISNULL(@LiquiditySummaryTableBody, '') + @LiquiditySummaryTableTail
+	
+     --- Table showing top 10 CRE loans with Pdwn changes:
+    SET @CRELoanPdwnTableHead = ''
+		+ ' <br> <table cellpadding=0 cellspacing=0 border=0>' 
+		+ '<tr><b>Top 10 CRE loans with changes in paydown projections vs prior liquidity report</b></tr>'
+		+ '<td bgcolor=#E6E6FA><b>Deal Name</b></td>'
+		+ '<td bgcolor=#E6E6FA><b>Most recent liquidity report</b></td>'
+		+ '<td bgcolor=#E6E6FA><b>Current data set</b></td>'
+		+ '<td bgcolor=#E6E6FA><b>Liquidity Impact</b></td>'
+		+ '<tr>'
 
+	SET @CRELoanPdwnTableBody = (select top 10 
+                                    td = lr.FamilyDealName, 
+                                    td = FORMAT(lr.TrAmt, '#,###'), 
+                                    td = FORMAT(cr.TrAmt, '#,###'),
+                                    td = FORMAT(cr.TrAmt - lr.TrAmt, '#,###')
+                                from
+                                    (
+                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
+                                    from [BSM].dbo.TransactionEntryArchive ta
+                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
+                                    where AuditDate = @auditdate and AssetStatus = 'Lending' and TransDate >= @sdate and TransDate <= @pend
+                                        and (ta.TransactionType = 'Loan Curtailment' or ta.TransactionType = 'Loan Balloon Payment' or ta.TransactionType = 'CMBS Curtailment')
+                                    group by FamilyDealName
+                                    ) lr
+                                left join
+                                    (
+                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
+                                    from [BSM].dbo.TransactionEntry ta
+                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
+                                    where TransDate >= @sdate and TransDate <= @pend
+                                        and (ta.TransactionType = 'Loan Curtailment' or ta.TransactionType = 'Loan Balloon Payment' or ta.TransactionType = 'CMBS Curtailment')
+                                    group by FamilyDealName
+                                    ) cr on lr.familydealname = cr.familydealname
+                                where cr.TrAmt - lr.TrAmt <> 0
+                                order by abs(cr.TrAmt - lr.TrAmt) desc 
+
+					 FOR   XML RAW('tr'),
+					  ELEMENTS
+
+					)
+	SET @CRELoanPdwnTableTail = '</table><br><br>' ;
+    SELECT  @CRELoanPdwnTableBody = @CRELoanPdwnTableHead + ISNULL(@CRELoanPdwnTableBody, '') + @CRELoanPdwnTableTail
 
     --- Table showing top 10 CRE loans with FF funding changes:
     SET @CRELoanFFTableHead = ''
@@ -359,14 +362,13 @@ SET @Body = '
     --Select @copy_recipients = Value from AM..EmailConfiguration where Env = @envName and [Key] = 'ExpMaturityVarianceCCRecipient'
     --Select @blind_copy_recipients = Value from AM..EmailConfiguration where Env = @envName and [Key] = 'ExpMaturityVarianceBCCRecipient'
 
-
     --EXEC msdb.dbo.sp_addrolemember @rolename = 'DatabaseMailUserRole'
-    --,@membername = 'LNR\sdufays';
+    --,@membername = 'LNR\vsubbotin';
 
     EXEC msdb.dbo.sp_send_dbmail
-    @profile_name = 'Sandbox', --'LNR'
+    @profile_name = 'LNR', --'LNR'
     @subject = @subject,
-    @recipients = 'sdufays@lnrproperty.com', --@ToRecipients,
+    @recipients = 'vsubbotin@lnrproperty.com', --@ToRecipients,
     --@copy_recipients = @copy_recipients,
     --@blind_copy_recipients = @blind_copy_recipients,
     @body = @Body ,

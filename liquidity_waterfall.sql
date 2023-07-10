@@ -15,11 +15,11 @@ WITH LoanData AS (
         cf.CFNetInterest,
         cf.CFMonth
     -- from the joined three tables
-    FROM [BSM].dbo.Loan l
-    INNER JOIN [BSM].dbo.FinancingPaymentData p
+    FROM [BSM].dbo.Loan l -- defining loan table as l 
+    INNER JOIN [BSM].dbo.FinancingPaymentData p -- defining the finance payment data as p 
         ON l.LoanID = p.LoanID -- join by loan id
-        AND p.RepoLineNameforthePeriod IS NOT NULL -- make sure repo line name isn't null
-    INNER JOIN [BSM].dbo.Cashflow cf
+        AND p.RepoLineNameforthePeriod IS NOT NULL -- make sure repo line name isn't null, why is this neccessary 
+    INNER JOIN [BSM].dbo.Cashflow cf -- define cashflow as cf 
         ON l.LoanID = cf.LoanID -- join by loan id
         AND cf.CFMonth = p.Month -- make sure months are the same in cashflow and financing payment
     -- where loan is active and payment date is within the boundaries
