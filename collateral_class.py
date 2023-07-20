@@ -81,7 +81,6 @@ class CollateralPortfolio(Loan):
         sum = 0
         for loan in self.__active_portfolio:
             sum+=loan.get_loan_balance()
-        self.__collateral_list.append(sum)
         return sum
     
     def calculate_term_lengths(self, portfolio, loan_term_types):
