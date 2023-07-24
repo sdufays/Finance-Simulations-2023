@@ -5,6 +5,7 @@ class CLO(Tranche):
     def __init__(self, ramp_up, reinvestment_bool, replenishment_bool, reinvestment_period, replenishment_period, replenishment_amount, starting_date):
         # tranche objects stored here
         self.__tranches = []
+        self.__all_tranches = []
         self.__ramp_up = ramp_up # boolean, default no
         self.__reinvestment_bool = reinvestment_bool
         self.__replenishment_bool = replenishment_bool
@@ -21,7 +22,9 @@ class CLO(Tranche):
                 self.__tranches.remove(self.get_tranches()[t])
             else:
                 t+=1
-
+                
+    def get_all_tranches(self):
+        return self.__all_tranches
     
     def get_total_cashflows(self):
         self.__total_cashflows = [x for x in self.__total_cashflows if x != 0]
@@ -52,6 +55,7 @@ class CLO(Tranche):
     def add_tranche(self, name, rating, offered, size, spread, price):
         tranche = Tranche(name, rating, offered, size, spread, price)
         self.__tranches.append(tranche)
+        self.__all_tranches.append(tranche)
 
     def get_tranches(self):
         return self.__tranches

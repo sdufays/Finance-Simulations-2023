@@ -130,6 +130,8 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
 
+        #print(clo.get_all_tranches()[len(clo.get_tranches())-1].get_size())
+
         # WHEN LOANS START PAYING OFF
         if principal_pay != 0:
             # remove loan
@@ -147,7 +149,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
                replen_cumulative += loan_value
                remaining_subtract = beginning_bal - loan_value
                if remaining_subtract > 0:
-                  loan_waterfall(remaining_subtract, clo.get_tranches())
+                  loan_waterfall(remaining_subtract, clo.get_all_tranches())
             elif replen_after_reinv_bool:
                loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
                loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
@@ -158,9 +160,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
                   replen_months += 1
                   incremented_replen_month = True  # set flag to True so that it won't increment again within this month
                if remaining_subtract > 0:
-                  loan_waterfall(remaining_subtract, clo.get_tranches())
+                  loan_waterfall(remaining_subtract, clo.get_all_tranches())
             else: # waterfall it
-               loan_waterfall(beginning_bal, clo.get_tranches())
+               loan_waterfall(beginning_bal, clo.get_all_tranches())
         else: # if no principal paydown value, just move on
                portfolio_index += 1
 
@@ -251,7 +253,7 @@ if __name__ == "__main__":
 
     excel_file_path = "Prime CLO.xlsm"
    
-    NUM_TRIALS = 1
+    NUM_TRIALS = 20
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
