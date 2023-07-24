@@ -159,7 +159,7 @@ def graphs_by_scenario(output_df, cases, trial_numbers):
        adv_rate_dict[case] = adv_rate_list
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
-    workbook = xlsxwriter.Workbook('graphs.xlsx')
+    workbook = xlsxwriter.Workbook('graphs_caseB.xlsx')
 
     # Set an Excel chart style.
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
@@ -190,7 +190,7 @@ def graphs_by_scenario(output_df, cases, trial_numbers):
 
 def market_aware_graphs(dataframe):
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
-   workbook = xlsxwriter.Workbook('graphs_market_aware.xlsx')
+   workbook = xlsxwriter.Workbook('graphs_market_aware_caseB.xlsx')
 
    # Set an Excel chart style.
    # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
