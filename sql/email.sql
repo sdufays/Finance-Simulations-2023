@@ -153,7 +153,7 @@ SET @LiquiditySummaryTableHead = ''
 	
      --- Table showing top 10 CRE loans with Pdwn changes:
     SET @CRELoanPdwnTableHead = ''
-    + ' <br><b>Top 10 CRE loans with changes in paydown projections vs prior liquidity report</b>'
+    + ' <br><b>Top 3 most influential CRE loans per month when change in loan paydown liquidity is greather than 5 million</b>'
     + '<table>'
     + '<tr>'
     + '<th>Transaction Date</th>'
@@ -161,49 +161,71 @@ SET @LiquiditySummaryTableHead = ''
     + '<th>Most recent liquidity report</th>'
     + '<th>Current data set</th>'
     + '<th>Liquidity Impact</th>'
-    + '</tr>'
+    + '</tr>';
+
+
+    WITH LoanPdwnDeltas AS (
+          SELECT 
+            PeriodEndDate,
+            MONTH(PeriodEndDate) AS [CurrentMonth],
+            Lending_LoanPdwnChange
+          FROM #LiquiditySummary
+          WHERE ABS(Lending_LoanPdwnChange) > @threshold
+        )
 
     SELECT @CRELoanPdwnTableBody = (
-	    SELECT 
-		    td = lr.TransDate,
-		    td = lr.FamilyDealName, 
-		    td = FORMAT(lr.TrAmt, '#,###'), 
-		    td = FORMAT(cr.TrAmt, '#,###'),
-		    td = FORMAT(cr.TrAmt - lr.TrAmt, '#,###')
-	    FROM
-	    (
-		    SELECT 
-			    FamilyDealName, 
-			    SUM(Amount) AS 'TrAmt',
-			    TransDate
-		    FROM [BSM].dbo.TransactionEntryArchive ta
-		    INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
-		    WHERE 
-			    AuditDate = @auditdate AND 
-			    AssetStatus = 'Lending' AND 
-			    TransDate >= @sdate AND 
-			    TransDate <= @pend AND 
-			    (ta.TransactionType = 'Loan Curtailment' OR ta.TransactionType = 'Loan Balloon Payment' OR ta.TransactionType = 'CMBS Curtailment')
-		    GROUP BY FamilyDealName, TransDate
-	    ) lr
-	    LEFT JOIN
-	    (
-		    SELECT 
-			    FamilyDealName, 
-			    SUM(Amount) AS 'TrAmt',
-			    TransDate
-		    FROM [BSM].dbo.TransactionEntry ta
-		    INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
-		    WHERE 
-			    TransDate >= @sdate AND 
-			    TransDate <= @pend AND 
-			    (ta.TransactionType = 'Loan Curtailment' OR ta.TransactionType = 'Loan Balloon Payment' OR ta.TransactionType = 'CMBS Curtailment')
-		    GROUP BY FamilyDealName, TransDate
-	    ) cr ON lr.familydealname = cr.familydealname AND lr.TransDate = cr.TransDate
-	    WHERE 
-		    cr.TrAmt - lr.TrAmt <> 0 AND 
-		    ABS(cr.TrAmt - lr.TrAmt) > @threshold
-	    ORDER BY ABS(cr.TrAmt - lr.TrAmt) DESC
+        SELECT 
+    		td = FORMAT(joined.TransDate,'d','us'),
+            --td = joined.CurrentMonth,
+    		td = joined.FamilyDealName, 
+            td = ISNULL(CONVERT(NVARCHAR, FORMAT(joined.lrTrAmt, 'N0')), '0'), 
+            td = ISNULL(CONVERT(NVARCHAR, FORMAT(joined.crTrAmt, 'N0')), '0'),
+            td = ISNULL(CONVERT(NVARCHAR, FORMAT((joined.crTrAmt - joined.lrTrAmt), 'N0')), '0')
+    	FROM
+    	(
+            SELECT 
+                MAX(COALESCE(cr.ExactDate, lr.ExactDate)) AS TransDate,
+                MONTH(COALESCE(lr.TransDate, cr.TransDate)) AS [CurrentMonth],
+                COALESCE(lr.FamilyDealName, cr.FamilyDealName) AS FamilyDealName, 
+                SUM(COALESCE(lr.TrAmt, 0)) AS 'lrTrAmt',
+                SUM(COALESCE(cr.TrAmt, 0)) AS 'crTrAmt',
+                SUM(COALESCE(cr.TrAmt, 0)) - SUM(COALESCE(lr.TrAmt, 0)) AS Delta
+            FROM
+            (SELECT 
+                    FamilyDealName, 
+                    SUM(Amount) AS 'TrAmt',
+                    DATEADD(month, DATEDIFF(month, 0, TransDate), 0) AS TransDate,
+                    MAX(TransDate) AS ExactDate
+                FROM [BSM].dbo.TransactionEntryArchive ta
+                INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+                WHERE 
+                    AuditDate = @auditdate AND 
+                    AssetStatus = 'Lending' AND 
+                    TransDate >= @sdate AND 
+                    TransDate <= @pend AND 
+                    (ta.TransactionType = 'Loan Curtailment' OR ta.TransactionType = 'Loan Balloon Payment' OR ta.TransactionType = 'CMBS Curtailment')
+                GROUP BY FamilyDealName, DATEADD(month, DATEDIFF(month, 0, TransDate), 0)
+            ) lr
+            FULL OUTER JOIN
+            (SELECT 
+                    FamilyDealName, 
+                    SUM(Amount) AS 'TrAmt',
+                    DATEADD(month, DATEDIFF(month, 0, TransDate), 0) AS TransDate,
+                    MAX(TransDate) AS ExactDate
+                FROM [BSM].dbo.TransactionEntry ta
+                INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+                WHERE 
+                    TransDate >= @sdate AND 
+                    TransDate <= @pend AND 
+                    (ta.TransactionType = 'Loan Curtailment' OR ta.TransactionType = 'Loan Balloon Payment' OR ta.TransactionType = 'CMBS Curtailment')
+                GROUP BY FamilyDealName, DATEADD(month, DATEDIFF(month, 0, TransDate), 0)
+            ) cr ON lr.FamilyDealName = cr.FamilyDealName AND lr.TransDate = cr.TransDate
+            GROUP BY MONTH(COALESCE(lr.TransDate, cr.TransDate)),
+                COALESCE(lr.FamilyDealName, cr.FamilyDealName)
+    	) AS joined
+    	INNER JOIN LoanPdwnDeltas LPD ON LPD.CurrentMonth = joined.CurrentMonth
+        WHERE ABS(joined.Delta) >= 5000000
+    	ORDER BY joined.TransDate
 	    FOR XML RAW('tr'), ELEMENTS
     )
 
@@ -212,134 +234,237 @@ SET @LiquiditySummaryTableHead = ''
 
     --- Table showing top 10 CRE loans with FF funding changes:
     SET @CRELoanFFTableHead = ''
-    + ' <br><b>Top 10 CRE loans with changes in funding projections vs prior liquidity report</b>'
+    + ' <br><b>Top 3 most influential CRE loans per month when change in future funding liquidity is greather than 5 million</b>'
     + '<table>'
     + '<tr>'
+    + '<th>Transaction Date</th>'
     + '<th>Deal Name</th>'
     + '<th>Most recent liquidity report</th>'
     + '<th>Current data set</th>'
     + '<th>Liquidity Impact</th>'
-    + '</tr>'
+    + '</tr>';
 
-	SET @CRELoanFFTableBody = (select top 10 
-                                    td = lr.FamilyDealName, 
-                                    td = FORMAT(lr.TrAmt, '#,###'), 
-                                    td = FORMAT(cr.TrAmt, '#,###'),
-                                    td = FORMAT(cr.TrAmt - lr.TrAmt, '#,###')
-                                from
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntryArchive ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where AuditDate = @auditdate and AssetStatus = 'Lending' and TransDate >= @sdate and TransDate <= @pend
-                                        and ta.TransactionType = 'Loan Future Funding'
-                                    group by FamilyDealName
-                                    ) lr
-                                left join
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntry ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where TransDate >= @sdate and TransDate <= @pend
-                                        and ta.TransactionType = 'Loan Future Funding'
-                                    group by FamilyDealName
-                                    ) cr on lr.familydealname = cr.familydealname
-                                where cr.TrAmt - lr.TrAmt <> 0
-                                order by abs(cr.TrAmt - lr.TrAmt) desc 
+    
+    WITH FFDeltas AS (
+        SELECT 
+        PeriodEndDate,
+        MONTH(PeriodEndDate) AS [CurrentMonth],
+        Lending_FFChange
+        FROM #LiquiditySummary
+        WHERE ABS(Lending_FFChange) > @threshold
+    )
 
+	SELECT @CRELoanFFTableBody = (
+    SELECT 
+    		td = FORMAT(joined.TransDate,'d','us'),
+    		td = joined.FamilyDealName, 
+    		td = FORMAT(joined.lrTrAmt, '#,###'), 
+    		td = FORMAT(joined.crTrAmt, '#,###'),
+    		td = FORMAT(joined.crTrAmt - joined.lrTrAmt, '#,###')
+    	FROM
+    	(
+    		SELECT 
+    			MONTH(lr.TransDate) AS [CurrentMonth],
+    			lr.FamilyDealName, 
+    			lr.TrAmt AS 'lrTrAmt',
+    			cr.TrAmt AS 'crTrAmt',
+    			lr.TransDate--,
+                --ROW_NUMBER() OVER (PARTITION BY MONTH(lr.TransDate) ORDER BY lr.TransDate DESC) AS RowNum
+    		FROM
+    		(
+    			SELECT 
+    				FamilyDealName, 
+    				SUM(Amount) AS 'TrAmt',
+    				TransDate
+    			FROM [BSM].dbo.TransactionEntryArchive ta
+    			INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+    			WHERE 
+    				AuditDate = @auditdate AND 
+    				AssetStatus = 'Lending' AND 
+    				TransDate >= @sdate AND 
+    				TransDate <= @pend AND 
+    				ta.TransactionType = 'Loan Future Funding'
+    			GROUP BY FamilyDealName, TransDate
+    		) lr
+    		LEFT JOIN
+    		(
+    			SELECT 
+    				FamilyDealName, 
+    				SUM(Amount) AS 'TrAmt',
+    				TransDate
+    			FROM [BSM].dbo.TransactionEntry ta
+    			INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+    			WHERE 
+    				TransDate >= @sdate AND 
+    				TransDate <= @pend AND 
+    				ta.TransactionType = 'Loan Future Funding'
+    			GROUP BY FamilyDealName, TransDate
+    		) cr ON lr.familydealname = cr.familydealname AND lr.TransDate = cr.TransDate
+    		WHERE 
+    			cr.TrAmt - lr.TrAmt <> 0 
+    	) AS joined
+    	INNER JOIN FFDeltas FFD ON FFD.CurrentMonth = joined.CurrentMonth
+        --WHERE joined.RowNum <= 3
+    	ORDER BY joined.TransDate
+	    FOR XML RAW('tr'), ELEMENTS
+    )
 
-					 FOR   XML RAW('tr'),
-					  ELEMENTS
-
-					)
+					
 	SET @CRELoanFFTableTail = '</table><br><br>' ;
     SELECT  @CRELoanFFTableBody = @CRELoanFFTableHead + ISNULL(@CRELoanFFTableBody, '') + @CRELoanFFTableTail
 
     --- Table showing top 10 CRE loans with Repo Pdwn changes:
     SET @CRERepoPdwnTableHead = ''
-    + ' <br><b>Top 10 CRE loans with changes in repo paydown projections vs prior liquidity report</b>'
+    + ' <br><b>Top 3 most influential CRE loans per month when change in repo paydown liquidity is greather than 5 million</b>'
     + '<table>'
     + '<tr>'
+    + '<th>Transaction Date</th>'
     + '<th>Deal Name</th>'
     + '<th>Most recent liquidity report</th>'
     + '<th>Current data set</th>'
     + '<th>Liquidity Impact</th>'
-    + '</tr>'
+    + '</tr>';
 
-	SET @CRERepoPdwnTableBody = (select top 10 
-                                    td = lr.FamilyDealName, 
-                                    td = FORMAT(lr.TrAmt, '#,###'), 
-                                    td = FORMAT(cr.TrAmt, '#,###'),
-                                    td = FORMAT(-cr.TrAmt + lr.TrAmt, '#,###')
-                                from
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntryArchive ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where AuditDate = @auditdate and AssetStatus = 'Lending' and TransDate >= @sdate and TransDate <= @pend
-                                        and (ta.TransactionType = 'Loan Financing Curtailment' or ta.TransactionType = 'CMBS Financing curtailment')
-                                    group by FamilyDealName
-                                    ) lr
-                                left join
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntry ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where TransDate >= @sdate and TransDate <= @pend
-                                        and (ta.TransactionType = 'Loan Financing Curtailment' or ta.TransactionType = 'CMBS Financing curtailment')
-                                    group by FamilyDealName
-                                    ) cr on lr.familydealname = cr.familydealname
-                                where cr.TrAmt - lr.TrAmt <> 0
-                                order by abs(cr.TrAmt - lr.TrAmt) desc 
+    WITH RepoPdwnDeltas AS (
+        SELECT 
+        PeriodEndDate,
+        MONTH(PeriodEndDate) AS [CurrentMonth],
+        Lending_RepoPdwnChange
+        FROM #LiquiditySummary
+        WHERE ABS(Lending_RepoPdwnChange) > @threshold
+    )
 
-					 FOR   XML RAW('tr'),
-					  ELEMENTS
-
-					)
+	SELECT @CRERepoPdwnTableBody = (
+        SELECT 
+    		td = FORMAT(joined.TransDate,'d','us'),
+    		td = joined.FamilyDealName, 
+    		td = FORMAT(joined.lrTrAmt, '#,###'), 
+    		td = FORMAT(joined.crTrAmt, '#,###'),
+    		td = FORMAT(joined.crTrAmt - joined.lrTrAmt, '#,###')
+    	FROM
+    	(SELECT 
+            MONTH(lr.TransDate) AS [CurrentMonth],
+            isnull(lr.FamilyDealName, cr.FamilyDealName) AS FamilyDealName, 
+            SUM(lr.TrAmt) AS 'lrTrAmt',
+            SUM(cr.TrAmt) AS 'crTrAmt',
+            lr.TransDate--,
+            --ROW_NUMBER() OVER (PARTITION BY MONTH(lr.TransDate) ORDER BY lr.TransDate DESC) AS RowNum
+        FROM
+            (SELECT 
+    	            FamilyDealName, 
+    	            SUM(Amount) AS 'TrAmt',
+    	            TransDate
+                FROM [BSM].dbo.TransactionEntryArchive ta
+                INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+                WHERE 
+    	            AuditDate = @auditdate AND 
+    	            AssetStatus = 'Lending' AND 
+    	            TransDate >= @sdate AND 
+    	            TransDate <= @pend AND 
+                    (ta.TransactionType = 'Loan Financing Curtailment' or ta.TransactionType = 'CMBS Financing curtailment')
+                GROUP BY FamilyDealName, TransDate
+            ) lr
+            FULL OUTER JOIN
+            (SELECT 
+    	            FamilyDealName, 
+    	            SUM(Amount) AS 'TrAmt',
+    	            TransDate
+                FROM [BSM].dbo.TransactionEntry ta
+                INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+                WHERE 
+    	            TransDate >= @sdate AND 
+    	            TransDate <= @pend AND 
+                    (ta.TransactionType = 'Loan Financing Curtailment' or ta.TransactionType = 'CMBS Financing curtailment')
+                GROUP BY FamilyDealName, TransDate
+            ) cr ON lr.familydealname = cr.familydealname 
+            WHERE cr.TrAmt - lr.TrAmt <> 0 
+            GROUP BY MONTH(lr.TransDate),
+                isnull(lr.FamilyDealName, cr.FamilyDealName),
+                lr.TransDate
+    	) AS joined
+    	INNER JOIN RepoPdwnDeltas RPD ON RPD.CurrentMonth = joined.CurrentMonth
+        --WHERE joined.RowNum <= 3
+    	ORDER BY joined.TransDate
+	    FOR XML RAW('tr'), ELEMENTS
+    )
 	SET @CRERepoPdwnTableTail = '</table><br><br>' ;
     SELECT  @CRERepoPdwnTableBody = @CRERepoPdwnTableHead + ISNULL(@CRERepoPdwnTableBody, '') + @CRERepoPdwnTableTail
 
     --- Table showing top 10 CRE loans with Repo Draw changes:
     SET @CRERepoDrawTableHead = ''
-    + ' <br><b>Top 10 CRE loans with changes in repo draw projections vs prior liquidity report</b>'
+    + ' <br><b>Top 3 most influential CRE loans per month when change in repo draw liquidity is greather than 5 million</b>'
     + '<table>'
     + '<tr>'
+    + '<th>Transaction Date</th>'
     + '<th>Deal Name</th>'
     + '<th>Most recent liquidity report</th>'
     + '<th>Current data set</th>'
     + '<th>Liquidity Impact</th>'
-    + '</tr>'
+    + '</tr>';
 
-	SET @CRERepoDrawTableBody = (select top 10 
-                                    td = lr.FamilyDealName, 
-                                    td = FORMAT(lr.TrAmt, '#,###'), 
-                                    td = FORMAT(cr.TrAmt, '#,###'),
-                                    td = FORMAT(cr.TrAmt - lr.TrAmt, '#,###')
-                                from
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntryArchive ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where AuditDate = @auditdate and AssetStatus = 'Lending' and TransDate >= @sdate and TransDate <= @pend
-                                        and (ta.TransactionType = 'Loan Financing Draw' or ta.TransactionType = 'CMBS Financing Draw')
-                                    group by FamilyDealName
-                                    ) lr
-                                left join
-                                    (
-                                    select FamilyDealName, SUM(Amount) as 'TrAmt'
-                                    from [BSM].dbo.TransactionEntry ta
-                                        inner join [BSM].dbo.Loan l on l.LoanID = ta.PeopleSoftID
-                                    where TransDate >= @sdate and TransDate <= @pend
-                                        and (ta.TransactionType = 'Loan Financing Draw' or ta.TransactionType = 'CMBS Financing Draw')
-                                    group by FamilyDealName
-                                    ) cr on lr.familydealname = cr.familydealname
-                                where cr.TrAmt - lr.TrAmt <> 0
-                                order by abs(cr.TrAmt - lr.TrAmt) desc 
+    WITH RepoDrawDeltas AS (
+        SELECT 
+        PeriodEndDate,
+        MONTH(PeriodEndDate) AS [CurrentMonth],
+        Lending_RepoDrawChange
+        FROM #LiquiditySummary
+        WHERE ABS(Lending_RepoDrawChange) > @threshold
+    )
 
-					 FOR   XML RAW('tr'),
-					  ELEMENTS
-
-					)
+	SELECT @CRERepoDrawTableBody = (
+        SELECT 
+    		td = FORMAT(joined.TransDate,'d','us'),
+    		td = joined.FamilyDealName, 
+    		td = FORMAT(joined.lrTrAmt, '#,###'), 
+    		td = FORMAT(joined.crTrAmt, '#,###'),
+    		td = FORMAT(joined.crTrAmt - joined.lrTrAmt, '#,###')
+    	FROM
+    	(
+    		SELECT 
+    			MONTH(lr.TransDate) AS [CurrentMonth],
+    			lr.FamilyDealName, 
+    			lr.TrAmt AS 'lrTrAmt',
+    			cr.TrAmt AS 'crTrAmt',
+    			lr.TransDate--,
+                --ROW_NUMBER() OVER (PARTITION BY MONTH(lr.TransDate) ORDER BY lr.TransDate DESC) AS RowNum
+    		FROM
+    		(
+    			SELECT 
+    				FamilyDealName, 
+    				SUM(Amount) AS 'TrAmt',
+    				TransDate
+    			FROM [BSM].dbo.TransactionEntryArchive ta
+    			INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+    			WHERE 
+    				AuditDate = @auditdate AND 
+    				AssetStatus = 'Lending' AND 
+    				TransDate >= @sdate AND 
+    				TransDate <= @pend AND 
+    				ta.TransactionType IN ('Loan Financing Draw', 'CMBS Financing Draw')
+    			GROUP BY FamilyDealName, TransDate
+    		) lr
+    		LEFT JOIN
+    		(
+    			SELECT 
+    				FamilyDealName, 
+    				SUM(Amount) AS 'TrAmt',
+    				TransDate
+    			FROM [BSM].dbo.TransactionEntry ta
+    			INNER JOIN [BSM].dbo.Loan l ON l.LoanID = ta.PeopleSoftID
+    			WHERE 
+    				TransDate >= @sdate AND 
+    				TransDate <= @pend AND 
+    				ta.TransactionType IN ('Loan Financing Draw', 'CMBS Financing Draw')
+    			GROUP BY FamilyDealName, TransDate
+    		) cr ON lr.familydealname = cr.familydealname AND lr.TransDate = cr.TransDate
+    		WHERE 
+    			cr.TrAmt - lr.TrAmt <> 0 
+    	) AS joined
+    	INNER JOIN RepoDrawDeltas RDD ON RDD.CurrentMonth = joined.CurrentMonth
+        --WHERE joined.RowNum <= 3
+    	ORDER BY joined.TransDate
+	    FOR XML RAW('tr'), ELEMENTS
+    )
 	SET @CRERepoDrawTableTail = '</table><br><br>' ;
     SELECT  @CRERepoDrawTableBody = @CRERepoDrawTableHead + ISNULL(@CRERepoDrawTableBody, '') + @CRERepoDrawTableTail
 
@@ -364,7 +489,7 @@ SET @LiquiditySummaryTableHead = ''
     @profile_name = 'Sandbox', --'LNR'
     @subject = @subject,
     @recipients = 'jchiou@lnrproperty.com', --@ToRecipients,
-    --@copy_recipients = @copy_recipients,
+    @copy_recipients = 'sdufays@lnrproperty.com',
     --@blind_copy_recipients = @blind_copy_recipients,
     @body = @Body ,
     @body_format = 'HTML' ;

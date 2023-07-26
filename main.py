@@ -198,7 +198,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     #print(tranche_df.head(longest_duration))
     #tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
-    #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
+    cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "Prime CLO.xlsm"
+    excel_file_path = "Prime CLO Case B.xlsm"
    
     NUM_TRIALS = 100
     cases = ['base', 'downside', 'upside']
