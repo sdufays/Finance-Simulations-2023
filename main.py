@@ -181,7 +181,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
          break 
       
       # check if AAA is below threshold -> if so, signal to terminate
-      if clo.get_tranches()[0].get_size() <= threshold:
+      if case != "market aware" and clo.get_tranches()[0].get_size() <= threshold:
+          terminate_next = True 
+      elif case == "market aware" and (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() > 0.75):
           terminate_next = True 
 
       # increment months
@@ -251,9 +253,10 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
 
-    excel_file_path = "Prime CLO Case B.xlsm"
+    excel_file_path = "Argentic CLO Case A Input.xlsm"
+    excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
-    NUM_TRIALS = 100
+    NUM_TRIALS = 1
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -333,7 +336,7 @@ if __name__ == "__main__":
          
          output_df = run_simulation("market aware", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
        # exit loop and display dataframe data in excel graphs
-       market_aware_graphs(output_df)
+       market_aware_graphs(output_df, excel_file_name)
     else:
       for scenario in [base, downside, upside]:
          for run in range(NUM_TRIALS):
@@ -353,7 +356,7 @@ if __name__ == "__main__":
             total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
             
             output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
-      graphs_by_scenario(output_df, cases, trial_numbers)
+      graphs_by_scenario(output_df, cases, trial_numbers, excel_file_name)
     # print output dataframe (just to look at it)
     print(output_df)
 

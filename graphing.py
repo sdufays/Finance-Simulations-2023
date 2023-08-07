@@ -132,7 +132,7 @@ def create_waar_graph(workbook, worksheet_name, data, chart_title, chart_style):
    chart.set_size({'width': 600, 'height': 400})
    worksheet.insert_chart('E2', chart)
 
-def graphs_by_scenario(output_df, cases, trial_numbers):
+def graphs_by_scenario(output_df, cases, trial_numbers, excel_name):
 # ---------------------------- READING DF ----------------------------- #
     deal_call_months_dict = {}
     wa_cof_dict = {}
@@ -159,7 +159,7 @@ def graphs_by_scenario(output_df, cases, trial_numbers):
        adv_rate_dict[case] = adv_rate_list
 
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
-    workbook = xlsxwriter.Workbook('graphs_caseA.xlsx')
+    workbook = xlsxwriter.Workbook('RESULTS Scenarios' + excel_name + '.xlsx')
 
     # Set an Excel chart style.
     # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
@@ -188,9 +188,9 @@ def graphs_by_scenario(output_df, cases, trial_numbers):
     # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
     workbook.close()
 
-def market_aware_graphs(dataframe):
+def market_aware_graphs(dataframe, excel_name):
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
-   workbook = xlsxwriter.Workbook('graphs_market_aware_caseA.xlsx')
+   workbook = xlsxwriter.Workbook('RESULTS MA' + excel_name + '.xlsx')
 
    # Set an Excel chart style.
    # 1 - grey / 2 - blue, red / 3 - blues / 4 - reds / 5  - greens / 6 - purples 
@@ -226,3 +226,6 @@ def manual_loan_graphs(dataframe):
    create_waar_graph(workbook, "WA Adv Rate", dataframe['WA Adv Rate'], "MARKET AWARE WA Adv Rate Frequency", 7)
    # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
    workbook.close()
+
+
+
