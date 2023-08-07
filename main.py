@@ -5,6 +5,7 @@ import pandas as pd
 import numpy_financial as npf
 import numpy as np
 from collections import Counter
+print("testing")
 
 # ------------------- GET NUM DAYS IN MONTH -------------------- #
 def get_date_array(date):
