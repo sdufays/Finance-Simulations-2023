@@ -253,7 +253,7 @@ if __name__ == "__main__":
     base = [.33, .33, .34]
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
-
+    excel_file_folder = "inputs/"
     excel_file_path = "Argentic CLO Case A Input.xlsm"
     excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
 
    # ------------------------ READ EXCEL: OTHER SPECIFICATIONS ------------------------ #
-    df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
+    df_os = pd.read_excel(excel_file_folder + excel_file_path, sheet_name = "Other Specifications", header=None)
 
     # assume they're giving us a date at the end of the month
     first_payment_date = df_os.iloc[2, 1]
@@ -297,7 +297,7 @@ if __name__ == "__main__":
        
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
-    df_uc = pd.read_excel(excel_file_path, sheet_name = "Upfront Costs", header=None)
+    df_uc = pd.read_excel(excel_file_folder + excel_file_path, sheet_name = "Upfront Costs", header=None)
     placement_percent = df_uc.iloc[0,1]
     legal = df_uc.iloc[1, 1]
     accounting = df_uc.iloc[2, 1]
@@ -311,10 +311,10 @@ if __name__ == "__main__":
     ramp_up = df_os.iloc[0, 1]
 
     # read excel file for capital stack
-    df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
+    df_cs = pd.read_excel(excel_file_folder + excel_file_path, sheet_name = "Capital Stack")
 
     # read excel file for loans
-    df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
+    df_cp = pd.read_excel(excel_file_folder + excel_file_path, sheet_name = "Collateral Portfolio")
 
     # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
     # market aware scenario
