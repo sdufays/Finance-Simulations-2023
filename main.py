@@ -2,7 +2,7 @@ from collateral_class import CollateralPortfolio
 from clo_class import CLO
 from graphing import *
 import pandas as pd
-import numpy_financial as npf
+import numpy_financial as np
 import numpy as np
 from collections import Counter
 print("testing")
