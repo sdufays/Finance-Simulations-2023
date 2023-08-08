@@ -207,7 +207,6 @@ def market_aware_graphs(dataframe, excel_name):
    # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
    workbook.close()
 
-
 def manual_loan_graphs(dataframe):
    # ------------------------- GRAPHING OUTPUTS -------------------------- #
    workbook = xlsxwriter.Workbook('outputs/graphs_manual_loans.xlsx')
