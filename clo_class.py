@@ -136,7 +136,6 @@ class CLO(Tranche):
         for tranche in self.get_tranches():
             tranche_sum += dataframe.loc[(tranche.get_name(), month), 'Tranche Size']
 
-        print("tranche {}".format(tranche_sum))
         return tranche_sum
  # cash flow for loans 
  # principal sum of all loans + interest sum 

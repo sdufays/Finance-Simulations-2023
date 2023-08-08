@@ -5,7 +5,6 @@ import pandas as pd
 import numpy_financial as np
 import numpy as np
 from collections import Counter
-print("testing")
 
 # ------------------- GET NUM DAYS IN MONTH -------------------- #
 def get_date_array(date):
@@ -184,7 +183,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       # check if AAA is below threshold -> if so, signal to terminate
       if case != "market aware" and clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
-      elif case == "market aware" and (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() > 0.75):
+      elif case == "market aware" and (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() < 0.75):
           terminate_next = True 
 
       # increment months
@@ -257,7 +256,7 @@ if __name__ == "__main__":
     excel_file_path = "Argentic CLO Case A Input.xlsm"
     excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
-    NUM_TRIALS = 1
+    NUM_TRIALS = 100
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
