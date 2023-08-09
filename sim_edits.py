@@ -304,24 +304,40 @@ if __name__ == "__main__":
          # initialize objects (must redo every run)
          clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
-         # READ EXCEL FOR TRANCHE NAMES
-         tranche_names = df_cs['Class Name'].tolist()
-         months = list(range(0, 100)) # this will be months passed, not actual month we're in...
-
-         # Rename the columns to match your provided structure
-         df_cs.columns = ['Class Name', 'Period Date', 'Balance', 'Principal', 'Interest', 'Cashflow']
-
+         # ------------- READ EXCEL FOR TRANCHES -----------------
+         # delete unused column
+         df_cs.drop(columns=['Payment Date'], inplace=True)
          # Set "Class Name" and "Date" as a multi-index
          df_cs.set_index(['Class Name', 'Period Date'], inplace=True)
-
-         # Optionally, you can sort the index for better formatting
+         # sort the index for better formatting
          df_cs.sort_index(inplace=True)
 
          pd.options.display.float_format = '{:,.2f}'.format
 
-         print(df_cs)
+         #print(df_cs)
+
+         loan_portfolio_obj = CollateralPortfolio(0)
+
+         # ---------------- READ EXCEL FOR LOANS -------------------
+         # drop unneeded column
+         df_cp.drop(columns=['Loan Name'], inplace=True)
+         print(df_cp)
+
+         for loan_num in range(df_cp.shape[0]):
+            loan_portfolio_obj.add_initial_loan(loan_id=loan_num, 
+                                                loan_balance=df_cp.at[loan_num, 'Collateral Balance'], 
+                                                margin=df_cp.at[loan_num, 'Market Repo Spread'], 
+                                                index_floor=1, 
+                                                # need to actually calculate remaining loan terms
+                                                remaining_loan_term=df_cp.at[loan_num, 'Loan Term'], 
+                                                extension_period=5, 
+                                                open_prepayment_period=5, 
+                                                manual_term=0)
+         for loan in loan_portfolio_obj.get_active_portfolio():
+            print(loan)
+
+         # OUTDATED CODE
          
-         loan_portfolio_obj = CollateralPortfolio(market_spread_amt)
          # add tranche data in a loop
          for index_t, row_t in df_cs.iterrows():
             tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
