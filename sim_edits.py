@@ -314,15 +314,31 @@ if __name__ == "__main__":
 
          pd.options.display.float_format = '{:,.2f}'.format
 
-         #print(df_cs)
+         unique_tranche_names = df_cs.index.get_level_values('Class Name').unique()
+
+         for tranche_name in unique_tranche_names:
+            # Extract data for the current tranche name
+            tranche_data = df_cs.loc[tranche_name]
+            last_row = tranche_data.iloc[-1]
+
+            # Add the tranche using the values from the first row
+            clo_obj.add_tranche(name=tranche_name,
+                                 rating="n/a",
+                                 offered=1, # Modify as needed
+                                 size=last_row["Balance"],
+                                 spread=0.05,
+                                 price=99)
+         for tranche in clo_obj.get_all_tranches():
+            print(tranche)
 
          loan_portfolio_obj = CollateralPortfolio(0)
 
          # ---------------- READ EXCEL FOR LOANS -------------------
          # drop unneeded column
          df_cp.drop(columns=['Loan Name'], inplace=True)
-         print(df_cp)
+         #print(df_cp)
 
+         # adds all remaining loans to the loan portfolio
          for loan_num in range(df_cp.shape[0]):
             loan_portfolio_obj.add_initial_loan(loan_id=loan_num, 
                                                 loan_balance=df_cp.at[loan_num, 'Collateral Balance'], 
@@ -333,8 +349,7 @@ if __name__ == "__main__":
                                                 extension_period=5, 
                                                 open_prepayment_period=5, 
                                                 manual_term=0)
-         for loan in loan_portfolio_obj.get_active_portfolio():
-            print(loan)
+         
 
          # OUTDATED CODE
          
