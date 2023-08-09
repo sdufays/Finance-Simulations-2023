@@ -235,11 +235,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
 
 if __name__ == "__main__":
    # ------------------------ PRESET INFO ------------------------ #
-    excel_file_path = "CLO_Input2.xlsm"
+    excel_file_path = "FL1_Setup_InternalMethod.xlsx"
     NUM_TRIALS = 3
-    cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
-    index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
     columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
     ma_output_df = pd.DataFrame(index=trial_numbers, columns=columns)
 
@@ -254,21 +252,14 @@ if __name__ == "__main__":
     # starting payment month
     starting_mos = date[0]
     days_in_mos = get_date_array(date)
-
     SOFR_value = df_os.iloc[3,1]
-
     has_reinvestment = df_os.iloc[4,1]
     has_replenishment = df_os.iloc[5,1]
-
     reinvestment_period = df_os.iloc[1,1]
     replenishment_period = df_os.iloc[6,1]
-
     replenishment_amount = df_os.iloc[7,1]
-
-    has_set_terms = df_os.iloc[10,1]
-    
-    market_spread_amt = 0 # if no market spread amount
-       
+    has_existing_data = df_os.iloc[10,1]
+  
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
     df_uc = pd.read_excel(excel_file_path, sheet_name = "Upfront Costs", header=None)
@@ -308,10 +299,28 @@ if __name__ == "__main__":
 # run the simulation starting with x months_passed 
 
     # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
-    if has_set_terms:
+    if has_existing_data:
        for run in range(NUM_TRIALS):
          # initialize objects (must redo every run)
          clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+
+         # READ EXCEL FOR TRANCHE NAMES
+         tranche_names = df_cs['Class Name'].tolist()
+         months = list(range(0, 100)) # this will be months passed, not actual month we're in...
+
+         # Rename the columns to match your provided structure
+         df_cs.columns = ['Class Name', 'Period Date', 'Balance', 'Principal', 'Interest', 'Cashflow']
+
+         # Set "Class Name" and "Date" as a multi-index
+         df_cs.set_index(['Class Name', 'Period Date'], inplace=True)
+
+         # Optionally, you can sort the index for better formatting
+         df_cs.sort_index(inplace=True)
+
+         pd.options.display.float_format = '{:,.2f}'.format
+
+         print(df_cs)
+         
          loan_portfolio_obj = CollateralPortfolio(market_spread_amt)
          # add tranche data in a loop
          for index_t, row_t in df_cs.iterrows():
