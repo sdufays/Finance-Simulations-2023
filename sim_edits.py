@@ -243,7 +243,6 @@ if __name__ == "__main__":
     columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
     ma_output_df = pd.DataFrame(index=trial_numbers, columns=columns)
 
-
    # ------------------------ READ EXCEL: OTHER SPECIFICATIONS ------------------------ #
     df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
 
@@ -269,7 +268,6 @@ if __name__ == "__main__":
     has_set_terms = df_os.iloc[10,1]
     
     market_spread_amt = 0 # if no market spread amount
-
        
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
