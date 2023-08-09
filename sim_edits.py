@@ -328,6 +328,7 @@ if __name__ == "__main__":
                                  size=last_row["Balance"],
                                  spread=0.05,
                                  price=99)
+         # prints out the tranches
          for tranche in clo_obj.get_all_tranches():
             print(tranche)
 
@@ -350,19 +351,6 @@ if __name__ == "__main__":
                                                 open_prepayment_period=5, 
                                                 manual_term=0)
          
-
-         # OUTDATED CODE
-         
-         # add tranche data in a loop
-         for index_t, row_t in df_cs.iterrows():
-            tranche_data = row_t[['Name', 'Rating', 'Offered', 'Size', 'Spread (bps)', 'Price']]
-            clo_obj.add_tranche(tranche_data[0], tranche_data[1], tranche_data[2], tranche_data[3], tranche_data[4] / 10000, tranche_data[5])
-         aaa_threshold = clo_obj.get_threshold()
-         # add loan data in a loop
-         for index_l, row_l in df_cp.iterrows():
-            loan_data = row_l[['Loan ID','Collateral Interest UPB', 'Margin', 'Index Floor', 'Loan Term (rem)', 'First Extension Period (mo)', 'Open Prepayment Period', 'Manual Loan Term']] 
-            loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6], loan_data[7])
-
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
          output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
