@@ -38,7 +38,7 @@ def loan_waterfall(subtract_value, tranches):
 
 # ------------------- SIMULATION FUNCTION -------------------- #
 def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold):
-    longest_duration = 60 # int(loan_portfolio.get_longest_term())
+    longest_duration = 100 # int(loan_portfolio.get_longest_term())
     
     # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # 21 loan IDs
@@ -312,10 +312,18 @@ if __name__ == "__main__":
          # sort the index for better formatting
          df_cs.sort_index(inplace=True)
 
+
          pd.options.display.float_format = '{:,.2f}'.format
 
-         unique_tranche_names = df_cs.index.get_level_values('Class Name').unique()
+         print(df_cs)
 
+         # get CLO start date and current date
+         start_date = df_cs.loc['A', :].index[0]
+         current_date = df_cs.loc['A', :].index[-1]
+         months_passed = df_cs.index.get_level_values(1).nunique()
+
+         # extract tranche names
+         unique_tranche_names = df_cs.index.get_level_values('Class Name').unique()
          for tranche_name in unique_tranche_names:
             # get data for each tranche based on name
             tranche_data = df_cs.loc[tranche_name]
@@ -328,15 +336,15 @@ if __name__ == "__main__":
                                  spread=0.05,
                                  price=99)
          # prints out the tranches
-         for tranche in clo_obj.get_all_tranches():
-            print(tranche)
+         #for tranche in clo_obj.get_all_tranches():
+         #   print(tranche)
 
          loan_portfolio_obj = CollateralPortfolio(0)
 
          # ---------------- READ EXCEL FOR LOANS -------------------
          # drop unneeded column
          df_cp.drop(columns=['Loan Name'], inplace=True)
-         #print(df_cp)
+         print(df_cp)
 
          # adds all remaining loans to the loan portfolio
          for loan_num in range(df_cp.shape[0]):
