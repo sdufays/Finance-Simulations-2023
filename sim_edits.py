@@ -39,6 +39,7 @@ def loan_waterfall(subtract_value, tranches):
 # ------------------- SIMULATION FUNCTION -------------------- #
 def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, tranche_df):
     longest_duration = 70
+    original_months_passed = months_passed
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
@@ -104,19 +105,19 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
         tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
-        # errors cuz we're trying to go into a prev month that doesn't exist
-        # WE NEED TO REWRITE THESE FUNCTIONS otherwise it's just 0 forever
-        beginning_bal = loan.beginning_balance(months_passed, loan_df)
-        principal_pay = loan.principal_paydown(months_passed, loan_df)
+        beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
+        principal_pay = loan.principal_paydown(months_passed, loan_df) # WRONG RN i haven't edited it
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
-        interest_inc = loan.interest_income(beginning_bal, SOFR, days)
+        interest_inc = loan.interest_income(beginning_bal, SOFR, days) # WRONG RN cuz we don't have index floor
         # save to loan dataframe
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
+        print(loan_df.head(longest_duration-months_passed))
+
 
         # WHEN LOANS START PAYING OFF
         if principal_pay != 0:

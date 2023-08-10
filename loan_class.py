@@ -65,6 +65,12 @@ class Loan:
         else:
             return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
 
+    def beginning_balance_MANUAL(self, month, loan_data, original_mos_passed):
+        if month == original_mos_passed:
+            return self.get_loan_balance()
+        else:
+            return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
+        
     # month = months passed
     def principal_paydown(self, month, loan_data):
         if month == self.get_term_length() + self.get_starting_month():
