@@ -307,7 +307,7 @@ if __name__ == "__main__":
          # ------------- READ EXCEL FOR TRANCHES -----------------
          # delete unused column
          df_cs.drop(columns=['Payment Date'], inplace=True)
-         # Set "Class Name" and "Date" as a multi-index
+         # set two indexes
          df_cs.set_index(['Class Name', 'Period Date'], inplace=True)
          # sort the index for better formatting
          df_cs.sort_index(inplace=True)
@@ -317,14 +317,13 @@ if __name__ == "__main__":
          unique_tranche_names = df_cs.index.get_level_values('Class Name').unique()
 
          for tranche_name in unique_tranche_names:
-            # Extract data for the current tranche name
+            # get data for each tranche based on name
             tranche_data = df_cs.loc[tranche_name]
-            last_row = tranche_data.iloc[-1]
+            last_row = tranche_data.iloc[-1] # most recent values
 
-            # Add the tranche using the values from the first row
             clo_obj.add_tranche(name=tranche_name,
                                  rating="n/a",
-                                 offered=1, # Modify as needed
+                                 offered=1, # we don't know which are offered sigh
                                  size=last_row["Balance"],
                                  spread=0.05,
                                  price=99)
