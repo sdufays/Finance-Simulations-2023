@@ -37,29 +37,10 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- #
-def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold):
-    longest_duration = 100 # int(loan_portfolio.get_longest_term())
-    
-    # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
-    loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # 21 loan IDs
-    months = list(range(0, longest_duration))
-    loan_index = pd.MultiIndex.from_product([loan_ids, months],
-                                   names=['Loan ID', 'Months Passed'])
-    loan_df = pd.DataFrame(index=loan_index, columns=['Current Month', 'Beginning Balance', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
-
-    # ------------------------ CREATE TRANCHE DATAFRAME ------------------------ #
-    tranche_names = []
-    for tranche in clo.get_tranches():
-       if tranche.get_offered() == 1:
-        tranche_names.append(tranche.get_name())
-    tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
-    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
-    
-    # ------------------------ SET DATAFRAME FORMAT OPTIONS ------------------------ #
-    pd.options.display.float_format = '{:,.2f}'.format
+def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed):
+    longest_duration = 100
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
-    months_passed = 0
     terminate_next = False
 
     # initial CLO variables
@@ -300,9 +281,11 @@ if __name__ == "__main__":
 
     # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
     if has_existing_data:
-       for run in range(NUM_TRIALS):
+      for run in range(NUM_TRIALS):
          # initialize objects (must redo every run)
          clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+
+         pd.options.display.float_format = '{:,.2f}'.format
 
          # ------------- READ EXCEL FOR TRANCHES -----------------
          # delete unused column
@@ -312,15 +295,14 @@ if __name__ == "__main__":
          # sort the index for better formatting
          df_cs.sort_index(inplace=True)
 
-
-         pd.options.display.float_format = '{:,.2f}'.format
-
          print(df_cs)
 
          # get CLO start date and current date
          start_date = df_cs.loc['A', :].index[0]
          current_date = df_cs.loc['A', :].index[-1]
-         months_passed = df_cs.index.get_level_values(1).nunique()
+         mos_passed = df_cs.index.get_level_values(1).nunique()
+         aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Balance']
+         print(aaa_threshold)
 
          # extract tranche names
          unique_tranche_names = df_cs.index.get_level_values('Class Name').unique()
@@ -360,9 +342,9 @@ if __name__ == "__main__":
          
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
-       # exit loop and display dataframe data in excel graphs
-       manual_loan_graphs(output_df)
+         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed)
+      # exit loop and display dataframe data in excel graphs
+      manual_loan_graphs(output_df)
 
     print(output_df)
 
