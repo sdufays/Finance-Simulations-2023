@@ -41,6 +41,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     longest_duration = 70
     original_months_passed = months_passed
 
+    # maybe create new tranche dataframe
+    # put cashflow into a list so far
+
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
 
@@ -102,7 +105,6 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
         loan_df = loan_df.reindex(loan_index)
         # fill nan values in df with 0
         loan_df = loan_df.fillna(0)
-        tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
@@ -116,7 +118,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Principal Paydown'] = principal_pay
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Ending Balance'] = ending_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
-        print(loan_df.head(longest_duration-months_passed))
+        #print(loan_df.head(longest_duration-months_passed))
 
 
         # WHEN LOANS START PAYING OFF
@@ -158,6 +160,8 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       # save current balances of each tranche object (for final output)
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
+      
+      print(tranche_df)
 
       # calculate and append this month's clo cashflow
       clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next) 
@@ -304,8 +308,15 @@ if __name__ == "__main__":
          # ------------- READ EXCEL FOR TRANCHES -----------------
          # delete unused column
          df_cs.drop(columns=['Payment Date'], inplace=True)
+         df_cs.rename(columns={
+               'Class Name' : 'Tranche Name',
+               'Period Date' : 'Period Date',
+               'Balance' : 'Tranche Size',
+               'Principal' : ' Principal Payment',
+               'Interest' : 'Interest Payment'
+            }, inplace=True)
          # set two indexes
-         df_cs.set_index(['Class Name', 'Period Date'], inplace=True)
+         df_cs.set_index(['Tranche Name', 'Period Date'], inplace=True)
          # sort the index for better formatting
          df_cs.sort_index(inplace=True)
 
@@ -316,11 +327,11 @@ if __name__ == "__main__":
          start_date = df_cs.loc['A', :].index[0]
          current_date = df_cs.loc['A', :].index[-1]
          mos_passed = df_cs.index.get_level_values(1).nunique()
-         aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Balance']
-         print(aaa_threshold)
+         aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Tranche Size']
+         #print(aaa_threshold)
 
          # extract tranche names
-         unique_tranche_names = df_cs.index.get_level_values('Class Name').unique()
+         unique_tranche_names = df_cs.index.get_level_values('Tranche Name').unique()
          for tranche_name in unique_tranche_names:
             # get data for each tranche based on name
             tranche_data = df_cs.loc[tranche_name]
@@ -329,7 +340,7 @@ if __name__ == "__main__":
             clo_obj.add_tranche(name=tranche_name,
                                  rating="n/a",
                                  offered=1, # we don't know which are offered sigh
-                                 size=last_row["Balance"],
+                                 size=last_row["Tranche Size"],
                                  spread=0.05,
                                  price=99)
          # prints out the tranches
@@ -341,7 +352,7 @@ if __name__ == "__main__":
          # ---------------- READ EXCEL FOR LOANS -------------------
          # drop unneeded column
          df_cp.drop(columns=['Loan Name'], inplace=True)
-         print(df_cp)
+         #print(df_cp)
 
          # adds all remaining loans to the loan portfolio
          for loan_num in range(df_cp.shape[0]):
