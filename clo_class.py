@@ -31,6 +31,9 @@ class CLO(Tranche):
         self.__total_cashflows = [x for x in self.__total_cashflows if not math.isnan(x)]
         return self.__total_cashflows
     
+    def set_total_cashflows_MANUAL(self, total_cashflow_list):
+        self.__total_cashflows = total_cashflow_list
+    
     def get_ramp_up(self):
         return self.__ramp_up
 

@@ -37,12 +37,9 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- #
-def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, tranche_df):
+def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date):
     longest_duration = 70
     original_months_passed = months_passed
-
-    # maybe create new tranche dataframe
-    # put cashflow into a list so far
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
@@ -61,6 +58,28 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     loan_df = loan_df.fillna(0)
     #print(loan_df.head(longest_duration-months_passed))
 
+    # ------------------------ CREATE TRANCHE DATAFRAME ------------------------ #
+    # SAVE CASH FLOWS
+    monthly_cashflow_sums = old_tranche_df.groupby(level=1).sum()
+    cashflow_list = monthly_cashflow_sums['Total Cashflow'].tolist()
+    clo.set_total_cashflows_MANUAL(cashflow_list)
+    
+    # CREATE TRANCHE DF
+    tranche_names = []
+    for tranche in clo.get_tranches():
+       if tranche.get_offered() == 1:
+        tranche_names.append(tranche.get_name())
+    tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
+    tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
+    
+    # SAVE FIRST LINE
+    for tranche in clo.get_tranches():
+       tranche_df.loc[(tranche.get_name(), months_passed), 'Tranche Size'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Tranche Size']
+       tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
+       tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
+    
+    print(tranche_df)
+    
     # initial collateral portfolio variables
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     margin = loan_portfolio.generate_initial_margin()
@@ -80,6 +99,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     # removing unsold tranches so they don't get in the way
     # unsure if we want this lol, but we still have the full stack saved in .get_all_tranches()
     clo.remove_unsold_tranches()
+
+    # we're now in the 47th month
+    months_passed += 1
 
     # --------------------------------- START MONTH LOOP -------------------------------------- #
     while months_passed in range(longest_duration):
@@ -312,7 +334,7 @@ if __name__ == "__main__":
                'Class Name' : 'Tranche Name',
                'Period Date' : 'Period Date',
                'Balance' : 'Tranche Size',
-               'Principal' : ' Principal Payment',
+               'Principal' : 'Principal Payment',
                'Interest' : 'Interest Payment'
             }, inplace=True)
          # set two indexes
@@ -369,7 +391,7 @@ if __name__ == "__main__":
          
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs)
+         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date)
       # exit loop and display dataframe data in excel graphs
       manual_loan_graphs(output_df)
 
