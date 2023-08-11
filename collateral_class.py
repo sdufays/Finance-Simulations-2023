@@ -62,6 +62,32 @@ class CollateralPortfolio(Loan):
         for lo in self.__storage_portfolio:
             if lo != None and lo.get_loan_id() == loan_id:
                 lo.set_term_length(term)
+    
+    def add_new_loan_MANUAL(self, loan_balance, margin_lower_bound, margin_upper_bound, month,ramp):
+        new_loan_terms = [18, 20, 30]
+        term = new_loan_terms[random.randint(0,2)]
+
+        margin = round(random.uniform(margin_lower_bound,margin_upper_bound), 4) + 0.01
+
+        # make loan id higher than storage portfolio length -> i.e. 26
+        loan_id = len(self.__storage_portfolio) + 1
+        # index will be 20 cuz just removed another loan, where the list goes from [0, 1, ... 20]
+        # same even if active portfolio shrinks
+        if not ramp:
+            index_in_portfolio = len(self.__active_portfolio)
+        else:
+            index_in_portfolio = len(self.__active_portfolio) + 1
+
+        self.add_initial_loan(loan_id, loan_balance, margin, index_floor=0, remaining_loan_term=36, extension_period=12, open_prepayment_period=1, manual_term=0)
+        # sets term length in active portfolio
+        self.__active_portfolio[index_in_portfolio].set_term_length(term)
+        # sets month the loan came to birth
+        self.__active_portfolio[index_in_portfolio].set_starting_month(month)
+        # sets term length in storage portfolio by finding loan by its id
+        # cuz storage portfolio will look like [1,2,..., None (was 21), 22]
+        for lo in self.__storage_portfolio:
+            if lo != None and lo.get_loan_id() == loan_id:
+                lo.set_term_length(term)
 
     def update_loan_cashflow(self, monthly_amount):
         self.__loan_cashflow.append(monthly_amount)

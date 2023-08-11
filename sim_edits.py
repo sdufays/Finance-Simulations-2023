@@ -41,6 +41,10 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     longest_duration = 70
     original_months_passed = months_passed
 
+    # have to read these in from excel
+    margin_lower = 0.035
+    margin_upper = 0.045
+
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
 
@@ -113,7 +117,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       if months_passed == 1:
          extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
          if extra_balance > 0:
-            loan_portfolio.add_new_loan(extra_balance, margin, months_passed, ramp = True )
+            loan_portfolio.add_new_loan_MANUAL(extra_balance, margin_lower, margin_upper, months_passed, ramp = True )
       
       # START LOANS LOOP
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
@@ -153,17 +157,17 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
             replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
             if reinvestment_bool:
-               loan_portfolio.add_new_loan(beginning_bal, margin, months_passed, ramp=False)
+               loan_portfolio.add_new_loan_manual(beginning_bal, margin_lower, margin_upper, months_passed, ramp=False)
             elif replenishment_bool:
                loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
-               loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
+               loan_portfolio.add_new_loan_MANUAL(loan_value, margin_lower, margin_upper, months_passed, ramp=False)
                replen_cumulative += loan_value
                remaining_subtract = beginning_bal - loan_value
                if remaining_subtract > 0:
                   loan_waterfall(remaining_subtract, clo.get_tranches())
             elif replen_after_reinv_bool:
                loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
-               loan_portfolio.add_new_loan(loan_value, margin, months_passed, ramp=False)
+               loan_portfolio.add_new_loan_MANUAL(loan_value,  margin_lower, margin_upper, months_passed, ramp=False)
                replen_cumulative += loan_value
                remaining_subtract = beginning_bal - loan_value
                # increment replen_months only once in a month
