@@ -10,6 +10,7 @@ class CollateralPortfolio(Loan):
         self.__storage_portfolio = [] # [loan1, loan2, None, loan4, ... loan31...]
         self.__initial_deal_size = 0
         self.__market_spread = market_spread
+        self.__loan_cashflow = []
     
     def get_market_spread(self):
         return self.__market_spread
@@ -67,7 +68,7 @@ class CollateralPortfolio(Loan):
         new_loan_terms = [18, 20, 30]
         term = new_loan_terms[random.randint(0,2)]
 
-        margin = round(random.uniform(margin_lower_bound,margin_upper_bound), 4) + 0.01
+        margin = round(random.uniform(margin_lower_bound,margin_upper_bound), 4)
 
         # make loan id higher than storage portfolio length -> i.e. 26
         loan_id = len(self.__storage_portfolio) + 1
