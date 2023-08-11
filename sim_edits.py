@@ -127,6 +127,8 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
         loan_df = loan_df.reindex(loan_index)
         # fill nan values in df with 0
         loan_df = loan_df.fillna(0)
+        tranche_df = tranche_df.fillna(0)
+
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
@@ -386,9 +388,10 @@ if __name__ == "__main__":
                                                 index_floor=1, # what is this
                                                 # need to actually calculate remaining loan terms
                                                 remaining_loan_term=df_cp.at[loan_num, 'Loan Term'] - mos_passed, 
-                                                extension_period=0, 
+                                                extension_period=0, # don't need these periods anymore
                                                 open_prepayment_period=0, 
                                                 manual_term=0)
+            # set term length instead of calculating it
             loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term'])
          
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
