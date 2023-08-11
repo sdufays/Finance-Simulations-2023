@@ -37,13 +37,9 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- #
-def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date):
+def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 70
     original_months_passed = months_passed
-
-    # have to read these in from excel
-    margin_lower = 0.035
-    margin_upper = 0.045
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
@@ -284,6 +280,8 @@ if __name__ == "__main__":
     replenishment_period = df_os.iloc[6,1]
     replenishment_amount = df_os.iloc[7,1]
     has_existing_data = df_os.iloc[10,1]
+    generic_spread_upper = df_os.iloc[11,1]
+    generic_spread_lower = df_os.iloc[12,1]
   
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
@@ -297,7 +295,7 @@ if __name__ == "__main__":
     modeling = df_uc.iloc[6, 1]
     misc = df_uc.iloc[7, 1]
 
- # ------------------------ READ EXCEL: OBJECT DATA ------------------------ #
+   # ------------------------ READ EXCEL: OBJECT DATA ------------------------ #
     ramp_up = df_os.iloc[0, 1]
 
     # read excel file for capital stack
@@ -306,22 +304,22 @@ if __name__ == "__main__":
     # read excel file for loans
     df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
-# ------------------------ READ EXCEL: EXISTING DATA ------------------------ #
+      # ------------------------ READ EXCEL: EXISTING DATA ------------------------ #
 
-# pseudocode 
+      # pseudocode 
 
-# read sheet with existing tranche data 
-# calculate months_passed / current_month 
-# store all data to dataframe (tranche balance, tranche principal / interest)
-# populate loan dataframe
-   # get month 0 data from portfolio
-   # run regular loan calculations 
-   # calculate which loans have paid off and delete them from the active portfolio 
-   # calculate loan interest 
-   # check if any new loans have been added 
-# store existing clo cashflows 
+      # read sheet with existing tranche data 
+      # calculate months_passed / current_month 
+      # store all data to dataframe (tranche balance, tranche principal / interest)
+      # populate loan dataframe
+         # get month 0 data from portfolio
+         # run regular loan calculations 
+         # calculate which loans have paid off and delete them from the active portfolio 
+         # calculate loan interest 
+         # check if any new loans have been added 
+      # store existing clo cashflows 
 
-# run the simulation starting with x months_passed 
+      # run the simulation starting with x months_passed 
 
     # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
     if has_existing_data:
@@ -395,7 +393,7 @@ if __name__ == "__main__":
          
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date)
+         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
       # exit loop and display dataframe data in excel graphs
       manual_loan_graphs(output_df)
 
