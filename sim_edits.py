@@ -302,29 +302,14 @@ if __name__ == "__main__":
 
     # read excel file for capital stack
     df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
+    df_orig_cs = pd.read_excel(excel_file_path, sheet_name = "Original Capital Stack")
+
 
     # read excel file for loans
     df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
-      # ------------------------ READ EXCEL: EXISTING DATA ------------------------ #
-
-      # pseudocode 
-
-      # read sheet with existing tranche data 
-      # calculate months_passed / current_month 
-      # store all data to dataframe (tranche balance, tranche principal / interest)
-      # populate loan dataframe
-         # get month 0 data from portfolio
-         # run regular loan calculations 
-         # calculate which loans have paid off and delete them from the active portfolio 
-         # calculate loan interest 
-         # check if any new loans have been added 
-      # store existing clo cashflows 
-
-      # run the simulation starting with x months_passed 
-
     # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
-    if has_existing_data:
+    if has_existing_data: # unneccessary, get rid of all useless variables in other specs later 
       for run in range(NUM_TRIALS):
          # initialize objects (must redo every run)
          clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
@@ -346,10 +331,9 @@ if __name__ == "__main__":
          # sort the index for better formatting
          df_cs.sort_index(inplace=True)
 
-         print(df_cs)
+         #print(df_cs)
 
          # get CLO start date and current date
-         # lol we actually don't need these two here
          start_date = df_cs.loc['A', :].index[0]
          current_date = df_cs.loc['A', :].index[-1]
          mos_passed = df_cs.index.get_level_values(1).nunique()
@@ -362,6 +346,8 @@ if __name__ == "__main__":
             # get data for each tranche based on name
             tranche_data = df_cs.loc[tranche_name]
             last_row = tranche_data.iloc[-1] # most recent values
+            offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
+            print(offered)
 
             clo_obj.add_tranche(name=tranche_name,
                                  rating="n/a",
