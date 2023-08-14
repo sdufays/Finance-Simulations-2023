@@ -185,7 +185,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
       
-      print(tranche_df)
+      #print(tranche_df)
 
       # calculate and append this month's clo cashflow
       clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next) 
@@ -376,16 +376,17 @@ if __name__ == "__main__":
          loan_portfolio_obj = CollateralPortfolio(0)
 
          # ---------------- READ EXCEL FOR LOANS -------------------
-         # drop unneeded column
+         # drop unneeded columns
          df_cp.drop(columns=['Loan Name'], inplace=True)
-         #print(df_cp)
+         df_cp.drop(columns=['Market Repo Spread'], inplace=True)
+         df_cp.drop(columns=['Market Repo Adv Rate'], inplace=True)
 
          # adds all remaining loans to the loan portfolio
          for loan_num in range(df_cp.shape[0]):
             loan_portfolio_obj.add_initial_loan(loan_id=loan_num + 1, 
                                                 loan_balance=df_cp.at[loan_num, 'Collateral Balance'], 
-                                                margin=df_cp.at[loan_num, 'Market Repo Spread'], 
-                                                index_floor=1, # what is this
+                                                margin=df_cp.at[loan_num, 'Spread'], 
+                                                index_floor=df_cp.at[loan_num, 'Index Floor'],
                                                 # need to actually calculate remaining loan terms
                                                 remaining_loan_term=df_cp.at[loan_num, 'Loan Term'] - mos_passed, 
                                                 extension_period=0, # don't need these periods anymore
