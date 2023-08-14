@@ -347,17 +347,15 @@ if __name__ == "__main__":
             tranche_data = df_cs.loc[tranche_name]
             last_row = tranche_data.iloc[-1] # most recent values
             offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
-            print(offered)
-
             clo_obj.add_tranche(name=tranche_name,
                                  rating="n/a",
-                                 offered=1, # we don't know which are offered sigh
+                                 offered=offered, 
                                  size=last_row["Tranche Size"],
                                  spread=0.05,
                                  price=99)
          # prints out the tranches
-         #for tranche in clo_obj.get_all_tranches():
-         #   print(tranche)
+         for tranche in clo_obj.get_all_tranches():
+            print(tranche)
 
          loan_portfolio_obj = CollateralPortfolio(0)
 
@@ -366,6 +364,7 @@ if __name__ == "__main__":
          df_cp.drop(columns=['Loan Name'], inplace=True)
          df_cp.drop(columns=['Market Repo Spread'], inplace=True)
          df_cp.drop(columns=['Market Repo Adv Rate'], inplace=True)
+
 
          # adds all remaining loans to the loan portfolio
          for loan_num in range(df_cp.shape[0]):
