@@ -60,7 +60,7 @@ class Tranche:
         else:
             return 0
         
-    # save cash flow list functions (PREF tranche only)
+    # save cash flow list functions
     def init_tranche_cashflow_list(self, cashflow_list):
         self.__cashflow_list = cashflow_list
 

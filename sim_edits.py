@@ -60,8 +60,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
 
     # ------------------------ CREATE TRANCHE DATAFRAME ------------------------ #
     # SAVE CASH FLOWS
-    # saves a list of single tranche cashflows to the last tranche (the PREF tranche)
-    clo.get_tranches()[-1].init_tranche_cashflow_list(old_tranche_df.loc[tranche.get_name(), "Total Cashflow"].tolist())
+    # saves a list of single tranche cashflows to all tranches
+    for tranche in clo.get_tranches():
+      tranche.init_tranche_cashflow_list(old_tranche_df.loc[tranche.get_name(), "Total Cashflow"].tolist())
     # sums cash flows for all other tranches
     monthly_cashflow_sums = old_tranche_df.groupby(level=1).sum()
     cashflow_list = monthly_cashflow_sums['Total Cashflow'].tolist()

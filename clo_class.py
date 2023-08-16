@@ -133,8 +133,7 @@ class CLO(Tranche):
                     principal_sum += tranche_subtraction_amount
                 tranche_interest = tranche.tranche_interest(num_days, sofr_value, dataframe, month)
                 interest_sum += tranche_interest
-                if tranche.get_name() == self.get_tranches()[-1].get_name(): # if tranche is PREF tranche
-                    tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
+                tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
             self.__total_cashflows.append(interest_sum + principal_sum)
 
     def current_clo_size(self,dataframe, month):
