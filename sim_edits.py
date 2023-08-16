@@ -72,13 +72,14 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
     
+
     # SAVE FIRST LINE
     for tranche in clo.get_tranches():
        tranche_df.loc[(tranche.get_name(), months_passed), 'Tranche Size'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Tranche Size']
        tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
        tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
     
-    print(tranche_df)
+    print(tranche_df.head(longest_duration-months_passed))
     
     # initial collateral portfolio variables
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
@@ -347,12 +348,14 @@ if __name__ == "__main__":
             tranche_data = df_cs.loc[tranche_name]
             last_row = tranche_data.iloc[-1] # most recent values
             offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
+            spread = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Spread (bps)'].iloc[0]
+            price = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Price'].iloc[0]
             clo_obj.add_tranche(name=tranche_name,
                                  rating="n/a",
                                  offered=offered, 
                                  size=last_row["Tranche Size"],
-                                 spread=0.05,
-                                 price=99)
+                                 spread=spread / 10000, # cuz in bps
+                                 price=price)
          # prints out the tranches
          for tranche in clo_obj.get_all_tranches():
             print(tranche)

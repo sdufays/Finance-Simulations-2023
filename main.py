@@ -256,7 +256,7 @@ if __name__ == "__main__":
     excel_file_path = "Argentic CLO Case A Input.xlsm"
     excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
-    NUM_TRIALS = 100
+    NUM_TRIALS = 1
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
@@ -333,7 +333,7 @@ if __name__ == "__main__":
             loan_portfolio_obj.add_initial_loan(loan_data[0], loan_data[1], loan_data[2], loan_data[3], loan_data[4], loan_data[5], loan_data[6], 0)
 
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
-         
+
          output_df = run_simulation("market aware", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
        # exit loop and display dataframe data in excel graphs
        market_aware_graphs(output_df, excel_file_name)
