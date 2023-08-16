@@ -285,6 +285,7 @@ if __name__ == "__main__":
     has_existing_data = df_os.iloc[10,1]
     generic_spread_upper = df_os.iloc[11,1]
     generic_spread_lower = df_os.iloc[12,1]
+    tranche_p_balance = df_os.iloc[13,1]
   
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
