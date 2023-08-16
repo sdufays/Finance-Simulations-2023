@@ -60,6 +60,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
 
     # ------------------------ CREATE TRANCHE DATAFRAME ------------------------ #
     # SAVE CASH FLOWS
+    # saves a list of single tranche cashflows to the last tranche (the PREF tranche)
+    clo.get_tranches()[-1].init_tranche_cashflow_list(old_tranche_df.loc[tranche.get_name(), "Total Cashflow"].tolist())
+    # sums cash flows for all other tranches
     monthly_cashflow_sums = old_tranche_df.groupby(level=1).sum()
     cashflow_list = monthly_cashflow_sums['Total Cashflow'].tolist()
     clo.set_total_cashflows_MANUAL(cashflow_list)
@@ -67,7 +70,6 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     # CREATE TRANCHE DF
     tranche_names = []
     for tranche in clo.get_tranches():
-       if tranche.get_offered() == 1:
         tranche_names.append(tranche.get_name())
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
@@ -79,11 +81,10 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
        tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
        tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
     
-    print(tranche_df.head(longest_duration-months_passed))
+    print(tranche_df.tail(longest_duration-months_passed))
     
     # initial collateral portfolio variables
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
-    margin = loan_portfolio.generate_initial_margin()
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
@@ -97,9 +98,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
         wa_spread += loan.get_margin()
     wa_spread /= len(loan_portfolio.get_active_portfolio()) # THIS IS WRONG NOW, need original portfolio
 
-    # removing unsold tranches so they don't get in the way
-    # unsure if we want this lol, but we still have the full stack saved in .get_all_tranches()
-    clo.remove_unsold_tranches()
+    # NOT REMOVING UNSOLD TRANCHES CUZ TAX CALCULATIONS REQUIRE ALL OF THEM
 
     # we're now in the 47th month
     months_passed += 1
@@ -357,8 +356,8 @@ if __name__ == "__main__":
                                  spread=spread / 10000, # cuz in bps
                                  price=price)
          # prints out the tranches
-         for tranche in clo_obj.get_all_tranches():
-            print(tranche)
+         #for tranche in clo_obj.get_all_tranches():
+         #   print(tranche)
 
          loan_portfolio_obj = CollateralPortfolio(0)
 

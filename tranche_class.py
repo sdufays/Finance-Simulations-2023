@@ -60,5 +60,15 @@ class Tranche:
         else:
             return 0
         
+    # save cash flow list functions (PREF tranche only)
+    def init_tranche_cashflow_list(self, cashflow_list):
+        self.__cashflow_list = cashflow_list
+
+    def add_tranche_cashflow_value(self, cashflow_value):
+        self.__cashflow_list.append(cashflow_value)
+    
+    def get_tranche_cashflow_list(self):
+        return self.__cashflow_list
+        
     def __str__(self):
         return "Name: {}\nRating: {}\nSize: {:,.2f}\nSpread: {}\nOffered: {}\nPrice: {:.2f}\nBalance List: {}\nPrincipal Dictionary: {}".format(self.get_name(), self.get_rating(), self.get_size(), self.get_spread(), self.get_offered(),self.get_price(), self.get_bal_list(), self.get_principal_dict())
