@@ -303,7 +303,7 @@ if __name__ == "__main__":
     ramp_up = df_os.iloc[0, 1]
 
     # read excel file for capital stack
-    df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack")
+    df_cs = pd.read_excel(excel_file_path, sheet_name = "Capital Stack for Tax Calc")
     df_orig_cs = pd.read_excel(excel_file_path, sheet_name = "Original Capital Stack")
 
 
@@ -348,9 +348,15 @@ if __name__ == "__main__":
             # get data for each tranche based on name
             tranche_data = df_cs.loc[tranche_name]
             last_row = tranche_data.iloc[-1] # most recent values
-            offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
-            spread = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Spread (bps)'].iloc[0]
-            price = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Price'].iloc[0]
+            
+            if tranche_name in df_orig_cs['Name'].tolist():
+               offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
+               spread = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Spread (bps)'].iloc[0]
+               price = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Price'].iloc[0]
+            else: # for PREF vs P and R
+               offered = 0
+               spread = 0 # not sure if they have spread?
+               price = 0 # don't have price cuz it's not sold
             clo_obj.add_tranche(name=tranche_name,
                                  rating="n/a",
                                  offered=offered, 
