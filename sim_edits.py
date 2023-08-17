@@ -133,7 +133,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
-        principal_pay = loan.principal_paydown(months_passed, loan_df) # WRONG RN i haven't edited it
+        principal_pay = loan.principal_paydown(months_passed, loan_df) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days) # WRONG RN cuz we don't have index floor
@@ -221,7 +221,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranchedata.xlsx', index=True)
+    tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
@@ -383,6 +383,9 @@ if __name__ == "__main__":
                                                 manual_term=0)
             # set term length instead of calculating it
             loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term'])
+            # SET THE STARTING MONTHS FOR EACH LOAN HERE FOR EASIER CALCULATION OF WHEN THEY PAY OFF
+            loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(INSERT_STARTING_MONTH_HERE)
+
          
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
