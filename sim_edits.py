@@ -5,6 +5,7 @@ import pandas as pd
 import numpy_financial as npf
 import numpy as np
 from collections import Counter
+# HTFRWEOUGURHTUR
 
 # ------------------- GET NUM DAYS IN MONTH -------------------- #
 def get_date_array(date):
@@ -36,7 +37,7 @@ def loan_waterfall(subtract_value, tranches):
     if subtract_value > 0:
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
-# ------------------- SIMULATION FUNCTION -------------------- #
+# ------------------- SIMULATION FUNCTION -------------------- # 
 def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 70
     original_months_passed = months_passed
