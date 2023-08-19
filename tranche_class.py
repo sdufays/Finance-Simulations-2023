@@ -21,6 +21,10 @@ class Tranche:
         for i in range(0, total_months):
             self.__principal_dict[i] = []
     
+    def init_principal_dict_MANUAL(self, start_month, total_months):
+        for i in range(start_month, total_months):
+            self.__principal_dict[i] = []
+
     def save_balance(self, dataframe, month):
         self.__bal_list.append(self.get_size())
         dataframe.loc[(self.get_name(), month), 'Tranche Size'] = self.get_size()

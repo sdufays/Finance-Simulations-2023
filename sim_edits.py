@@ -5,7 +5,6 @@ import pandas as pd
 import numpy_financial as npf
 import numpy as np
 from collections import Counter
-# HTFRWEOUGURHTUR
 
 # ------------------- GET NUM DAYS IN MONTH -------------------- #
 def get_date_array(date):
@@ -39,7 +38,7 @@ def loan_waterfall(subtract_value, tranches):
 
 # ------------------- SIMULATION FUNCTION -------------------- # 
 def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
-    longest_duration = 70
+    longest_duration = 100
     original_months_passed = months_passed
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
@@ -48,7 +47,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # initial CLO variables
     initial_clo_tob = clo.get_tob()
     for tranche in clo.get_tranches():
-       tranche.init_principal_dict(longest_duration)
+       # 
+       tranche.init_principal_dict(months_passed, longest_duration)
 
     # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # generate loan ids
@@ -289,7 +289,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 if __name__ == "__main__":
    # ------------------------ PRESET INFO ------------------------ #
     excel_file_path = "FL1_Setup_InternalMethod.xlsx"
-    NUM_TRIALS = 3
+    NUM_TRIALS = 1
     trial_numbers = range(0, NUM_TRIALS)
     columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
     ma_output_df = pd.DataFrame(index=trial_numbers, columns=columns)
@@ -339,89 +339,88 @@ if __name__ == "__main__":
     # read excel file for loans
     df_cp = pd.read_excel(excel_file_path, sheet_name = "Collateral Portfolio")
 
-    # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
-    if has_existing_data: # unneccessary, get rid of all useless variables in other specs later 
-      for run in range(NUM_TRIALS):
-         # initialize objects (must redo every run)
-         clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
+   # ------------------------ RUN SIMULATION IN LOOP ------------------------ #
+    for run in range(NUM_TRIALS):
+      # initialize objects (must redo every run)
+      clo_obj = CLO(ramp_up, has_reinvestment, has_replenishment, reinvestment_period, replenishment_period, replenishment_amount, first_payment_date)
 
-         pd.options.display.float_format = '{:,.2f}'.format
+      pd.options.display.float_format = '{:,.2f}'.format
 
-         # ------------- READ EXCEL FOR TRANCHES -----------------
-         # delete unused column
-         df_cs.drop(columns=['Payment Date'], inplace=True)
-         df_cs.rename(columns={
-               'Class Name' : 'Tranche Name',
-               'Period Date' : 'Period Date',
-               'Balance' : 'Tranche Size',
-               'Principal' : 'Principal Payment',
-               'Interest' : 'Interest Payment'
-            }, inplace=True)
-         # set two indexes
-         df_cs.set_index(['Tranche Name', 'Period Date'], inplace=True)
-         # sort the index for better formatting
-         df_cs.sort_index(inplace=True)
+      # ------------- READ EXCEL FOR TRANCHES -----------------
+      # delete unused column
+      df_cs.drop(columns=['Payment Date'], inplace=True)
+      df_cs.rename(columns={
+            'Class Name' : 'Tranche Name',
+            'Period Date' : 'Period Date',
+            'Balance' : 'Tranche Size',
+            'Principal' : 'Principal Payment',
+            'Interest' : 'Interest Payment'
+         }, inplace=True)
+      # set two indexes
+      df_cs.set_index(['Tranche Name', 'Period Date'], inplace=True)
+      # sort the index for better formatting
+      df_cs.sort_index(inplace=True)
 
-         #print(df_cs)
+      #print(df_cs)
 
-         # get CLO start date and current date
-         start_date = df_cs.loc['A', :].index[0]
-         current_date = df_cs.loc['A', :].index[-1]
-         mos_passed = df_cs.index.get_level_values(1).nunique()
-         aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Tranche Size']
-         #print(aaa_threshold)
+      # get CLO start date and current date
+      start_date = df_cs.loc['A', :].index[0]
+      current_date = df_cs.loc['A', :].index[-1]
+      mos_passed = df_cs.index.get_level_values(1).nunique()
+      print(mos_passed)
+      aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Tranche Size']
 
-         # extract tranche names
-         unique_tranche_names = df_cs.index.get_level_values('Tranche Name').unique()
-         for tranche_name in unique_tranche_names:
-            # get data for each tranche based on name
-            tranche_data = df_cs.loc[tranche_name]
-            last_row = tranche_data.iloc[-1] # most recent values
-            
-            if tranche_name in df_orig_cs['Name'].tolist():
-               offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
-               spread = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Spread (bps)'].iloc[0]
-               price = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Price'].iloc[0]
-            else: # for PREF vs P and R
-               offered = 0
-               spread = 0 # not sure if they have spread?
-               price = 0 # don't have price cuz it's not sold
-            clo_obj.add_tranche(name=tranche_name,
-                                 rating="n/a",
-                                 offered=offered, 
-                                 size=last_row["Tranche Size"],
-                                 spread=spread / 10000, # cuz in bps
-                                 price=price)
-         # prints out the tranches
-         #for tranche in clo_obj.get_all_tranches():
-         #   print(tranche)
-
-         loan_portfolio_obj = CollateralPortfolio(0)
-
-         # ---------------- READ EXCEL FOR LOANS -------------------
-         # drop unneeded columns
-         df_cp.drop(columns=['Loan Name'], inplace=True)
-         df_cp.drop(columns=['Market Repo Spread'], inplace=True)
-         df_cp.drop(columns=['Market Repo Adv Rate'], inplace=True)
-
-
-         # adds all remaining loans to the loan portfolio
-         for loan_num in range(df_cp.shape[0]):
-            loan_portfolio_obj.add_initial_loan(loan_id=loan_num + 1, 
-                                                loan_balance=df_cp.at[loan_num, 'Collateral Balance'], 
-                                                margin=df_cp.at[loan_num, 'Spread'], 
-                                                index_floor=df_cp.at[loan_num, 'Index Floor'],
-                                                # need to actually calculate remaining loan terms
-                                                remaining_loan_term=df_cp.at[loan_num, 'Loan Term'] - mos_passed, 
-                                                extension_period=0, # don't need these periods anymore
-                                                open_prepayment_period=0, 
-                                                manual_term=0)
-            # set term length instead of calculating it
-            loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term'])
-            # SET THE STARTING MONTHS FOR EACH LOAN HERE FOR EASIER CALCULATION OF WHEN THEY PAY OFF
-            loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(starting_mos)
-
+      # extract tranche names
+      unique_tranche_names = df_cs.index.get_level_values('Tranche Name').unique()
+      for tranche_name in unique_tranche_names:
+         # get data for each tranche based on name
+         tranche_data = df_cs.loc[tranche_name]
+         last_row = tranche_data.iloc[-1] # most recent values
          
+         if tranche_name in df_orig_cs['Name'].tolist():
+            offered = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Offered'].iloc[0]
+            spread = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Spread (bps)'].iloc[0]
+            price = df_orig_cs.loc[df_orig_cs['Name'].str.upper() == tranche_name.upper(), 'Price'].iloc[0]
+         else: # for PREF vs P and R
+            offered = 0
+            spread = 0 # not sure if they have spread?
+            price = 0 # don't have price cuz it's not sold
+         clo_obj.add_tranche(name=tranche_name,
+                              rating="n/a",
+                              offered=offered, 
+                              size=last_row["Tranche Size"],
+                              spread=spread / 10000, # cuz in bps
+                              price=price)
+      # prints out the tranches
+      #for tranche in clo_obj.get_all_tranches():
+      #   print(tranche)
+
+      loan_portfolio_obj = CollateralPortfolio(0)
+
+      # ---------------- READ EXCEL FOR LOANS -------------------
+      # drop unneeded columns
+      df_cp.drop(columns=['Loan Name'], inplace=True)
+      df_cp.drop(columns=['Market Repo Spread'], inplace=True)
+      df_cp.drop(columns=['Market Repo Adv Rate'], inplace=True)
+
+
+      # adds all remaining loans to the loan portfolio
+      for loan_num in range(df_cp.shape[0]):
+         loan_portfolio_obj.add_initial_loan(loan_id=loan_num + 1, 
+                                             loan_balance=df_cp.at[loan_num, 'Collateral Balance'], 
+                                             margin=df_cp.at[loan_num, 'Spread'], 
+                                             index_floor=df_cp.at[loan_num, 'Index Floor'],
+                                             # need to actually calculate remaining loan terms
+                                             remaining_loan_term=df_cp.at[loan_num, 'Loan Term'] - mos_passed, 
+                                             extension_period=0, # don't need these periods anymore
+                                             open_prepayment_period=0, 
+                                             manual_term=0)
+         # set term length instead of calculating it
+         loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term'])
+         # SET THE STARTING MONTHS FOR EACH LOAN HERE FOR EASIER CALCULATION OF WHEN THEY PAY OFF
+         loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(starting_mos)
+
+      
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
          output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
