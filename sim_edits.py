@@ -227,6 +227,22 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     #print(pd.DataFrame(cashflow_data))
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
+    # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
+    if current_month in [1,2,3]: # q1
+      # calculate sum of mo 1-3 and apply it on month 2 (cuz we have to pay tax before quarter is over)
+    elif current_month in [4,5,6]: # q2
+    elif current_month in [6,7,8]: # q3
+    else: # q4
+   
+    # MONTHLY TAX CALCULATIONS (pseudocode/plan)
+    for mo in range(deal_call_month):
+      discount_rate_R = np.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
+      tax_expense_accrual_R = np.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
+      # net taxable income = collateral interest amount - sum of tranche interest expenses (besides R tranche) - tax_expense_accrual_R
+
+      
+
+       
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
