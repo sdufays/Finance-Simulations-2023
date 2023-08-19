@@ -86,6 +86,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     print(tranche_df.tail(longest_duration-months_passed))
     
     # initial collateral portfolio variables
+    # WE DONT HAVE INITIAL DEAL SIZE
     loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     replen_months = 0
     replen_cumulative = 0
@@ -262,6 +263,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # PROJECTED EQUITY YIELD
     # equity net spread
+    ##### NOW DONT HAVE INITIAL DEAL SIZE
     collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
     clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
     net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
