@@ -136,6 +136,33 @@ class CLO(Tranche):
                 tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
             self.__total_cashflows.append(interest_sum + principal_sum)
 
+    def append_cashflow_MANUAL(self, month, upfront_cost, num_days, sofr_value, dataframe, termin_next, orig_mo):
+        if month == 0: # should return a negative number
+            self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
+            # stores month 0 tranche interest value in df
+            for tranche in self.get_tranches():
+                tranche.tranche_interest(num_days, sofr_value, dataframe, month)
+        else:
+            interest_sum = 0
+            principal_sum = 0
+            for tranche in self.get_tranches():
+                if month == 0:
+                    tranche_subtraction_amount = 0
+                elif termin_next:
+                    tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
+                    dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
+                    principal_sum += tranche_subtraction_amount
+                elif month == orig_mo + 1:
+                    hi = "oh my god how do we do this"
+                else:
+                    tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size'] - dataframe.loc[(tranche.get_name(), month), 'Tranche Size'] or 0
+                    dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
+                    principal_sum += tranche_subtraction_amount
+                tranche_interest = tranche.tranche_interest(num_days, sofr_value, dataframe, month)
+                interest_sum += tranche_interest
+                tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
+            self.__total_cashflows.append(interest_sum + principal_sum)
+
     def current_clo_size(self,dataframe, month):
         tranche_sum = 0
         for tranche in self.get_tranches():

@@ -189,7 +189,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       #print(tranche_df)
 
       # calculate and append this month's clo cashflow
-      clo.append_cashflow(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next) 
+      clo.append_cashflow_MANUAL(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next, original_months_passed) 
 
       #calculate and appednd this month's loan cashflow 
       total_principal_paydown = loan_df.loc[(slice(None), months_passed), 'Principal Paydown'].sum()
