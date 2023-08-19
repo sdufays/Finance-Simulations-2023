@@ -37,7 +37,7 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- #
-def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
+def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 70
     original_months_passed = months_passed
 
@@ -71,6 +71,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     # CREATE TRANCHE DF
     tranche_names = []
     for tranche in clo.get_tranches():
+       if tranche.get_offered() == 1:
         tranche_names.append(tranche.get_name())
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
