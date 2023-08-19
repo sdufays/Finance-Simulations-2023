@@ -367,7 +367,6 @@ if __name__ == "__main__":
       start_date = df_cs.loc['A', :].index[0]
       current_date = df_cs.loc['A', :].index[-1]
       mos_passed = df_cs.index.get_level_values(1).nunique()
-      print(mos_passed)
       aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Tranche Size']
 
       # extract tranche names
@@ -385,6 +384,7 @@ if __name__ == "__main__":
             offered = 0
             spread = 0 # not sure if they have spread?
             price = 0 # don't have price cuz it's not sold
+         # populating the clo / tranche classes
          clo_obj.add_tranche(name=tranche_name,
                               rating="n/a",
                               offered=offered, 
@@ -395,6 +395,7 @@ if __name__ == "__main__":
       #for tranche in clo_obj.get_all_tranches():
       #   print(tranche)
 
+      # we're not using markeket aware so it's 0
       loan_portfolio_obj = CollateralPortfolio(0)
 
       # ---------------- READ EXCEL FOR LOANS -------------------
@@ -416,7 +417,7 @@ if __name__ == "__main__":
                                              open_prepayment_period=0, 
                                              manual_term=0)
          # set term length instead of calculating it
-         loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term'])
+         loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term']) 
          # SET THE STARTING MONTHS FOR EACH LOAN HERE FOR EASIER CALCULATION OF WHEN THEY PAY OFF
          loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(starting_mos)
 
