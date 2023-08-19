@@ -179,6 +179,9 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
                loan_waterfall(beginning_bal, clo.get_tranches())
         else: # if no principal paydown value, just move on
                portfolio_index += 1
+        
+        # update remaining term length
+        loan.set_term_length(loan.get_term_length() - 1)
 
       # INNER (LOANS) LOOP ENDS
 
@@ -208,6 +211,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       # check if AAA is below threshold -> if so, signal to terminate
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
+         
 
       # increment months
       months_passed += 1
@@ -244,9 +248,12 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       monthly_taxable_income[mo] = net_taxable_income
 
       # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
+      # VERY UNSURE ABOUT THIS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
-         # calculate sum of currentmonth-2, currentmonth-1, and currentmonth net taxable income and apply it on currentmonth-1
-       
+         # calculate sum of month-2, month-1, and month net taxable income and "apply"?? it on month-1
+         quarterly_taxable_income = monthly_taxable_income[mo-2] + monthly_taxable_income[mo-1] + monthly_taxable_income[mo]
+         # what does step three mean sigh
+   
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
     
@@ -410,7 +417,7 @@ if __name__ == "__main__":
             # set term length instead of calculating it
             loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term'])
             # SET THE STARTING MONTHS FOR EACH LOAN HERE FOR EASIER CALCULATION OF WHEN THEY PAY OFF
-            loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(INSERT_STARTING_MONTH_HERE)
+            loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(starting_mos)
 
          
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
