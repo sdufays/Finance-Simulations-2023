@@ -40,6 +40,7 @@ def loan_waterfall(subtract_value, tranches):
 def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 100
     original_months_passed = months_passed
+    print(original_months_passed)
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
@@ -105,6 +106,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # we're now in the 47th month
     months_passed += 1
+    # need to update remaining loan term
 
     # --------------------------------- START MONTH LOOP -------------------------------------- #
     while months_passed in range(longest_duration):
@@ -131,7 +133,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         # GET CALCULATIONS
         #print("MONTHS PASSED " + str(months_passed))
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
-        principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
+        principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days) # WRONG RN cuz we don't have index floor
