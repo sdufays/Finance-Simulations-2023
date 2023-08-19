@@ -36,6 +36,9 @@ class Loan:
     def get_remaining_loan_term(self):
         return self.__remaining_loan_term
 
+    def update_remaining_loan_term(self):
+        self.__remaining_loan_term -= 1
+
     def get_extension_period(self):
         return self.__extension_period
 
@@ -80,7 +83,7 @@ class Loan:
             return 0
         
     def principal_paydown_MANUAL(self, month, loan_data):
-        if self.get_term_length() == 0:
+        if self.get_remaining_loan_term() == 0:
             # ending/beginning balance is same
             return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']
         else:

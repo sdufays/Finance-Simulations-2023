@@ -183,7 +183,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                portfolio_index += 1
         
         # update remaining term length
-        loan.set_term_length(loan.get_term_length() - 1)
+        loan.update_remaining_loan_term()
 
       # INNER (LOANS) LOOP ENDS
 
