@@ -235,7 +235,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     # MONTHLY TAX CALCULATIONS (pseudocode/plan)
     # yes it is weird that we do another loop here but it's 
     # because we need to know deal call month already in order to calculate these values
-    for mo in range(deal_call_month):
+    for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
       collateral_interest_amt = # sum of interest rates of all tranches (A-R) from starting_month to mo
       interest_expense_sum = 0
