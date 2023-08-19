@@ -133,7 +133,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
-        principal_pay = loan.principal_paydown(months_passed, loan_df) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
+        principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days) # WRONG RN cuz we don't have index floor
