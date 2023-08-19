@@ -47,8 +47,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # initial CLO variables
     initial_clo_tob = clo.get_tob()
     for tranche in clo.get_tranches():
-       # 
-       tranche.init_principal_dict(months_passed, longest_duration)
+       tranche.init_principal_dict_MANUAL(months_passed, longest_duration)
 
     # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # generate loan ids
@@ -418,13 +417,10 @@ if __name__ == "__main__":
                                              manual_term=0)
          # set term length instead of calculating it
          loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term']) 
-         # SET THE STARTING MONTHS FOR EACH LOAN HERE FOR EASIER CALCULATION OF WHEN THEY PAY OFF
-         loan_portfolio_obj.get_active_portfolio()[loan_num].set_starting_month(starting_mos)
-
       
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation("manual terms", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
+         output_df = run_simulation(ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
       # exit loop and display dataframe data in excel graphs
       manual_loan_graphs(output_df)
 
