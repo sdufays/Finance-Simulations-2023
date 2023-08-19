@@ -68,12 +68,6 @@ class Loan:
         else:
             return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
 
-    def beginning_balance_MANUAL(self, month, loan_data, original_mos_passed):
-        if month == original_mos_passed:
-            return self.get_loan_balance()
-        else:
-            return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
-        
     # month = months passed
     def principal_paydown(self, month, loan_data):
         if month == self.get_term_length() + self.get_starting_month():
@@ -82,13 +76,6 @@ class Loan:
         else:
             return 0
         
-    def principal_paydown_MANUAL(self, month, loan_data):
-        if self.get_remaining_loan_term() == 0:
-            # ending/beginning balance is same
-            return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']
-        else:
-            return 0
-
     # at the end, beginning - paydown = 0 cuz no partial paydown
     def ending_balance(self, beginning_balance, principal_paydown):
         # update balance
@@ -103,3 +90,27 @@ class Loan:
     # index value is SOFR
     def interest_income(self, beginning_balance, INDEX_VALUE, num_days):
         return beginning_balance * (self.get_margin() + max(self.get_index_floor(), INDEX_VALUE)) * num_days / 360
+    
+ # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
+
+    def beginning_balance_MANUAL(self, month, loan_data, original_mos_passed):
+        if month == (original_mos_passed + 1):
+            return self.get_loan_balance()
+        else:
+            return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']
+        
+    def principal_paydown_MANUAL(self, month, loan_data, orig_month):
+        if self.get_remaining_loan_term() == 0:
+            if month == orig_month:
+                return self.get_loan_balance()
+            # ending/beginning balance is same
+            return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']
+        else:
+            return 0
+        
+    def ending_balance_MANUAL(self, beginning_balance, principal_paydown):
+        # update balance
+        self.__loan_balance = beginning_balance -  principal_paydown
+        # don't update remaining loan term bc it's done within the loop
+        # return ending loan balance
+        return self.__loan_balance

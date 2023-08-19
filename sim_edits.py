@@ -83,7 +83,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
    #     tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
    #     tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
     
-    print(tranche_df.tail(longest_duration-months_passed))
+    #print(tranche_df.tail(longest_duration-months_passed))
     
     # initial collateral portfolio variables
     # WE DONT HAVE INITIAL DEAL SIZE
@@ -108,15 +108,16 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # --------------------------------- START MONTH LOOP -------------------------------------- #
     while months_passed in range(longest_duration):
-      print("months passed {}".format(months_passed))
+      #print("months passed {}".format(months_passed))
       # loan counter starts at 0 
       portfolio_index = 0 
       current_month = (starting_month + months_passed) % 12 or 12
-      # ramp-up calculations, won't happen in this case but ig we can leave it
       # START LOANS LOOP
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
         loan = loan_portfolio.get_active_portfolio()[portfolio_index]
+        # update remaining term length
+        loan.update_remaining_loan_term()
         # update dataframe indexes when new loans are added
         loan_id = loan.get_loan_id()
         if loan_id not in loan_ids:
@@ -127,8 +128,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         loan_df = loan_df.fillna(0)
         tranche_df = tranche_df.fillna(0)
 
-
         # GET CALCULATIONS
+        #print("MONTHS PASSED " + str(months_passed))
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
         principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
@@ -176,9 +177,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                loan_waterfall(beginning_bal, clo.get_tranches())
         else: # if no principal paydown value, just move on
                portfolio_index += 1
-        
-        # update remaining term length
-        loan.update_remaining_loan_term()
 
       # INNER (LOANS) LOOP ENDS
 
@@ -421,6 +419,6 @@ if __name__ == "__main__":
       # exit loop and display dataframe data in excel graphs
       manual_loan_graphs(output_df)
 
-    print(output_df)
+    #print(output_df)
 
     
