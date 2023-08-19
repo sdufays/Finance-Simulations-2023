@@ -47,7 +47,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # initial CLO variables
     initial_clo_tob = clo.get_tob()
     for tranche in clo.get_tranches():
-       tranche.init_principal_dict_MANUAL(months_passed, longest_duration)
+       tranche.init_principal_dict_MANUAL(original_months_passed, longest_duration)
 
     # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # generate loan ids
@@ -76,12 +76,12 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
     
-
-    # SAVE FIRST LINE
-    for tranche in clo.get_tranches():
-       tranche_df.loc[(tranche.get_name(), months_passed), 'Tranche Size'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Tranche Size']
-       tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
-       tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
+   # this doesn't work, populate first line of tranche_df with last line of old_tranche_df another way
+   #  # SAVE FIRST LINE
+   #  for tranche in clo.get_tranches():
+   #     tranche_df.loc[(tranche.get_name(), months_passed), 'Tranche Size'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Tranche Size']
+   #     tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
+   #     tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
     
     print(tranche_df.tail(longest_duration-months_passed))
     
@@ -112,11 +112,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       portfolio_index = 0 
       current_month = (starting_month + months_passed) % 12 or 12
       # ramp-up calculations, won't happen in this case but ig we can leave it
-      if months_passed == 1:
-         extra_balance = max(0, clo.get_tda() - loan_portfolio.get_collateral_sum())
-         if extra_balance > 0:
-            loan_portfolio.add_new_loan_MANUAL(extra_balance, margin_lower, margin_upper, months_passed, ramp = True )
-      
       # START LOANS LOOP
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
