@@ -227,21 +227,25 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
     #print(pd.DataFrame(cashflow_data))
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
-    # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
-    if current_month in [1,2,3]: # q1
-      # calculate sum of mo 1-3 and apply it on month 2 (cuz we have to pay tax before quarter is over)
-    elif current_month in [4,5,6]: # q2
-    elif current_month in [6,7,8]: # q3
-    else: # q4
-   
+    monthly_taxable_income = {}
     # MONTHLY TAX CALCULATIONS (pseudocode/plan)
+    # yes it is weird that we do another loop here but it's 
+    # because we need to know deal call month already in order to calculate these values
     for mo in range(deal_call_month):
+      current_month = (starting_month + mo) % 12 or 12
+      collateral_interest_amt = # sum of interest rates of all tranches (A-R) from starting_month to mo
+      interest_expense_sum = 0
+      for tranche in clo.get_tranches():
+         if tranche.get_name() != 'R':
+            interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
       discount_rate_R = np.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
       tax_expense_accrual_R = np.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
-      # net taxable income = collateral interest amount - sum of tranche interest expenses (besides R tranche) - tax_expense_accrual_R
+      net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
+      monthly_taxable_income[mo] = net_taxable_income
 
-      
-
+      # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
+      if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
+         # calculate sum of currentmonth-2, currentmonth-1, and currentmonth net taxable income and apply it on currentmonth-1
        
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
