@@ -145,7 +145,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Current Month'] = current_month
         #print(loan_df.head(longest_duration-months_passed))
 
-
         # WHEN LOANS START PAYING OFF
         if principal_pay != 0:
             # remove loan
@@ -189,9 +188,11 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       #print(tranche_df)
 
       # calculate and append this month's clo cashflow
+      # sigh might need to save original tranche sizes
       clo.append_cashflow_MANUAL(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next, original_months_passed) 
 
       #calculate and appednd this month's loan cashflow 
+      # maybe we should ask vlad why he asked us to calculate this? cuz idk if it's needed for the outputs
       total_principal_paydown = loan_df.loc[(slice(None), months_passed), 'Principal Paydown'].sum()
       total_interest_income = loan_df.loc[(slice(None), months_passed), 'Interest Income'].sum()
       month_cashflow = total_interest_income + total_principal_paydown
