@@ -238,7 +238,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # because we need to know deal call month already in order to calculate these values
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
-      collateral_interest_amt = # sum of interest rates of all tranches (A-R) from starting_month to mo
+      collateral_interest_amt = 'IDK YET' # sum of interest rates of all tranches (A-R) from starting_month to mo
       interest_expense_sum = 0
       for tranche in clo.get_tranches():
          if tranche.get_name() != 'R':
