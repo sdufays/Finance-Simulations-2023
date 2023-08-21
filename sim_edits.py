@@ -210,7 +210,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       if clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
          
-
       # increment months
       months_passed += 1
 
