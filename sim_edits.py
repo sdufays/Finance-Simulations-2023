@@ -229,7 +229,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
     monthly_taxable_income = {}
-    quarterly_cumu_taxable_loss = {}
     quarterly_taxable_amount_net_loss = {}
     # MONTHLY TAX CALCULATIONS (pseudocode/plan)
     # yes it is weird that we do another loop here but it's 
@@ -265,9 +264,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                quarterly_taxable_amount_net_of_loss = quarterly_taxable_income
             elif cumulative_taxable_loss > 0 and quarterly_taxable_income > cumulative_taxable_loss:
                quarterly_taxable_amount_net_of_loss = cumulative_taxable_loss
-         quarterly_taxable_amount_net_loss[mo] = quarterly_taxable_amount_net_of_loss
-         quarterly_cumu_taxable_loss[mo] = cumulative_taxable_loss
-         
+         quarterly_taxable_amount_net_loss[mo] = quarterly_taxable_amount_net_of_loss         
    
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
