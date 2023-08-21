@@ -234,7 +234,12 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # because we need to know deal call month already in order to calculate these values
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
-      collateral_interest_amt = 'IDK YET' # sum of interest rates of all tranches (A-R) from starting_month to mo
+      # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
+      past_interest_sum = old_tranche_df['Interest Payment'].sum()
+      # need to test this part
+      new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
+      collateral_interest_amt = past_interest_sum + new_interest_sum
+      # NET TAXABLE INCOME
       interest_expense_sum = 0
       for tranche in clo.get_tranches():
          if tranche.get_name() != 'R':
@@ -249,7 +254,16 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # calculate sum of month-2, month-1, and month net taxable income and "apply"?? it on month-1
          quarterly_taxable_income = monthly_taxable_income[mo-2] + monthly_taxable_income[mo-1] + monthly_taxable_income[mo]
-         # what does step three mean sigh
+         # what is the first summation in cumulative taxable loss quarterly calculation???
+         # cumulative_taxable_loss = quarterly_taxable_income_sum - quarterly_taxable_amount_net_of_loss ??
+         if quarterly_taxable_income < 0 or cumulative_taxable_loss < 0:
+            quarterly_taxable_amount_net_of_loss = 0
+         else:
+            if cumulative_taxable_loss > 0 and quarterly_taxable_income <= cumulative_taxable_loss:
+               quarterly_taxable_amount_net_of_loss = quarterly_taxable_income
+            elif cumulative_taxable_loss > 0 and quarterly_taxable_income > cumulative_taxable_loss:
+               quarterly_taxable_amount_net_of_loss = cumulative_taxable_loss
+         
    
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
