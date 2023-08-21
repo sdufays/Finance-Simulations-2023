@@ -188,8 +188,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       #print(tranche_df)
 
       # calculate and append this month's clo cashflow
-      # sigh might need to save original tranche sizes
-      clo.append_cashflow_MANUAL(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next, original_months_passed) 
+      # use old_tranche_df to get tranche size
+      clo.append_cashflow_MANUAL(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date) 
 
       #calculate and appednd this month's loan cashflow 
       # maybe we should ask vlad why he asked us to calculate this? cuz idk if it's needed for the outputs

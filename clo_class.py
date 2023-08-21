@@ -136,7 +136,7 @@ class CLO(Tranche):
                 tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
             self.__total_cashflows.append(interest_sum + principal_sum)
 
-    def append_cashflow_MANUAL(self, month, upfront_cost, num_days, sofr_value, dataframe, termin_next, orig_mo):
+    def append_cashflow_MANUAL(self, month, upfront_cost, num_days, sofr_value, dataframe, termin_next, orig_mo, old_tranche_data, current_date):
         if month == 0: # should return a negative number
             self.__total_cashflows.append(self.get_dda() + upfront_cost - self.get_tob())
             # stores month 0 tranche interest value in df
@@ -152,8 +152,11 @@ class CLO(Tranche):
                     tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
                     dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
                     principal_sum += tranche_subtraction_amount
-                elif month == orig_mo + 1:
-                    hi = "oh my god how do we do this"
+                elif month == orig_mo + 1: # if it's the month we start after the inputted data
+                    # need to make sure this works, not sure
+                    tranche_subtraction_amount = old_tranche_data.loc[(tranche.get_name(), current_date), 'Tranche Size']
+                    dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
+                    principal_sum += tranche_subtraction_amount
                 else:
                     tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size'] - dataframe.loc[(tranche.get_name(), month), 'Tranche Size'] or 0
                     dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
