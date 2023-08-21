@@ -191,7 +191,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # use old_tranche_df to get tranche size
       clo.append_cashflow_MANUAL(months_passed, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date) 
 
-      #calculate and appednd this month's loan cashflow 
+      #calculate and append this month's loan cashflow 
       # maybe we should ask vlad why he asked us to calculate this? cuz idk if it's needed for the outputs
       total_principal_paydown = loan_df.loc[(slice(None), months_passed), 'Principal Paydown'].sum()
       total_interest_income = loan_df.loc[(slice(None), months_passed), 'Interest Income'].sum()

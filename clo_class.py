@@ -137,6 +137,7 @@ class CLO(Tranche):
             self.__total_cashflows.append(interest_sum + principal_sum)
 
     def append_cashflow_MANUAL(self, month, num_days, sofr_value, dataframe, termin_next, orig_mo, old_tranche_data, last_date):
+        #  REWRITE THIS TO BE MORE EFFICIENT (currently calculating everything 2x)
         interest_sum = 0
         principal_sum = 0
         for tranche in self.get_tranches():
@@ -146,7 +147,7 @@ class CLO(Tranche):
                 principal_sum += tranche_subtraction_amount
             elif month == orig_mo + 1: # if it's the month we start after the inputted data
                 # need to make sure this works, not sure
-                tranche_subtraction_amount = old_tranche_data.loc[(tranche.get_name(), last_date), 'Tranche Size']
+                tranche_subtraction_amount = old_tranche_data.loc[(tranche.get_name(), last_date), 'Tranche Size'] - dataframe.loc[(tranche.get_name(), month), 'Tranche Size'] or 0
                 dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
                 principal_sum += tranche_subtraction_amount
             else:
@@ -155,6 +156,7 @@ class CLO(Tranche):
                 principal_sum += tranche_subtraction_amount
             tranche_interest = tranche.tranche_interest(num_days, sofr_value, dataframe, month)
             interest_sum += tranche_interest
+            # adds this to an individual tranche
             tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
         self.__total_cashflows.append(interest_sum + principal_sum)
 
