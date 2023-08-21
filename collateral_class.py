@@ -68,6 +68,7 @@ class CollateralPortfolio(Loan):
         new_loan_terms = [18, 20, 30]
         term = new_loan_terms[random.randint(0,2)]
 
+        # go by intervals?
         margin = round(random.uniform(margin_lower_bound,margin_upper_bound), 4)
 
         # make loan id higher than storage portfolio length -> i.e. 26

@@ -136,7 +136,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
-        interest_inc = loan.interest_income(beginning_bal, SOFR, days) # WRONG RN cuz we don't have index floor
+        interest_inc = loan.interest_income(beginning_bal, SOFR, days) 
         # save to loan dataframe
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Interest Income'] = interest_inc
@@ -155,7 +155,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             replen_after_reinv_bool = (clo.get_reinv_bool() and clo.get_replen_bool()) and (months_passed > clo.get_reinv_period()) and (replen_months < clo.get_replen_period() and replen_cumulative < clo.get_replen_amount()) and (months_passed == loan.get_term_length())
 
             if reinvestment_bool:
-               loan_portfolio.add_new_loan_manual(beginning_bal, margin_lower, margin_upper, months_passed, ramp=False)
+               loan_portfolio.add_new_loan_MANUAL(beginning_bal, margin_lower, margin_upper, months_passed, ramp=False)
             elif replenishment_bool:
                loan_value = min(beginning_bal, clo.get_replen_amount() - replen_cumulative)
                loan_portfolio.add_new_loan_MANUAL(loan_value, margin_lower, margin_upper, months_passed, ramp=False)
@@ -189,7 +189,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
       # calculate and append this month's clo cashflow
       # use old_tranche_df to get tranche size
-      clo.append_cashflow_MANUAL(months_passed, upfront_costs, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date) 
+      clo.append_cashflow_MANUAL(months_passed, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date) 
 
       #calculate and appednd this month's loan cashflow 
       # maybe we should ask vlad why he asked us to calculate this? cuz idk if it's needed for the outputs
