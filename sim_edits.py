@@ -230,6 +230,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
     monthly_taxable_income = {}
+    quarterly_cumu_taxable_loss = {}
+    quarterly_taxable_amount_net_loss = {}
     # MONTHLY TAX CALCULATIONS (pseudocode/plan)
     # yes it is weird that we do another loop here but it's 
     # because we need to know deal call month already in order to calculate these values
@@ -255,8 +257,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # calculate sum of month-2, month-1, and month net taxable income and "apply"?? it on month-1
          quarterly_taxable_income = monthly_taxable_income[mo-2] + monthly_taxable_income[mo-1] + monthly_taxable_income[mo]
-         # what is the first summation in cumulative taxable loss quarterly calculation???
-         # cumulative_taxable_loss = quarterly_taxable_income_sum - quarterly_taxable_amount_net_of_loss ??
+         # what if there is no previous month?
+         cumulative_taxable_loss = quarterly_taxable_income - quarterly_taxable_amount_net_loss[mo-3]
          if quarterly_taxable_income < 0 or cumulative_taxable_loss < 0:
             quarterly_taxable_amount_net_of_loss = 0
          else:
@@ -264,6 +266,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                quarterly_taxable_amount_net_of_loss = quarterly_taxable_income
             elif cumulative_taxable_loss > 0 and quarterly_taxable_income > cumulative_taxable_loss:
                quarterly_taxable_amount_net_of_loss = cumulative_taxable_loss
+         quarterly_taxable_amount_net_loss[mo] = quarterly_taxable_amount_net_of_loss
+         quarterly_cumu_taxable_loss[mo] = cumulative_taxable_loss
          
    
     # WEIGHTED AVG COST OF FUNDS
