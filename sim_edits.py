@@ -235,7 +235,12 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # because we need to know deal call month already in order to calculate these values
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
-      collateral_interest_amt = 'IDK YET' # sum of interest rates of all tranches (A-R) from starting_month to mo
+      # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
+      past_interest_sum = old_tranche_df['Interest Payment'].sum()
+      # need to test this part
+      new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
+      collateral_interest_amt = past_interest_sum + new_interest_sum
+      # NET TAXABLE INCOME
       interest_expense_sum = 0
       for tranche in clo.get_tranches():
          if tranche.get_name() != 'R':
