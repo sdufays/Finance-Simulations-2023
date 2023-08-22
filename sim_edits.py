@@ -38,7 +38,7 @@ def loan_waterfall(subtract_value, tranches):
 
 # ------------------- SIMULATION FUNCTION -------------------- # 
 def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, advance_rate_threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
-    longest_duration = 70
+    longest_duration = 100
     original_months_passed = months_passed
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
@@ -92,6 +92,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
         loan = loan_portfolio.get_active_portfolio()[portfolio_index]
+        #print(loan)
         # update remaining term length
         loan.update_remaining_loan_term()
         # update dataframe indexes when new loans are added
@@ -174,7 +175,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # increment months
       months_passed += 1
 
-    # ------------------ TESTING PURPOSES ONLY ------------------- #
+    # ------------------ TEST SIMULATION ------------------- #
     # VIEW LOAN DATAFRAME
     #print(loan_df.tail(longest_duration))
     #loan_df.to_excel('loandata.xlsx', index=True)
@@ -183,7 +184,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranchedata.xlsx', index=True)
+    tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
@@ -391,6 +392,9 @@ if __name__ == "__main__":
                                              extension_period=0, # don't need these periods anymore
                                              open_prepayment_period=0, 
                                              manual_term=0)
+         # PROBLEM IS HERE
+         for loan in loan_portfolio_obj.get_active_portfolio():
+            print(loan)
          # set term length instead of calculating it
          loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term']) 
       

@@ -101,7 +101,7 @@ class Loan:
         
     def principal_paydown_MANUAL(self, month, loan_data, orig_month):
         if self.get_remaining_loan_term() == 0:
-            if month == orig_month:
+            if month == orig_month + 1:
                 return self.get_loan_balance()
             # ending/beginning balance is same
             return loan_data.loc[(self.get_loan_id(), month - 1), 'Ending Balance']

@@ -63,6 +63,18 @@ class Tranche:
             return interest
         else:
             return 0
+    
+    # NEED TO MAKE THIS GET FROM OLD DATAFRAME IN MONTH 47
+    def tranche_interest_MANUAL(self, num_days, sofr_value, dataframe, month):
+        if self.get_offered() == 1:
+            if month > 0:
+                interest = dataframe.loc[(self.get_name(), month-1), 'Tranche Size'] * (self.get_spread() + sofr_value) * num_days / 360
+            else:
+                interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
+            dataframe.loc[(self.get_name(), month), 'Interest Payment'] = interest
+            return interest
+        else:
+            return 0
         
     # save cash flow list functions
     def init_tranche_cashflow_list(self, cashflow_list):
