@@ -38,9 +38,8 @@ def loan_waterfall(subtract_value, tranches):
 
 # ------------------- SIMULATION FUNCTION -------------------- # 
 def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, advance_rate_threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
-    longest_duration = 100
+    longest_duration = 70
     original_months_passed = months_passed
-    print(original_months_passed)
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
@@ -77,40 +76,15 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
     
-   # this doesn't work, populate first line of tranche_df with last line of old_tranche_df another way
-   #  # SAVE FIRST LINE
-   #  for tranche in clo.get_tranches():
-   #     tranche_df.loc[(tranche.get_name(), months_passed), 'Tranche Size'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Tranche Size']
-   #     tranche_df.loc[(tranche.get_name(), months_passed), 'Principal Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Principal Payment']
-   #     tranche_df.loc[(tranche.get_name(), months_passed), 'Interest Payment'] = old_tranche_df.loc[(tranche.get_name(), curr_date), 'Interest Payment']
-    
-    #print(tranche_df.tail(longest_duration-months_passed))
-    
-    # initial collateral portfolio variables
-    # WE DONT HAVE INITIAL DEAL SIZE
-    loan_portfolio.set_initial_deal_size(loan_portfolio.get_collateral_sum())
     replen_months = 0
     replen_cumulative = 0
     incremented_replen_month = False
-   
-    # calculate wa loan spread for day 1, for use in final output
-    # NOT SURE IF STILL NEEDED
-    loan_term_df = pd.DataFrame(columns=['Loan ID','Loan Term'])
-    wa_spread = 0
-    for loan in loan_portfolio.get_active_portfolio():
-        loan_term_df.loc[loan_term_df.shape[0]] = [loan.get_loan_id(), loan.get_term_length()]
-        wa_spread += loan.get_margin()
-    wa_spread /= len(loan_portfolio.get_active_portfolio()) # THIS IS WRONG NOW, need original portfolio
-
-    # NOT REMOVING UNSOLD TRANCHES CUZ TAX CALCULATIONS REQUIRE ALL OF THEM
 
     # we're now in the 47th month
     months_passed += 1
-    # need to update remaining loan term
 
     # --------------------------------- START MONTH LOOP -------------------------------------- #
     while months_passed in range(longest_duration):
-      #print("months passed {}".format(months_passed))
       # loan counter starts at 0 
       portfolio_index = 0 
       current_month = (starting_month + months_passed) % 12 or 12
@@ -131,7 +105,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
-        #print("MONTHS PASSED " + str(months_passed))
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
         principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance(beginning_bal, principal_pay)
@@ -185,21 +158,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       for tranche in clo.get_tranches():
         tranche.save_balance(tranche_df, months_passed)
       
-      #print(tranche_df)
-
       # calculate and append this month's clo cashflow
       # use old_tranche_df to get tranche size
       clo.append_cashflow_MANUAL(months_passed, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date) 
-
-      #calculate and append this month's loan cashflow 
-      # maybe we should ask vlad why he asked us to calculate this? cuz idk if it's needed for the outputs
-      total_principal_paydown = loan_df.loc[(slice(None), months_passed), 'Principal Paydown'].sum()
-      total_interest_income = loan_df.loc[(slice(None), months_passed), 'Interest Income'].sum()
-      month_cashflow = total_interest_income + total_principal_paydown
-      loan_portfolio.update_loan_cashflow(month_cashflow)
-
-      # calculate and append each month's total collateral balance to the collateral list 
-      loan_portfolio.get_collateral_sum()
 
       # terminate outer (months) loop, if below threshold in prev month
       if terminate_next:
@@ -207,7 +168,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          break 
       
       # check if wa advance rate is below threshold
-      if clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() < advance_rate_threshold:
+      if (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum()) < advance_rate_threshold:
           terminate_next = True 
          
       # increment months
@@ -222,7 +183,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    tranche_df.to_excel('tranchedata.xlsx', index=True)
+    #tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
@@ -234,16 +195,14 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
        net_loss_dict[i] = []
 
     year = 0
-    # MONTHLY TAX CALCULATIONS (pseudocode/plan)
-    # yes it is weird that we do another loop here but it's 
-    # because we need to know deal call month already in order to calculate these values
+    # MONTHLY TAX CALCULATIONS
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
       # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
       past_interest_sum = old_tranche_df['Interest Payment'].sum()
-      # need to test this part
       new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
       collateral_interest_amt = past_interest_sum + new_interest_sum
+
       # NET TAXABLE INCOME
       interest_expense_sum = 0
       for tranche in clo.get_tranches():
@@ -254,8 +213,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
       monthly_tax_inc[mo] = net_taxable_income
 
-      # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
-      # VERY UNSURE ABOUT THIS
+      # QUARTERLY TAX CALCULATIONS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # keep track of quarter number and year
          quarter = 0 if current_month==3 else (1 if current_month==6 else (2 if current_month==9 else 3))
@@ -291,35 +249,15 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       yearly_tax_liability = []
       for year in net_loss_dict.keys():
          yearly_tax_liability.append(net_loss_dict[year].sum() * .25)
+      print(yearly_tax_liability)
    
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
-    
-    # WEIGHTED AVG ADVANCE RATE
-    avg_clo_bal = 0
-    for i in range(len(clo.get_tranches())):
-       avg_clo_bal += sum(clo.get_tranches()[i].get_bal_list()) / deal_call_month
-    avg_collateral_bal = loan_df['Ending Balance'].sum() / deal_call_month
-    wa_adv_rate = (avg_clo_bal/avg_collateral_bal) * 100
-
-    # PROJECTED EQUITY YIELD
-    # equity net spread
-    ##### NOW DONT HAVE INITIAL DEAL SIZE
-    collateral_income = loan_portfolio.get_initial_deal_size() *  (wa_spread + SOFR)
-    clo_interest_cost = initial_clo_tob * (wa_cof / 100 + SOFR) # interest we pay to tranches
-    net_equity_amt = loan_portfolio.get_initial_deal_size() - initial_clo_tob # total amount of loans - amount offered as tranches
-    equity_net_spread = (collateral_income - clo_interest_cost) / net_equity_amt # excess equity availalbe
-    # origination fee add on (fee for creating the clo)
-    origination_fee = loan_portfolio.get_initial_deal_size() * 0.01/(net_equity_amt * deal_call_month) # remember in simulation to put deal_call_mos[trial]
-    # projected equity yield (times 100 cuz percent), represents expected return on the clo
-    projected_equity_yield = (equity_net_spread + origination_fee) * 100
  
     # -------------------------------- SAVE OUTPUTS TO DATAFRAME --------------------------------- #
     output_dataframe.loc[trial_index, 'Deal Call Month'] = deal_call_month
     output_dataframe.loc[trial_index, 'WA COF'] = wa_cof
-    output_dataframe.loc[trial_index, 'WA Adv Rate'] = wa_adv_rate
-    output_dataframe.loc[trial_index, 'Projected Equity Yield'] = projected_equity_yield
-    
+
     return output_dataframe
 
 
@@ -328,8 +266,8 @@ if __name__ == "__main__":
     excel_file_path = "FL1_Setup_InternalMethod.xlsx"
     NUM_TRIALS = 1
     trial_numbers = range(0, NUM_TRIALS)
-    columns = ['Deal Call Month', 'WA COF', 'WA Adv Rate', 'Projected Equity Yield']
-    ma_output_df = pd.DataFrame(index=trial_numbers, columns=columns)
+    columns = ['Deal Call Month', 'WA COF']
+    output_df = pd.DataFrame(index=trial_numbers, columns=columns)
 
    # ------------------------ READ EXCEL: OTHER SPECIFICATIONS ------------------------ #
     df_os = pd.read_excel(excel_file_path, sheet_name = "Other Specifications", header=None)
@@ -352,7 +290,7 @@ if __name__ == "__main__":
     generic_spread_upper = df_os.iloc[11,1]
     generic_spread_lower = df_os.iloc[12,1]
     tranche_p_balance = df_os.iloc[13,1]
-    adv_rate_threshold = [14,1]
+    adv_rate_threshold = df_os.iloc[14,1]
   
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
@@ -458,7 +396,7 @@ if __name__ == "__main__":
       
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation(ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
+         output_df = run_simulation(output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
       # exit loop and display dataframe data in excel graphs
       manual_loan_graphs(output_df)
 

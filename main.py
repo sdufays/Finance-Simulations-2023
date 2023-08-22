@@ -256,7 +256,7 @@ if __name__ == "__main__":
     excel_file_path = "Argentic CLO Case A Input.xlsm"
     excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
-    NUM_TRIALS = 1
+    NUM_TRIALS = 2
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])
