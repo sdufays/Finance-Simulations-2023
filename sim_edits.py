@@ -201,7 +201,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # calculate and append each month's total collateral balance to the collateral list 
       loan_portfolio.get_collateral_sum()
 
-      # terminate outer (months) loop, if AAA was below threshold in prev month
+      # terminate outer (months) loop, if below threshold in prev month
       if terminate_next:
          deal_call_month = months_passed
          break 
@@ -228,8 +228,12 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     #print(pd.DataFrame(cashflow_data))
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
-    monthly_taxable_income = {}
-    quarterly_taxable_amount_net_loss = {}
+    monthly_tax_inc = {}
+    net_loss_dict = {} # {1:[q1,q2,q3,q4], 2:[q1,q2,q3,q4]...}
+    for i in range(deal_call_month // 12):
+       net_loss_dict[i] = []
+
+    year = 0
     # MONTHLY TAX CALCULATIONS (pseudocode/plan)
     # yes it is weird that we do another loop here but it's 
     # because we need to know deal call month already in order to calculate these values
@@ -248,25 +252,45 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       discount_rate_R = np.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
       tax_expense_accrual_R = np.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
-      monthly_taxable_income[mo] = net_taxable_income
+      monthly_tax_inc[mo] = net_taxable_income
 
       # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
       # VERY UNSURE ABOUT THIS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
+         # keep track of quarter number and year
+         quarter = 0 if current_month==3 else (1 if current_month==6 else (2 if current_month==9 else 3))
+         if mo >= 12 and mo % 12 == 0:
+            year+=1
+         
          # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
-         quarterly_taxable_income = monthly_taxable_income[mo-2] + monthly_taxable_income[mo-1] + monthly_taxable_income[mo]
+         taxable_income_sum = monthly_tax_inc[mo-2] + monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
+         
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
          # what if there is no previous quarter? then cumu tax loss is 0
-         cumulative_taxable_loss = quarterly_taxable_income - quarterly_taxable_amount_net_loss[mo-3]
-         # calculate quarterly taxable amount net of loss for THIS quarter
-         if quarterly_taxable_income < 0 or cumulative_taxable_loss < 0:
-            quarterly_taxable_amount_net_of_loss = 0
+         if mo == 3:
+            cumulative_taxable_loss = 0
          else:
-            if cumulative_taxable_loss > 0 and quarterly_taxable_income <= cumulative_taxable_loss:
-               quarterly_taxable_amount_net_of_loss = quarterly_taxable_income
-            elif cumulative_taxable_loss > 0 and quarterly_taxable_income > cumulative_taxable_loss:
-               quarterly_taxable_amount_net_of_loss = cumulative_taxable_loss
-         quarterly_taxable_amount_net_loss[mo] = quarterly_taxable_amount_net_of_loss         
+            if quarter == 0: # if first quarter
+               # get net loss of last quarter of prev year
+               cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year-1][-1]
+            else: # if not the first quarter
+               # get net loss of the previous quarter of current year
+               cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year][quarter-1]
+         
+         # calculate taxable amount net of loss for THIS quarter
+         if taxable_income_sum < 0 or cumulative_taxable_loss < 0:
+            quart_net_loss = 0
+         else:
+            if cumulative_taxable_loss > 0 and taxable_income_sum <= cumulative_taxable_loss:
+               quart_net_loss = taxable_income_sum
+            elif cumulative_taxable_loss > 0 and taxable_income_sum > cumulative_taxable_loss:
+               quart_net_loss = cumulative_taxable_loss
+         net_loss_dict[year].append(quart_net_loss)
+      
+      # YEARLY TAX LIABILITY
+      yearly_tax_liability = []
+      for year in net_loss_dict.keys():
+         yearly_tax_liability.append(net_loss_dict[year].sum() * .25)
    
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
