@@ -37,7 +37,7 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- #
-def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold):
+def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, advance_rate_threshold):
     # ------------------------ SET TERM LENGTHS BY SCENARIO ------------------------ #
     if case == "market aware":
        loan_portfolio.market_aware_loan_terms()
@@ -183,7 +183,7 @@ def run_simulation(case, output_dataframe, trial_index, clo, loan_portfolio, sta
       # check if AAA is below threshold -> if so, signal to terminate
       if case != "market aware" and clo.get_tranches()[0].get_size() <= threshold:
           terminate_next = True 
-      elif case == "market aware" and (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() < 0.75):
+      elif case == "market aware" and (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() < advance_rate_threshold):
           terminate_next = True 
 
       # increment months
@@ -289,6 +289,8 @@ if __name__ == "__main__":
     replenishment_amount = df_os.iloc[7,1]
 
     has_market_aware = df_os.iloc[8,1]
+
+    adv_rate_threshold = df_os.iloc[10,1]
     
     market_spread_amt = 0 # if no market spread amount
     if has_market_aware:
@@ -334,7 +336,7 @@ if __name__ == "__main__":
 
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
 
-         output_df = run_simulation("market aware", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
+         output_df = run_simulation("market aware", ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, adv_rate_threshold)
        # exit loop and display dataframe data in excel graphs
        market_aware_graphs(output_df, excel_file_name)
     else:
@@ -355,7 +357,7 @@ if __name__ == "__main__":
 
             total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
             
-            output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold)
+            output_df = run_simulation(scenario, output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, adv_rate_threshold)
       graphs_by_scenario(output_df, cases, trial_numbers, excel_file_name)
     # print output dataframe (just to look at it)
     print(output_df)

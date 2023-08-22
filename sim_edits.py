@@ -37,7 +37,7 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- # 
-def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
+def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, advance_rate_threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 100
     original_months_passed = months_passed
     print(original_months_passed)
@@ -206,8 +206,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          deal_call_month = months_passed
          break 
       
-      # check if AAA is below threshold -> if so, signal to terminate
-      if clo.get_tranches()[0].get_size() <= threshold:
+      # check if wa advance rate is below threshold
+      if clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum() < advance_rate_threshold:
           terminate_next = True 
          
       # increment months
@@ -253,10 +253,10 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # QUARTERLY TAX CALCULATIONS (pseudocode/plan)
       # VERY UNSURE ABOUT THIS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
-         # calculate sum of month-2, month-1, and month net taxable income and "apply"?? it on month-1
+         # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
          quarterly_taxable_income = monthly_taxable_income[mo-2] + monthly_taxable_income[mo-1] + monthly_taxable_income[mo]
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
-         # what if there is no previous quarter?
+         # what if there is no previous quarter? then cumu tax loss is 0
          cumulative_taxable_loss = quarterly_taxable_income - quarterly_taxable_amount_net_loss[mo-3]
          # calculate quarterly taxable amount net of loss for THIS quarter
          if quarterly_taxable_income < 0 or cumulative_taxable_loss < 0:
@@ -328,6 +328,7 @@ if __name__ == "__main__":
     generic_spread_upper = df_os.iloc[11,1]
     generic_spread_lower = df_os.iloc[12,1]
     tranche_p_balance = df_os.iloc[13,1]
+    adv_rate_threshold = [14,1]
   
     # --------------------------- READ EXCEL: UPFRONT COSTS --------------------------- #
 
@@ -380,7 +381,6 @@ if __name__ == "__main__":
       start_date = df_cs.loc['A', :].index[0]
       current_date = df_cs.loc['A', :].index[-1]
       mos_passed = df_cs.index.get_level_values(1).nunique()
-      aaa_threshold = 0.2 * df_cs.loc[('A', start_date), 'Tranche Size']
 
       # extract tranche names
       unique_tranche_names = df_cs.index.get_level_values('Tranche Name').unique()
@@ -434,7 +434,7 @@ if __name__ == "__main__":
       
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation(ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, aaa_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
+         output_df = run_simulation(ma_output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
       # exit loop and display dataframe data in excel graphs
       manual_loan_graphs(output_df)
 
