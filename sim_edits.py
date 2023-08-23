@@ -71,8 +71,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # CREATE TRANCHE DF
     tranche_names = []
     for tranche in clo.get_tranches():
-       if tranche.get_offered() == 1:
-        tranche_names.append(tranche.get_name())
+      tranche_names.append(tranche.get_name())
     tranche_index = pd.MultiIndex.from_product([tranche_names, months], names=['Tranche Name', 'Month'])
     tranche_df = pd.DataFrame(index=tranche_index, columns=['Interest Payment', 'Principal Payment', 'Tranche Size'])
     
@@ -92,7 +91,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
         loan = loan_portfolio.get_active_portfolio()[portfolio_index]
-        print(loan)
         # update remaining term length
         loan.update_remaining_loan_term()
         # update dataframe indexes when new loans are added
@@ -169,6 +167,11 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          break 
       
       # check if wa advance rate is below threshold
+      print('MONTH {}'.format(months_passed))
+      print('Current CLO Size {}'.format(clo.current_clo_size(tranche_df, months_passed)))
+      print('Collateral Sum {}'.format(loan_portfolio.get_collateral_sum()))
+      print('Adv Rate {}'.format(clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum()))
+      print()
       if (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum()) < advance_rate_threshold:
           terminate_next = True 
          

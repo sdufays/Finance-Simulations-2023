@@ -162,7 +162,10 @@ class CLO(Tranche):
     def current_clo_size(self,dataframe, month):
         tranche_sum = 0
         for tranche in self.get_tranches():
-            tranche_sum += dataframe.loc[(tranche.get_name(), month), 'Tranche Size']
+            # tranche must be offered
+            # for main it doesn't matter cuz we take out the non offered tranches, but it matters for sim edits cuz we don't take them out
+            if tranche.get_offered() == 1:
+                tranche_sum += dataframe.loc[(tranche.get_name(), month), 'Tranche Size']
 
         return tranche_sum
  # cash flow for loans 
