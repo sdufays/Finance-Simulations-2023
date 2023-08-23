@@ -380,7 +380,6 @@ if __name__ == "__main__":
       df_cp.drop(columns=['Market Repo Spread'], inplace=True)
       df_cp.drop(columns=['Market Repo Adv Rate'], inplace=True)
 
-
       # adds all remaining loans to the loan portfolio
       for loan_num in range(df_cp.shape[0]):
          loan_portfolio_obj.add_initial_loan(loan_id=loan_num + 1, 
@@ -392,17 +391,14 @@ if __name__ == "__main__":
                                              extension_period=0, # don't need these periods anymore
                                              open_prepayment_period=0, 
                                              manual_term=0)
-         # PROBLEM IS HERE
-         for loan in loan_portfolio_obj.get_active_portfolio():
-            print(loan)
          # set term length instead of calculating it
          loan_portfolio_obj.get_active_portfolio()[loan_num].set_term_length(df_cp.at[loan_num, 'Loan Term']) 
       
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-         output_df = run_simulation(output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
-      # exit loop and display dataframe data in excel graphs
-      manual_loan_graphs(output_df)
+      output_df = run_simulation(output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
+    # exit loop and display dataframe data in excel graphs
+    manual_loan_graphs(output_df)
 
     #print(output_df)
 
