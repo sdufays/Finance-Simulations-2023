@@ -92,7 +92,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       while portfolio_index < len(loan_portfolio.get_active_portfolio()):
         # initialize loan object
         loan = loan_portfolio.get_active_portfolio()[portfolio_index]
-        #print(loan)
+        print(loan)
         # update remaining term length
         loan.update_remaining_loan_term()
         # update dataframe indexes when new loans are added
@@ -108,7 +108,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
         principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
-        ending_bal = loan.ending_balance(beginning_bal, principal_pay)
+        ending_bal = loan.ending_balance_MANUAL(beginning_bal, principal_pay)
         days = days_in_month[current_month - 2]
         interest_inc = loan.interest_income(beginning_bal, SOFR, days) 
         # save to loan dataframe
