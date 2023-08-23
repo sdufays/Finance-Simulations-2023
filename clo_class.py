@@ -156,6 +156,11 @@ class CLO(Tranche):
             tranche_interest = tranche.tranche_interest_MANUAL(num_days, sofr_value, dataframe, month, orig_mo, old_tranche_data)
             interest_sum += tranche_interest
             # adds this to an individual tranche
+            if (tranche_subtraction_amount + tranche_interest == 0):
+                print('EQUALS 0')
+                print(month)
+                print(tranche.get_name())
+                print()
             tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
         self.__total_cashflows.append(interest_sum + principal_sum)
 

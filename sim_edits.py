@@ -226,10 +226,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
+      # some cash flow values are 0 for some reason
+      print(clo.get_tranches()[-1].get_tranche_cashflow_list())
+      # this is nan for some reason
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
+      print('discount rate {}'.format(discount_rate_R))
+      # this is also nan
       tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
-      print('tax accrual {}'.format(tax_expense_accrual_R))
-      print(collateral_interest_amt)
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
       monthly_tax_inc[mo] = net_taxable_income
 
@@ -241,7 +244,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             year+=1
          
          # if 3 or more months have passed
-         print(monthly_tax_inc)
          if mo >= 2:
             # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
             taxable_income_sum = monthly_tax_inc[mo-2] + monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
@@ -250,8 +252,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             taxable_income_sum = monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
          elif mo == 0:
             taxable_income_sum = monthly_tax_inc[mo]
-         print(mo)
-         print(taxable_income_sum)
             
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
          # if no previous quarter
