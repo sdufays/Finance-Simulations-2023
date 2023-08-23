@@ -6,6 +6,16 @@ import numpy_financial as npf
 import numpy as np
 from collections import Counter
 
+from datetime import datetime, timedelta
+
+def month_end_date(year, month):
+    # Start with the first day of the next month
+    next_month = month % 12 + 1
+    if month == 12:
+        year += 1
+    # Subtract one day to get the last day of the input month
+    return datetime(year, next_month, 1) - timedelta(days=1)
+
 # ------------------- GET NUM DAYS IN MONTH -------------------- #
 def get_date_array(date):
     if date[2] % 4 == 0:
@@ -37,7 +47,7 @@ def loan_waterfall(subtract_value, tranches):
         raise ValueError("Not enough total size in all tranches to cover the subtraction.")
 
 # ------------------- SIMULATION FUNCTION -------------------- # 
-def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, days_in_month, SOFR, upfront_costs, advance_rate_threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
+def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, starting_year, days_in_month, SOFR, upfront_costs, advance_rate_threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 100
     original_months_passed = months_passed
 
@@ -167,11 +177,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          break 
       
       # check if wa advance rate is below threshold
-      print('MONTH {}'.format(months_passed))
-      print('Current CLO Size {}'.format(clo.current_clo_size(tranche_df, months_passed)))
-      print('Collateral Sum {}'.format(loan_portfolio.get_collateral_sum()))
-      print('Adv Rate {}'.format(clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum()))
-      print()
       if (clo.current_clo_size(tranche_df, months_passed) / loan_portfolio.get_collateral_sum()) < advance_rate_threshold:
           terminate_next = True 
          
@@ -211,9 +216,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       interest_expense_sum = 0
       for tranche in clo.get_tranches():
          if tranche.get_name() != 'R':
-            interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
-      discount_rate_R = np.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
-      tax_expense_accrual_R = np.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
+            if mo > original_months_passed:
+               interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
+            else:
+               mo_end_date = month_end_date(start_year + year, current_month)
+               interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
+      discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
+      tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
       monthly_tax_inc[mo] = net_taxable_income
 
@@ -283,6 +292,7 @@ if __name__ == "__main__":
     date = list(map(int, date)) # [MM, DD, YYYY]
     # starting payment month
     starting_mos = date[0]
+    start_year = date[2]
     days_in_mos = get_date_array(date)
     SOFR_value = df_os.iloc[3,1]
     has_reinvestment = df_os.iloc[4,1]
@@ -399,7 +409,7 @@ if __name__ == "__main__":
       
          total_upfront_costs = clo_obj.get_upfront_costs(placement_percent, legal, accounting, trustee, printing, RA_site, modeling, misc)
          
-      output_df = run_simulation(output_df, run, clo_obj, loan_portfolio_obj, starting_mos, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
+      output_df = run_simulation(output_df, run, clo_obj, loan_portfolio_obj, starting_mos, start_year, days_in_mos, SOFR_value, total_upfront_costs, adv_rate_threshold, mos_passed, df_cs, current_date, generic_spread_lower, generic_spread_upper)
     # exit loop and display dataframe data in excel graphs
     manual_loan_graphs(output_df)
 
