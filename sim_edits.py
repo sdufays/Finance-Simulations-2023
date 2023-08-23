@@ -51,7 +51,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # generate loan ids
-    months = list(range(months_passed, longest_duration))
+    months = list(range(months_passed + 1, longest_duration))
     loan_index = pd.MultiIndex.from_product([loan_ids, months],
                                    names=['Loan ID', 'Months Passed'])
     loan_df = pd.DataFrame(index=loan_index, columns=['Current Month', 'Beginning Balance', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
