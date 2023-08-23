@@ -207,10 +207,16 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # MONTHLY TAX CALCULATIONS
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
+      # for indexing old tranche df
+      mo_end_date = month_end_date(start_year + year, current_month)
+
       # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
-      past_interest_sum = old_tranche_df['Interest Payment'].sum()
-      new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
-      collateral_interest_amt = past_interest_sum + new_interest_sum
+      if mo > original_months_passed:
+         past_interest_sum = old_tranche_df['Interest Payment'].sum()
+         new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
+         collateral_interest_amt = past_interest_sum + new_interest_sum
+      else:
+         collateral_interest_amt = old_tranche_df.loc[(old_tranche_df.index.get_level_values('Period Date') <= mo_end_date)].groupby(level='Tranche Name')['Interest Payment'].sum()
 
       # NET TAXABLE INCOME
       interest_expense_sum = 0
@@ -219,10 +225,11 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             if mo > original_months_passed:
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:
-               mo_end_date = month_end_date(start_year + year, current_month)
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
       tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
+      print('tax accrual {}'.format(tax_expense_accrual_R))
+      print(collateral_interest_amt)
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
       monthly_tax_inc[mo] = net_taxable_income
 
@@ -233,12 +240,22 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          if mo >= 12 and mo % 12 == 0:
             year+=1
          
-         # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
-         taxable_income_sum = monthly_tax_inc[mo-2] + monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
-         
+         # if 3 or more months have passed
+         print(monthly_tax_inc)
+         if mo >= 2:
+            # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
+            taxable_income_sum = monthly_tax_inc[mo-2] + monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
+         # if deal starts in the middle or end of a quarter
+         elif mo == 1:
+            taxable_income_sum = monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
+         elif mo == 0:
+            taxable_income_sum = monthly_tax_inc[mo]
+         print(mo)
+         print(taxable_income_sum)
+            
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
-         # what if there is no previous quarter? then cumu tax loss is 0
-         if mo == 3:
+         # if no previous quarter
+         if mo <= 2:
             cumulative_taxable_loss = 0
          else:
             if quarter == 0: # if first quarter
@@ -257,13 +274,14 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             elif cumulative_taxable_loss > 0 and taxable_income_sum > cumulative_taxable_loss:
                quart_net_loss = cumulative_taxable_loss
          net_loss_dict[year].append(quart_net_loss)
+
+         
+         # YEARLY TAX LIABILITY
+         yearly_tax_liability = []
+         for year in net_loss_dict.keys():
+            yearly_tax_liability.append(net_loss_dict[year].sum() * .25)
+         print(yearly_tax_liability)
       
-      # YEARLY TAX LIABILITY
-      yearly_tax_liability = []
-      for year in net_loss_dict.keys():
-         yearly_tax_liability.append(net_loss_dict[year].sum() * .25)
-      print(yearly_tax_liability)
-   
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
  
