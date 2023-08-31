@@ -105,10 +105,12 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         loan.update_remaining_loan_term()
         # update dataframe indexes when new loans are added
         loan_id = loan.get_loan_id()
-        if loan_id not in loan_ids:
-            loan_ids.append(loan_id)
+        loan_ids.append(loan_id)
         loan_index = pd.MultiIndex.from_product([loan_ids, months], names=['Loan ID', 'Months Passed'])
-        loan_df = loan_df.reindex(loan_index)
+        #print("Before reindexing " + str(loan_df.index.is_unique))
+        loan_df = loan_df.reindex(loan_index) #issue is that there are multiple loan IDs 
+        print("Duplicated entries:", loan_df[loan_df.index.duplicated()]) # loan ID number 1 is duplicated 
+        #print("After reindexing " + str(loan_df.index.is_unique))
         # fill nan values in df with 0
         loan_df = loan_df.fillna(0)
         tranche_df = tranche_df.fillna(0)
