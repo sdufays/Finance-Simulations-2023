@@ -109,9 +109,16 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         loan_index = pd.MultiIndex.from_product([loan_ids, months], names=['Loan ID', 'Months Passed'])
         #print("Before reindexing " + str(loan_df.index.is_unique))
         loan_df = loan_df.reindex(loan_index) #issue is that there are multiple loan IDs 
-        print("Duplicated entries:", loan_df[loan_df.index.duplicated()]) # loan ID number 1 is duplicated 
         #print("After reindexing " + str(loan_df.index.is_unique))
+        #print("Duplicated entries:", loan_df[loan_df.index.duplicated()]) # loan ID number 1 is duplicated 
+
+        loan_df.reset_index(inplace=True)
+        # this should solve it 
+        loan_df.drop_duplicates(subset=['Loan ID', 'Months Passed'], keep='first', inplace=True)
+        loan_df.set_index(['Loan ID', 'Months Passed'], inplace=True)
+
         # fill nan values in df with 0
+        loan_df.sort_index(inplace=True)
         loan_df = loan_df.fillna(0)
         tranche_df = tranche_df.fillna(0)
 
