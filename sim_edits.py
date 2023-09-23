@@ -71,8 +71,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # ------------------------ CREATE TRANCHE DATAFRAME ------------------------ #
     # SAVE CASH FLOWS
     # saves a list of single tranche cashflows to all tranches
+    tranche_R_bal = clo.get_tranches()[-1].get_size()
     for tranche in clo.get_tranches():
-      tranche.init_tranche_cashflow_list(old_tranche_df.loc[tranche.get_name(), "Total Cashflow"].tolist())
+      tranche.init_tranche_cashflow_list(old_tranche_df.loc[tranche.get_name(), "Total Cashflow"].tolist(), tranche_R_bal)
     # sums cash flows for all other tranches
     monthly_cashflow_sums = old_tranche_df.groupby(level=1).sum()
     cashflow_list = monthly_cashflow_sums['Total Cashflow'].tolist()
@@ -196,13 +197,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # ------------------ TEST SIMULATION ------------------- #
     # VIEW LOAN DATAFRAME
     #print(loan_df.tail(longest_duration))
-    loan_df.to_excel('loandata.xlsx', index=True)
+    #loan_df.to_excel('loandata.xlsx', index=True)
     # VIEW TRANCHE DATAFRAME
     #print(tranche_df.loc['A'])
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    tranche_df.to_excel('tranchedata.xlsx', index=True)
+    #tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))

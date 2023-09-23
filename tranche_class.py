@@ -77,8 +77,10 @@ class Tranche:
             return 0
         
     # save cash flow list functions
-    def init_tranche_cashflow_list(self, cashflow_list):
+    def init_tranche_cashflow_list(self, cashflow_list, tranche_R_balance):
         self.__cashflow_list = cashflow_list
+        # first element of cashflow list is -1 * balance of tranche R
+        self.__cashflow_list[0] = tranche_R_balance * -1
 
     def add_tranche_cashflow_value(self, cashflow_value):
         self.__cashflow_list.append(cashflow_value)
