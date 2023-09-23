@@ -178,7 +178,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       
       # calculate and append this month's clo cashflow
       # use old_tranche_df to get tranche size
-      clo.append_cashflow_MANUAL(months_passed, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date) 
+      monthly_collateral_interest = loan_df.loc[(slice(None), months_passed), 'Interest Income'].sum()
+      clo.append_cashflow_MANUAL(months_passed, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date,monthly_collateral_interest) 
 
       # terminate outer (months) loop, if below threshold in prev month
       if terminate_next:
@@ -201,7 +202,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    tranche_df.to_excel('tranchedata.xlsx', index=True)
+    #tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))

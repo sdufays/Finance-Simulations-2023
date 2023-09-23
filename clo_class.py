@@ -135,10 +135,10 @@ class CLO(Tranche):
                 interest_sum += tranche_interest
             self.__total_cashflows.append(interest_sum + principal_sum)
 
-    def append_cashflow_MANUAL(self, month, num_days, sofr_value, dataframe, termin_next, orig_mo, old_tranche_data, last_date):
-        #  REWRITE THIS TO BE MORE EFFICIENT (currently calculating everything 2x)
+    def append_cashflow_MANUAL(self, month, num_days, sofr_value, dataframe, termin_next, orig_mo, old_tranche_data, last_date, collateral_interest):
         interest_sum = 0
         principal_sum = 0
+        not_R_interest_sum = 0
         for tranche in self.get_tranches():
             if termin_next:
                 tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
@@ -153,14 +153,13 @@ class CLO(Tranche):
                 tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size'] - dataframe.loc[(tranche.get_name(), month), 'Tranche Size'] or 0
                 dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
                 principal_sum += tranche_subtraction_amount
-            tranche_interest = tranche.tranche_interest_MANUAL(num_days, sofr_value, dataframe, month, orig_mo, old_tranche_data)
+            if tranche.get_name() != 'R':
+                tranche_interest = tranche.tranche_interest_MANUAL(num_days, sofr_value, dataframe, month, orig_mo, old_tranche_data)
+                not_R_interest_sum += tranche_interest
+            else:
+                tranche_interest = collateral_interest - tranche_interest
             interest_sum += tranche_interest
             # adds this to an individual tranche
-            if (tranche_subtraction_amount + tranche_interest == 0):
-                print('EQUALS 0')
-                print(month)
-                print(tranche.get_name())
-                print()
             tranche.add_tranche_cashflow_value(tranche_subtraction_amount + tranche_interest) # add this tranche principal + tranche interest
         self.__total_cashflows.append(interest_sum + principal_sum)
 
