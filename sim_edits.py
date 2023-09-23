@@ -196,13 +196,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # ------------------ TEST SIMULATION ------------------- #
     # VIEW LOAN DATAFRAME
     #print(loan_df.tail(longest_duration))
-    #loan_df.to_excel('loandata.xlsx', index=True)
+    loan_df.to_excel('loandata.xlsx', index=True)
     # VIEW TRANCHE DATAFRAME
     #print(tranche_df.loc['A'])
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranchedata.xlsx', index=True)
+    tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
