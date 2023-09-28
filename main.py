@@ -253,10 +253,10 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
     excel_file_folder = "inputs/"
-    excel_file_path = "Argentic CLO Case A Input.xlsm"
+    excel_file_path = "Benefit Street AS IS Input.xlsm"
     excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
-    NUM_TRIALS = 2
+    NUM_TRIALS = 100
     cases = ['base', 'downside', 'upside']
     trial_numbers = range(0, NUM_TRIALS)
     index = pd.MultiIndex.from_product([cases, trial_numbers], names=['Case', 'Trial Number'])

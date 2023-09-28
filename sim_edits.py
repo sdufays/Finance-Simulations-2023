@@ -221,13 +221,16 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # for indexing old tranche df
       mo_end_date = month_end_date(start_year + year, current_month)
 
+      # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
       # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
       if mo > original_months_passed:
          past_interest_sum = old_tranche_df['Interest Payment'].sum()
          new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
          collateral_interest_amt = past_interest_sum + new_interest_sum
+         print(f'if {collateral_interest_amt}')
       else:
          collateral_interest_amt = old_tranche_df.loc[(old_tranche_df.index.get_level_values('Period Date') <= mo_end_date)].groupby(level='Tranche Name')['Interest Payment'].sum()
+         print(f'else {collateral_interest_amt}')
 
       # NET TAXABLE INCOME
       interest_expense_sum = 0
@@ -237,14 +240,14 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
-      # some cash flow values are 0 for some reason
-      print(clo.get_tranches()[-1].get_tranche_cashflow_list())
-      # this is nan for some reason
+
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
       print('discount rate {}'.format(discount_rate_R))
-      # this is also nan
+      # this is very small
       tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
+      print(f'tax expense accrual R {tax_expense_accrual_R}')
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
+      print(f'collateral interest amt {type(collateral_interest_amt)}')
       monthly_tax_inc[mo] = net_taxable_income
 
       # QUARTERLY TAX CALCULATIONS
