@@ -220,6 +220,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       current_month = (starting_month + mo) % 12 or 12
       # for indexing old tranche df
       mo_end_date = month_end_date(start_year + year, current_month)
+      print(f'START YEAR {start_year} \n YEAR {year} \n CURRENT MONTH {current_month}')
+      print(f'MONTH END DATE {mo_end_date}')
 
       # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
       # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
@@ -242,6 +244,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             if mo > original_months_passed:
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:
+               # CAUSING ERROR TODO:FIX ERROR
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
@@ -253,12 +256,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       print(f'collateral interest amt {type(collateral_interest_amt)}')
       monthly_tax_inc[mo] = net_taxable_income
 
+      if current_month == 1:
+         year += 1
+         print(f'YEAR {year}')
       # QUARTERLY TAX CALCULATIONS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # keep track of quarter number and year
          quarter = 0 if current_month==3 else (1 if current_month==6 else (2 if current_month==9 else 3))
-         if mo >= 12 and mo % 12 == 0:
-            year+=1
          
          # if 3 or more months have passed
          if mo >= 2:
@@ -282,8 +286,10 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                # get net loss of the previous quarter of current year
                cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year][quarter-1]
          
+         print(f'taxable income sum {taxable_income_sum} \n cumulative taxable loss {cumulative_taxable_loss}')
+
          # calculate taxable amount net of loss for THIS quarter
-         if taxable_income_sum < 0 or cumulative_taxable_loss < 0:
+         if taxable_income_sum < 0 or cumulative_taxable_loss <= 0:
             quart_net_loss = 0
          else:
             if cumulative_taxable_loss > 0 and taxable_income_sum <= cumulative_taxable_loss:
@@ -296,7 +302,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          # YEARLY TAX LIABILITY
          yearly_tax_liability = []
          for year in net_loss_dict.keys():
-            yearly_tax_liability.append(net_loss_dict[year].sum() * .25)
+            yearly_tax_liability.append(sum(net_loss_dict[year]) * .25)
          print(yearly_tax_liability)
       
     # WEIGHTED AVG COST OF FUNDS
