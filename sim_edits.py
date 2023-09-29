@@ -214,13 +214,18 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     for i in range(deal_call_month // 12):
        net_loss_dict[i] = []
 
-    year = 0
+    # NOTE: year is the number of years that have passed
+    # NOTE: yr is what we add to starting year (ie. what makes 2019 into 2020)
+    yr = 0
     # MONTHLY TAX CALCULATIONS
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
+      year = mo // 12
+      if current_month == 1:
+         yr += 1
       # for indexing old tranche df
-      mo_end_date = month_end_date(start_year + year, current_month)
-      print(f'START YEAR {start_year} \n YEAR {year} \n CURRENT MONTH {current_month}')
+      mo_end_date = month_end_date(start_year + yr, current_month)
+      print(f'START YEAR {start_year} \n YEAR {yr} \n CURRENT MONTH {current_month}')
       print(f'MONTH END DATE {mo_end_date}')
 
       # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
