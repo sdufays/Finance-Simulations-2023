@@ -227,10 +227,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          past_interest_sum = old_tranche_df['Interest Payment'].sum()
          new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
          collateral_interest_amt = past_interest_sum + new_interest_sum
-         print(f'if {collateral_interest_amt}')
+         #print(f'if {collateral_interest_amt}')
       else:
-         collateral_interest_amt = old_tranche_df.loc[(old_tranche_df.index.get_level_values('Period Date') <= mo_end_date)].groupby(level='Tranche Name')['Interest Payment'].sum()
-         print(f'else {collateral_interest_amt}')
+         collateral_interest_amt = old_tranche_df.loc[
+            (old_tranche_df.index.get_level_values('Period Date') <= mo_end_date),
+            'Interest Payment'
+         ].sum()
+         #print(f'else {collateral_interest_amt}')
 
       # NET TAXABLE INCOME
       interest_expense_sum = 0
