@@ -214,18 +214,17 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     for i in range(deal_call_month // 12):
        net_loss_dict[i] = []
 
-    # NOTE: year is the number of years that have passed
-    # NOTE: yr is what we add to starting year (ie. what makes 2019 into 2020)
-    yr = 0
+    year = 0
     # MONTHLY TAX CALCULATIONS
     for mo in range(deal_call_month): 
       current_month = (starting_month + mo) % 12 or 12
-      year = mo // 12
       if current_month == 1:
-         yr += 1
+         year += 1
+      else:
+         pass
       # for indexing old tranche df
-      mo_end_date = month_end_date(start_year + yr, current_month)
-      print(f'START YEAR {start_year} \n YEAR {yr} \n CURRENT MONTH {current_month}')
+      mo_end_date = month_end_date(start_year + year, current_month)
+      print(f'START YEAR {start_year} \n YEAR {year} \n CURRENT MONTH {current_month}')
       print(f'MONTH END DATE {mo_end_date}')
 
       # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
@@ -263,7 +262,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
       if current_month == 1:
          year += 1
-         print(f'YEAR {year}')
       # QUARTERLY TAX CALCULATIONS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # keep track of quarter number and year
@@ -292,7 +290,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year][quarter-1]
          
          print(f'taxable income sum {taxable_income_sum} \n cumulative taxable loss {cumulative_taxable_loss}')
-
          # calculate taxable amount net of loss for THIS quarter
          if taxable_income_sum < 0 or cumulative_taxable_loss <= 0:
             quart_net_loss = 0
@@ -303,11 +300,10 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                quart_net_loss = cumulative_taxable_loss
          net_loss_dict[year].append(quart_net_loss)
 
-         
          # YEARLY TAX LIABILITY
          yearly_tax_liability = []
-         for year in net_loss_dict.keys():
-            yearly_tax_liability.append(sum(net_loss_dict[year]) * .25)
+         for y in net_loss_dict.keys():
+            yearly_tax_liability.append(sum(net_loss_dict[y]) * .25)
          print(yearly_tax_liability)
       
     # WEIGHTED AVG COST OF FUNDS
