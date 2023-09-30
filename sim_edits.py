@@ -260,8 +260,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
       print(f'\n  MO BEFORE QUARTERLY {mo}\n')
 
-      if current_month == 1:
-         year += 1
       # QUARTERLY TAX CALCULATIONS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # keep track of quarter number and year
@@ -307,7 +305,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             elif cumulative_taxable_loss > 0 and taxable_income_sum > cumulative_taxable_loss:
                quart_net_loss = cumulative_taxable_loss
          net_loss_dict[year].append(quart_net_loss)
-         print(net_loss_dict)
 
          # YEARLY TAX LIABILITY
          yearly_tax_liability = []
