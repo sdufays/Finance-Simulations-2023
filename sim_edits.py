@@ -266,7 +266,11 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
          # keep track of quarter number and year
          quarter = 0 if current_month==3 else (1 if current_month==6 else (2 if current_month==9 else 3))
-         
+         print(f'quarter {quarter}')
+         # TODO: MAKE SURE THIS WORKS (this is cuz it can start month 0 but be in december already)
+         if mo <= 2:
+            net_loss_dict[0] = [None for i in range(0, quarter)]
+            print(net_loss_dict)
          # if 3 or more months have passed
          if mo >= 2:
             # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
@@ -283,7 +287,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
          # if no previous quarter
          # TODO: need to double check if this should be >2 or >=2
-         if mo > 2:
+         if mo >= 2:
             print(f'  MO {mo}')
             if quarter == 0: # if first quarter
                # get net loss of last quarter of prev year
@@ -308,7 +312,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          # YEARLY TAX LIABILITY
          yearly_tax_liability = []
          for y in net_loss_dict.keys():
-            yearly_tax_liability.append(sum(net_loss_dict[y]) * .25)
+            yearly_tax_liability.append(sum(val * .25 for val in net_loss_dict[y] if val is not None))
          #print(yearly_tax_liability)
       
     # WEIGHTED AVG COST OF FUNDS
