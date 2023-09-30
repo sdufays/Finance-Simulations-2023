@@ -248,8 +248,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          if tranche.get_name() != 'R':
             if mo > original_months_passed:
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
-            else:
-               # CAUSING ERROR TODO:FIX ERROR
+            else:  
+               # CAUSING INDEX ERROR TODO:FIX ERROR
+               # it's the last month
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
@@ -284,7 +285,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
          # if no previous quarter
-         # TODO: need to double check if this should be >2 or >=2
          if mo >= 2:
             print(f'  MO {mo}')
             if quarter == 0: # if first quarter
