@@ -203,7 +203,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    #tranche_df.to_excel('tranchedata.xlsx', index=True)
+    tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
@@ -246,11 +246,12 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       interest_expense_sum = 0
       for tranche in clo.get_tranches():
          if tranche.get_name() != 'R':
-            if mo > original_months_passed:
+            if mo >= original_months_passed:
+               print(mo)
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:  
                # CAUSING INDEX ERROR TODO:FIX ERROR
-               # it's the last month
+               # it's saying july 2023 is month 47
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
