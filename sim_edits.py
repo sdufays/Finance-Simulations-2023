@@ -225,7 +225,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          pass
       # for indexing old tranche df
       mo_end_date = month_end_date(start_year + year, current_month)
-      #print(f'START YEAR {start_year} \n YEAR {year} \n CURRENT MONTH {current_month}')
+      print(f'START YEAR {start_year} \n YEAR {year} \n CURRENT MONTH {current_month}')
       #print(f'MONTH END DATE {mo_end_date}')
 
       # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
