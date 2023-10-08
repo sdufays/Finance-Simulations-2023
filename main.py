@@ -253,7 +253,7 @@ if __name__ == "__main__":
     downside = [.30, .25, .45]
     upside = [.40, .35, .25]
     excel_file_folder = "inputs/"
-    excel_file_path = "Benefit Street AS IS Input.xlsm"
+    excel_file_path = "MF1 CLO MODIFIED Input.xlsm"
     excel_file_name = excel_file_path.split(" Input.xlsm")[0]
    
     NUM_TRIALS = 100
