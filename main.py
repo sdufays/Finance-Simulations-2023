@@ -6,6 +6,8 @@ import numpy_financial as np
 import numpy as np
 from collections import Counter
 
+print("pull is working")
+
 # ------------------- GET NUM DAYS IN MONTH -------------------- #
 def get_date_array(date):
     if date[2] % 4 == 0:
