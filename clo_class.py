@@ -144,7 +144,7 @@ class CLO(Tranche):
                 tranche_subtraction_amount = dataframe.loc[(tranche.get_name(), month-1), 'Tranche Size']
                 dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount
                 principal_sum += tranche_subtraction_amount
-            elif month == orig_mo + 1: # if it's the month we start after the inputted data
+            elif month == orig_mo: # if it's the month we start after the inputted data
                 # need to make sure this works, not sure
                 tranche_subtraction_amount = old_tranche_data.loc[(tranche.get_name(), last_date), 'Tranche Size'] - dataframe.loc[(tranche.get_name(), month), 'Tranche Size'] or 0
                 dataframe.loc[(tranche.get_name(), month), 'Principal Payment'] = tranche_subtraction_amount

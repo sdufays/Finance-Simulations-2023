@@ -67,7 +67,7 @@ class Tranche:
     # NEED TO MAKE THIS GET FROM OLD DATAFRAME IN MONTH 47
     def tranche_interest_MANUAL(self, num_days, sofr_value, dataframe, month, orig_mo, old_dataframe):
         if self.get_name() != 'R':
-            if month == orig_mo + 1:
+            if month == orig_mo:
                 interest = self.get_size() * (self.get_spread() + sofr_value) * num_days / 360
             else:
                 interest = dataframe.loc[(self.get_name(), month-1), 'Tranche Size'] * (self.get_spread() + sofr_value) * num_days / 360
