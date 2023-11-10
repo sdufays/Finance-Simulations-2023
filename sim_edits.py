@@ -215,8 +215,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
     monthly_tax_inc = {}
+    print(deal_call_month)
     net_loss_dict = {} # {1:[q1,q2,q3,q4], 2:[q1,q2,q3,q4]...}
-    for i in range(deal_call_month // 12):
+    for i in range(1, deal_call_month // 12 + 1):
        net_loss_dict[i] = []
 
     year = 0
@@ -230,22 +231,21 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          pass
       # for indexing old tranche df
       mo_end_date = month_end_date(start_year + year, current_month)
-      print(f'START YEAR {start_year} \n YEAR {year} \n CURRENT MONTH {current_month}')
+      print(f'YEAR {year} \n CURRENT MONTH {current_month}')
       #print(f'MONTH END DATE {mo_end_date}')
 
       # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
       # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
       if mo > original_months_passed:
          past_interest_sum = old_tranche_df['Interest Payment'].sum()
-         new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum()
+         # needs 2 .sum()s because it needs to sum all interests for each tranche, then sum the interests for all tranches together
+         new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum().sum()
          collateral_interest_amt = past_interest_sum + new_interest_sum
-         #print(f'if {collateral_interest_amt}')
       else:
          collateral_interest_amt = old_tranche_df.loc[
             (old_tranche_df.index.get_level_values('Period Date') <= mo_end_date),
             'Interest Payment'
          ].sum()
-         #print(f'else {collateral_interest_amt}')
 
       # NET TAXABLE INCOME
       interest_expense_sum = 0
@@ -255,8 +255,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                print(mo)
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:  
-               # CAUSING INDEX ERROR TODO:FIX ERROR
-               # it's saying july 2023 is month 47
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
@@ -279,6 +277,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          # if 3 or more months have passed
          if mo >= 2:
             # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
+            print(f'MONTHLY TAX INC {mo} {monthly_tax_inc[mo]}')
+            # TODO: figure out why somehow on month 48, monthly_tax_inc[mo] is a dataframe
             taxable_income_sum = monthly_tax_inc[mo-2] + monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
          # if deal starts in the middle or end of a quarter
          elif mo == 1:
@@ -288,6 +288,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             taxable_income_sum = monthly_tax_inc[mo]
             cumulative_taxable_loss = 0
 
+         # new error is that taxable income sum and cumulative taxable loss are dataframes for some reason
             
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
          # if no previous quarter
@@ -301,7 +302,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                print(quarter)
                cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year][quarter-1]
          
-         # print(f'taxable income sum {taxable_income_sum} \n cumulative taxable loss {cumulative_taxable_loss}')
+
          # calculate taxable amount net of loss for THIS quarter
          if taxable_income_sum < 0 or cumulative_taxable_loss <= 0:
             quart_net_loss = 0
@@ -310,6 +311,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                quart_net_loss = taxable_income_sum
             elif cumulative_taxable_loss > 0 and taxable_income_sum > cumulative_taxable_loss:
                quart_net_loss = cumulative_taxable_loss
+         print(f'{net_loss_dict=}')
          net_loss_dict[year].append(quart_net_loss)
 
          # YEARLY TAX LIABILITY
