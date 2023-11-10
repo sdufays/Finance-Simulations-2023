@@ -49,7 +49,10 @@ def loan_waterfall(subtract_value, tranches):
 # ------------------- SIMULATION FUNCTION -------------------- # 
 def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_month, starting_year, days_in_month, SOFR, upfront_costs, advance_rate_threshold, months_passed, old_tranche_df, curr_date, margin_lower, margin_upper):
     longest_duration = 100
+    # 46 months have passed, but if we start counting at 0 then we're at month 45
+    # so we don't need to add 1 later
     original_months_passed = months_passed
+    print(f'{original_months_passed=}')
 
     # --------------------------------- INITIALIZE LOOP VARIABLES -------------------------------------- #
     terminate_next = False
@@ -61,7 +64,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # ------------------------ CREATE LOAN DATAFRAME ------------------------ #
     loan_ids = list(range(1, 1 + len(loan_portfolio.get_active_portfolio())))  # generate loan ids
-    months = list(range(months_passed + 1, longest_duration))
+    months = list(range(months_passed, longest_duration))
     loan_index = pd.MultiIndex.from_product([loan_ids, months],
                                    names=['Loan ID', 'Months Passed'])
     loan_df = pd.DataFrame(index=loan_index, columns=['Current Month', 'Beginning Balance', 'Ending Balance', 'Principal Paydown', 'Interest Income'])
@@ -90,8 +93,10 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     replen_cumulative = 0
     incremented_replen_month = False
 
+    '''
     # we're now in the 47th month
     months_passed += 1
+    '''
 
     # --------------------------------- START MONTH LOOP -------------------------------------- #
     while months_passed in range(longest_duration):
@@ -124,6 +129,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
+        # error is happening here
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
         principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance_MANUAL(beginning_bal, principal_pay)
