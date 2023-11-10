@@ -226,6 +226,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       print(f'\n MO AT START OF LOOP {mo} \n')
       current_month = (starting_month + mo) % 12 or 12
       if current_month == 1:
+         # not sure if this is the right way
+         # this year calculation is only for the first 46 months sigh
          year += 1
       else:
          pass
