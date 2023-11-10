@@ -94,7 +94,8 @@ class Loan:
  # ----------------------- FOUR MAJOR CALCULATIONS --------------------------- #
 
     def beginning_balance_MANUAL(self, month, loan_data, original_mos_passed):
-        if month == (original_mos_passed + 1):
+        # if month is the first month
+        if month == original_mos_passed:
             return self.get_loan_balance()
         else:
             return loan_data.loc[(self.get_loan_id(), month-1), 'Ending Balance']

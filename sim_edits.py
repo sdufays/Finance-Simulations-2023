@@ -129,7 +129,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
         tranche_df = tranche_df.fillna(0)
 
         # GET CALCULATIONS
-        # error is happening here
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
         principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
         ending_bal = loan.ending_balance_MANUAL(beginning_bal, principal_pay)
