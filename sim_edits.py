@@ -215,10 +215,11 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     # -------------------------------- CALCULATE OUTPUTS --------------------------------- #
     monthly_tax_inc = {}
-    print(deal_call_month)
     net_loss_dict = {} # {1:[q1,q2,q3,q4], 2:[q1,q2,q3,q4]...}
-    for i in range(1, deal_call_month // 12 + 1):
+    for i in range(0, deal_call_month // 12 + 1):
        net_loss_dict[i] = []
+    print(f'{net_loss_dict=}')
+    print('hi')
 
     year = 0
     # MONTHLY TAX CALCULATIONS
@@ -298,7 +299,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                quart_net_loss = taxable_income_sum
             elif cumulative_taxable_loss > 0 and taxable_income_sum > cumulative_taxable_loss:
                quart_net_loss = cumulative_taxable_loss
-         print(f'{net_loss_dict=}')
+         print(f'within loop {net_loss_dict=}')
          net_loss_dict[year].append(quart_net_loss)
 
          # YEARLY TAX LIABILITY
