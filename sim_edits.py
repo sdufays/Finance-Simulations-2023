@@ -222,21 +222,17 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
     year = 0
     # MONTHLY TAX CALCULATIONS
+    # iterate through each month the deal was active for
     for mo in range(deal_call_month): 
-      print(f'\n MO AT START OF LOOP {mo} \n')
+      # 1 <= current_month <= 12
       current_month = (starting_month + mo) % 12 or 12
       if current_month == 1:
-         # not sure if this is the right way
-         # this year calculation is only for the first 46 months sigh
+         # if it's January, it's the next year
          year += 1
-      else:
-         pass
-      # for indexing old tranche df
+      
+      # calculate the actual date YYYY-MM-DD to index the inputted tranche df (not the one our model generates)
       mo_end_date = month_end_date(start_year + year, current_month)
-      print(f'YEAR {year} \n CURRENT MONTH {current_month}')
-      #print(f'MONTH END DATE {mo_end_date}')
 
-      # FOR SOME REASON COLLATERAL INTERST AMT IS A SERIES NOT A VALUE
       # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
       if mo > original_months_passed:
          past_interest_sum = old_tranche_df['Interest Payment'].sum()
@@ -254,35 +250,29 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       for tranche in clo.get_tranches():
          if tranche.get_name() != 'R':
             if mo >= original_months_passed:
-               print(mo)
                interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
             else:  
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
-      # this is very small
       tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
       monthly_tax_inc[mo] = net_taxable_income
 
-      print(f'\n  MO BEFORE QUARTERLY {mo}\n')
-
       # QUARTERLY TAX CALCULATIONS
       if current_month == 3 or current_month == 6 or current_month == 9 or current_month == 12:
-         # keep track of quarter number and year
+         # keep track of quarter number
          quarter = 0 if current_month==3 else (1 if current_month==6 else (2 if current_month==9 else 3))
-         print(f'quarter {quarter}')
-         # TODO: MAKE SURE THIS WORKS (this is cuz it can start month 0 but be in december already)
-         if mo <= 2:
+
+         # if less than a quarter has passed, but it's already like December, we still need the format [q1:[], q2:,q3:,q4]
+         if mo < 2: # think about why this is 2
             net_loss_dict[0] = [None for i in range(0, quarter)]
             print(net_loss_dict)
          # if 3 or more months have passed
          if mo >= 2:
             # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
-            print(f'MONTHLY TAX INC {mo} {monthly_tax_inc[mo]}')
-            # TODO: figure out why somehow on month 48, monthly_tax_inc[mo] is a dataframe
             taxable_income_sum = monthly_tax_inc[mo-2] + monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
-         # if deal starts in the middle or end of a quarter
+         # elif deal starts in the middle or end of a quarter
          elif mo == 1:
             taxable_income_sum = monthly_tax_inc[mo-1] + monthly_tax_inc[mo]
             cumulative_taxable_loss = 0
@@ -290,20 +280,15 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             taxable_income_sum = monthly_tax_inc[mo]
             cumulative_taxable_loss = 0
 
-         # new error is that taxable income sum and cumulative taxable loss are dataframes for some reason
-            
          # calculate cumulative taxable loss for THIS quarter using quarterly taxable amount net loss from PREV quarter
-         # if no previous quarter
+         # if no previous quarter?
          if mo >= 2:
-            print(f'  MO {mo}')
             if quarter == 0: # if first quarter
                # get net loss of last quarter of prev year
                cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year-1][-1]
             else: # if not the first quarter
                # get net loss of the previous quarter of current year
-               print(quarter)
                cumulative_taxable_loss = taxable_income_sum - net_loss_dict[year][quarter-1]
-         
 
          # calculate taxable amount net of loss for THIS quarter
          if taxable_income_sum < 0 or cumulative_taxable_loss <= 0:
