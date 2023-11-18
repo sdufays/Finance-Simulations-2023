@@ -306,7 +306,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          yearly_tax_liability = []
          for y in net_loss_dict.keys():
             yearly_tax_liability.append(sum(val * .25 for val in net_loss_dict[y] if val is not None))
-         #print(yearly_tax_liability)
+    print(yearly_tax_liability)
+    tax_liability_df = pd.DataFrame(yearly_tax_liability, columns=['Yearly Tax Liability'])
+    print(tax_liability_df)
       
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps

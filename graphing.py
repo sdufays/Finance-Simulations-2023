@@ -216,13 +216,11 @@ def manual_loan_graphs(dataframe):
    # 7 - like a light blueish green / 8 - oranges / 9 - ew / 10 - blue, orangey red
 
    # ------------------------------- DEAL CALL MONTHS --------------------------------- #
-   create_dcm_chart(workbook, "Deal Call Months", dataframe['Deal Call Month'], "MARKET AWARE Deal Call Months Frequency", 7)
+   create_dcm_chart(workbook, "Deal Call Months", dataframe['Deal Call Month'], "MANUAL Deal Call Months Frequency", 7)
    # --------------------------------- WEIGHTED AVERAGE COST OF FUNDS ------------------------------------ #
-   create_wa_cof_chart(workbook, "WA Cost of Funds", dataframe['WA COF'], "MARKET AWARE WA Cost of Funds Frequency", 7)
-   # --------------------------------- PROJECTED EQUITY YIELD ------------------------------------ #
-   create_equity_yield_graph(workbook, "Proj Equity Yield", dataframe['Projected Equity Yield'], "MARKET AWARE Hypothetical Equity Yield Frequency", 7)
-   # -------------------------------- WA ADVANCE RATE  ------------------------------ #
-   create_waar_graph(workbook, "WA Adv Rate", dataframe['WA Adv Rate'], "MARKET AWARE WA Adv Rate Frequency", 7)
+   create_wa_cof_chart(workbook, "WA Cost of Funds", dataframe['WA COF'], "MANUAL WA Cost of Funds Frequency", 7)
+   # --------------------------------- YEARLY TAX LIABILITY ------------------------------------ #
+   #create_equity_yield_graph(workbook, "Yearly Tax Liability", dataframe['Projected Equity Yield'], "MANUAL Hypothetical Equity Yield Frequency", 7)
    # -------------------------------- CLOSE WORKBOOK  ------------------------------ #
    workbook.close()
 
