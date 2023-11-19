@@ -202,13 +202,13 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     # ------------------ TEST SIMULATION ------------------- #
     # VIEW LOAN DATAFRAME
     #print(loan_df.tail(longest_duration))
-    #loan_df.to_excel('loandata.xlsx', index=True)
+    loan_df.to_excel('loandata.xlsx', index=True)
     # VIEW TRANCHE DATAFRAME
     #print(tranche_df.loc['A'])
     #print(tranche_df.loc['A-S'])
     #print(tranche_df.loc['B'])
     #print(tranche_df.head(longest_duration))
-    tranche_df.to_excel('tranchedata.xlsx', index=True)
+    #tranche_df.to_excel('tranchedata.xlsx', index=True)
     # VIEW CASHFLOW DATA AS DATAFRAME
     #cashflow_data = {'Cashflows': clo.get_total_cashflows()}
     #print(pd.DataFrame(cashflow_data))
@@ -219,7 +219,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     for i in range(0, deal_call_month // 12 + 2): # +2 cuz the deal could end in january of deal_call_month // 12
        net_loss_dict[i] = []
     print(f'{net_loss_dict=}')
-    print('hi')
 
     year = 0
     # MONTHLY TAX CALCULATIONS
@@ -245,6 +244,8 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
             (old_tranche_df.index.get_level_values('Period Date') <= mo_end_date),
             'Interest Payment'
          ].sum()
+         if mo == 0:
+            print(f'{collateral_interest_amt=}')
 
       # NET TAXABLE INCOME
       interest_expense_sum = 0
@@ -256,7 +257,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
+      # THIS IS NEGATIVE AND VERY LARGE
       tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
+      print(f'{tax_expense_accrual_R=}')
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
       monthly_tax_inc[mo] = net_taxable_income
 
