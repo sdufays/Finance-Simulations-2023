@@ -130,9 +130,9 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
         # GET CALCULATIONS
         beginning_bal = loan.beginning_balance_MANUAL(months_passed, loan_df, original_months_passed)
-        principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed) # WRONG RN i haven't edited it so loans aren't paying off cuz they don't have starting month
+        principal_pay = loan.principal_paydown_MANUAL(months_passed, loan_df, original_months_passed)
         ending_bal = loan.ending_balance_MANUAL(beginning_bal, principal_pay)
-        days = days_in_month[current_month - 2]
+        days = days_in_month[current_month - 2] # why -2??
         interest_inc = loan.interest_income(beginning_bal, SOFR, days) 
         # save to loan dataframe
         loan_df.loc[(loan.get_loan_id(), months_passed), 'Beginning Balance'] = beginning_bal
@@ -233,34 +233,29 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # calculate the actual date YYYY-MM-DD to index the inputted tranche df (not the one our model generates)
       mo_end_date = month_end_date(start_year + year, current_month)
 
-      # COLLATERAL INTEREST: sum of interest rates of all tranches (A-R) from starting_month to mo
-      if mo > original_months_passed:
-         past_interest_sum = old_tranche_df['Interest Payment'].sum()
-         # needs 2 .sum()s because it needs to sum all interests for each tranche, then sum the interests for all tranches together
-         new_interest_sum = tranche_df.loc[(tranche_df.index.get_level_values('Month') <= mo)].groupby(level='Tranche Name')['Interest Payment'].sum().sum()
-         collateral_interest_amt = past_interest_sum + new_interest_sum
-      else:
-         collateral_interest_amt = old_tranche_df.loc[
-            (old_tranche_df.index.get_level_values('Period Date') <= mo_end_date),
-            'Interest Payment'
-         ].sum()
-         if mo == 0:
-            print(f'{collateral_interest_amt=}')
-
       # NET TAXABLE INCOME
       interest_expense_sum = 0
+      collateral_interest_amt = 0
       for tranche in clo.get_tranches():
+         if mo >= original_months_passed:
+            interest_value = tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
+         else:
+            interest_value = old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
+         
+         collateral_interest_amt += interest_value
          if tranche.get_name() != 'R':
-            if mo >= original_months_passed:
-               interest_expense_sum += tranche_df.loc[(tranche.get_name(), mo), 'Interest Payment']
-            else:  
-               interest_expense_sum += old_tranche_df.loc[(tranche.get_name(), mo_end_date), 'Interest Payment']
+            interest_expense_sum += interest_value
+      
+      collateral_interest_amt = collateral_interest_amt * days_in_month[current_month-1] / 360
 
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
-      # THIS IS NEGATIVE AND VERY LARGE
-      tax_expense_accrual_R = npf.npv(discount_rate_R, clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
-      print(f'{tax_expense_accrual_R=}')
+      #print(f'DISCOUNT RATE {discount_rate_R}')
+      tranche_R_cashflow_for_mo = clo.get_tranches()[-1].get_tranche_cashflow_list()[mo]
+      tax_expense_accrual_R = npf.npv(discount_rate_R, 
+                                      clo.get_tranches()[-1].get_tranche_cashflow_list()[mo + 1:deal_call_month]) + tranche_R_cashflow_for_mo - npf.npv(discount_rate_R, 
+                                                                                                                                                       clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
+      print(f'{tax_expense_accrual_R=}')
       monthly_tax_inc[mo] = net_taxable_income
 
       # QUARTERLY TAX CALCULATIONS
@@ -296,6 +291,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
          # calculate taxable amount net of loss for THIS quarter
          if taxable_income_sum < 0 or cumulative_taxable_loss <= 0:
+            print(f"{taxable_income_sum=}\n{cumulative_taxable_loss=}")
             quart_net_loss = 0
          else:
             if cumulative_taxable_loss > 0 and taxable_income_sum <= cumulative_taxable_loss:
