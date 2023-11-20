@@ -246,8 +246,6 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          if tranche.get_name() != 'R':
             interest_expense_sum += interest_value
       
-      collateral_interest_amt = collateral_interest_amt * days_in_month[current_month-1] / 360
-
       discount_rate_R = npf.irr(clo.get_tranches()[-1].get_tranche_cashflow_list())
       #print(f'DISCOUNT RATE {discount_rate_R}')
       tranche_R_cashflow_for_mo = clo.get_tranches()[-1].get_tranche_cashflow_list()[mo]
@@ -255,7 +253,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                                       clo.get_tranches()[-1].get_tranche_cashflow_list()[mo + 1:deal_call_month]) + tranche_R_cashflow_for_mo - npf.npv(discount_rate_R, 
                                                                                                                                                        clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
-      print(f'{tax_expense_accrual_R=}')
+      print(f'Net taxable income {net_taxable_income}')
       monthly_tax_inc[mo] = net_taxable_income
 
       # QUARTERLY TAX CALCULATIONS
