@@ -64,8 +64,8 @@
                 @clo_end_date = @currentMaturityDateUsed,
                 @clo_reinvestment_period_end = 
                     CASE 
-                        WHEN @currentFinancing = 'STWD 2021-SIF1 CLO' THEN '2024-04-06'
-                        WHEN @currentFinancing = 'STWD 2021-SIF2 CLO' THEN '2025-01-10'
+                        WHEN @currentFinancing = 'XYZ 2021-SIF1 CLO' THEN '2024-04-06'
+                        WHEN @currentFinancing = 'XYZ 2021-SIF2 CLO' THEN '2025-01-10'
                         ELSE NULL
                     END
 
