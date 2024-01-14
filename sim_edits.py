@@ -185,6 +185,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
       # calculate and append this month's clo cashflow
       # use old_tranche_df to get tranche size
       monthly_collateral_interest = loan_df.loc[(slice(None), months_passed), 'Interest Income'].sum()
+      print(f"months_passed={months_passed}, monthly_collateral_interest={monthly_collateral_interest}")
       clo.append_cashflow_MANUAL(months_passed, days, SOFR, tranche_df, terminate_next, original_months_passed, old_tranche_df, curr_date,monthly_collateral_interest) 
 
       # terminate outer (months) loop, if below threshold in prev month
@@ -218,7 +219,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
     net_loss_dict = {} # {1:[q1,q2,q3,q4], 2:[q1,q2,q3,q4]...}
     for i in range(0, deal_call_month // 12 + 2): # +2 cuz the deal could end in january of deal_call_month // 12
        net_loss_dict[i] = []
-    print(f'{net_loss_dict=}')
+    #print(f'{net_loss_dict=}')
 
     year = 0
     # MONTHLY TAX CALCULATIONS
@@ -253,7 +254,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
                                       clo.get_tranches()[-1].get_tranche_cashflow_list()[mo + 1:deal_call_month]) + tranche_R_cashflow_for_mo - npf.npv(discount_rate_R, 
                                                                                                                                                        clo.get_tranches()[-1].get_tranche_cashflow_list()[mo:deal_call_month])
       net_taxable_income = collateral_interest_amt - interest_expense_sum - tax_expense_accrual_R
-      print(f'Net taxable income {net_taxable_income}')
+      #print(f'Net taxable income {net_taxable_income}')
       monthly_tax_inc[mo] = net_taxable_income
 
       # QUARTERLY TAX CALCULATIONS
@@ -264,7 +265,7 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
          # if less than a quarter has passed, but it's already like December, we still need the format [q1:[], q2:,q3:,q4]
          if mo < 2: # think about why this is 2
             net_loss_dict[0] = [None for i in range(0, quarter)]
-            print(net_loss_dict)
+            #print(net_loss_dict)
          # if 3 or more months have passed
          if mo >= 2:
             # calculate sum of month-2, month-1, and month net taxable income and "apply" it on month-1
@@ -289,23 +290,23 @@ def run_simulation(output_dataframe, trial_index, clo, loan_portfolio, starting_
 
          # calculate taxable amount net of loss for THIS quarter
          if taxable_income_sum < 0 or cumulative_taxable_loss <= 0:
-            print(f"{taxable_income_sum=}\n{cumulative_taxable_loss=}")
+            #print(f"{taxable_income_sum=}\n{cumulative_taxable_loss=}")
             quart_net_loss = 0
          else:
             if cumulative_taxable_loss > 0 and taxable_income_sum <= cumulative_taxable_loss:
                quart_net_loss = taxable_income_sum
             elif cumulative_taxable_loss > 0 and taxable_income_sum > cumulative_taxable_loss:
                quart_net_loss = cumulative_taxable_loss
-         print(f'within loop {net_loss_dict=}')
+         #print(f'within loop {net_loss_dict=}')
          net_loss_dict[year].append(quart_net_loss)
 
          # YEARLY TAX LIABILITY
          yearly_tax_liability = []
          for y in net_loss_dict.keys():
             yearly_tax_liability.append(sum(val * .25 for val in net_loss_dict[y] if val is not None))
-    print(yearly_tax_liability)
+    #print(yearly_tax_liability)
     tax_liability_df = pd.DataFrame(yearly_tax_liability, columns=['Yearly Tax Liability'])
-    print(tax_liability_df)
+    #print(tax_liability_df)
       
     # WEIGHTED AVG COST OF FUNDS
     wa_cof = (npf.irr(clo.get_total_cashflows())*12*360/365 - SOFR) * 100 # in bps
